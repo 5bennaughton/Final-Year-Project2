@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/Providers/AuthProvider';
 import { Inter_400Regular, useFonts } from '@expo-google-fonts/inter';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -24,10 +25,13 @@ export default function RootLayout() {
   return (
     
     <GluestackUIProvider mode="dark">
-      <Stack>
+      <AuthProvider>
+      <Stack initialRouteName='(auth)'>
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
+      </AuthProvider>
     </GluestackUIProvider>
   
   );
