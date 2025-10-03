@@ -4,7 +4,7 @@ import { AppState, Platform } from 'react-native'
 import 'react-native-url-polyfill/auto'
 
 const supabaseUrl = 'https://hlmutghuozhkavfszpbr.supabase.co'
-const supabaseAnonKey = 'Ysb_publishable_GDWGY10kBDoIqzW-J1YpGg_ovqXDDRC'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhsbXV0Z2h1b3poa2F2ZnN6cGJyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzkyMTEsImV4cCI6MjA3NDc1NTIxMX0.qts_8px332aXkiZd-xf0UWwqdBLYmv7cXTwuptVGRVI'
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
