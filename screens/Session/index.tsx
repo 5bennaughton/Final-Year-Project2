@@ -1,8 +1,11 @@
 import LiveSession from '@/components/LiveSession';
 import { Button, ButtonText } from '@/components/ui/button';
+import { HStack } from '@/components/ui/hstack';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { SessionInterface } from '@/helpers/types';
 import React, { useState } from 'react';
-import { SafeAreaView, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 const Session: React.FC = () => {
   const [sessionActive, setSessionActive] = useState(false);
@@ -23,7 +26,6 @@ const Session: React.FC = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-sky-50">
       <View className="flex-1 justify-center items-center p-5">
         <Text className="text-4xl mb-2">🏄</Text>
         <Text className="text-2xl font-bold mb-6">Start a New Session</Text>
@@ -32,20 +34,41 @@ const Session: React.FC = () => {
         </Button>
 
         {sessions.length > 0 && (
-          <View className="mt-10 w-full">
-            <Text className="text-xl font-bold mb-4">Recent Sessions</Text>
-            {sessions.slice(0, 3).map((session) => (
-              <View key={session.id} className="bg-white p-4 rounded-lg mb-3">
-                <Text className="font-semibold">
-                  {session.date.toLocaleDateString()}
-                </Text>
-                <Text>Distance: {session.distance.toFixed(2)} km</Text>
-              </View>
-            ))}
-          </View>
-        )}
+  <VStack className="mt-10 w-full px-5" space="lg">
+    <Text className="text-2xl font-bold text-sky-900">Recent Sessions</Text>
+    <VStack space="md">
+      {sessions.slice(0, 3).map((session) => (
+        <VStack 
+          key={session.id} 
+          className="bg-white p-5 rounded-xl shadow-md"
+          space="sm"
+        >
+          <Text className="text-lg font-bold text-sky-900">
+            {session.date.toLocaleDateString()}
+          </Text>
+          <Text className="text-sm text-gray-500">
+            {session.date.toLocaleTimeString()}
+          </Text>
+          <HStack className="mt-2" space="xl">
+            <VStack space="xs">
+              <Text className="text-xs text-gray-500">Duration</Text>
+              <Text className="text-base font-semibold text-sky-900">
+                {Math.floor(session.duration / 60)}:{(session.duration % 60).toString().padStart(2, '0')}
+              </Text>
+            </VStack>
+            <VStack space="xs">
+              <Text className="text-xs text-gray-500">Distance</Text>
+              <Text className="text-base font-semibold text-sky-900">
+                {session.distance.toFixed(2)} km
+              </Text>
+            </VStack>
+          </HStack>
+        </VStack>
+      ))}
+    </VStack>
+  </VStack>
+)}
       </View>
-    </SafeAreaView>
   );
 };
 
