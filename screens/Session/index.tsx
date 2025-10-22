@@ -6,7 +6,9 @@ import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { SessionInterface } from '@/helpers/types';
 import { supabase } from '@/lib/supabase';
+import * as AuthSession from 'expo-auth-session';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useState } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 
@@ -113,58 +115,96 @@ const Session: React.FC = () => {
     });
 };
 
-return (
-  <View className="flex-1 justify-center items-center p-5">
-    <Text className="text-4xl mb-2">🏄</Text>
-    <Text className="text-2xl text-black font-bold mb-6">Start a New Session</Text>
+  // Debug: Strava OAuth
+  const handleConnectStravaDebug = async () => {
+    // Prefer an HTTPS redirect from env (must be registered in Strava app settings)
+    const envRedirect = process.env.EXPO_PUBLIC_STRAVA_REDIRECT_URI;
+    const redirectUri = envRedirect || AuthSession.makeRedirectUri();
 
-    <Button onPress={handleStart} size="xl">
-      <ButtonText>Start Session</ButtonText>
-    </Button>
+    const clientId = process.env.EXPO_PUBLIC_STRAVA_CLIENT_ID || '181064';
+    const scope = 'activity:read_all';
 
-    {sessions.length > 0 && (
-      <VStack className="mt-10 w-full px-5" space="lg">
-        <Text className="text-2xl font-bold text-sky-900">Recent Sessions</Text>
+    const params = new URLSearchParams({
+      client_id: String(clientId || ''),
+      response_type: 'code',
+      redirect_uri: redirectUri,
+      scope,
+      approval_prompt: 'auto',
+    });
 
-        <VStack space="md">
-          {sessions.slice(0, 3).map((session) => (
-            <TouchableOpacity
-              key={session.id}                       
-              activeOpacity={0.8}
-              onPress={() => handleSessionPress(session.id!)} 
-            >
-              <VStack className="bg-white p-5 rounded-xl shadow-md" space="sm">
-                <Text className="text-lg font-bold text-sky-900">
-                  {new Date(session.date).toLocaleDateString()}
-                </Text>
-                <Text className="text-sm text-gray-500">
-                  {new Date(session.date).toLocaleTimeString()}
-                </Text>
+    console.log('[Strava OAuth] client_id:', clientId);
+    console.log('[Strava OAuth] redirect_uri:', redirectUri);
+    console.log('[Strava OAuth] scope:', scope);
+    console.log('[Strava OAuth] authorize URL:', `https://www.strava.com/oauth/authorize?${params.toString()}`);
 
-                <HStack className="mt-2" space="xl">
-                  <VStack space="xs">
-                    <Text className="text-xs text-gray-500">Duration</Text>
-                    <Text className="text-base font-semibold text-sky-900">
-                      {Math.floor(session.duration / 60)}:
-                      {(session.duration % 60).toString().padStart(2, '0')}
-                    </Text>
-                  </VStack>
+    if (!envRedirect) {
+      console.warn('EXPO_PUBLIC_STRAVA_REDIRECT_URI is not set. Set an HTTPS URI that matches your Strava app.');
+    }
 
-                  <VStack space="xs">
-                    <Text className="text-xs text-gray-500">Distance</Text>
-                    <Text className="text-base font-semibold text-sky-900">
-                      {session.distance.toFixed(2)} km
-                    </Text>
-                  </VStack>
-                </HStack>
-              </VStack>
-            </TouchableOpacity>
-          ))}
+    const result = await WebBrowser.openAuthSessionAsync(
+      `https://www.strava.com/oauth/authorize?${params.toString()}`,
+      redirectUri
+    );
+    console.log('[Strava OAuth] result:', result);
+  };
+
+  return (
+    <View className="flex-1 justify-center items-center p-5">
+      <Text className="text-4xl mb-2">🏄</Text>
+      <Text className="text-2xl text-black font-bold mb-6">Start a New Session</Text>
+
+      <Button onPress={handleStart} size="xl">
+        <ButtonText>Start Session</ButtonText>
+      </Button>
+
+      {/* Strava debug button to diagnose Bad Request */}
+      <Button onPress={handleConnectStravaDebug} size="xl" className="mt-4 bg-orange-500">
+        <ButtonText className="text-white">Connect Strava (Debug)</ButtonText>
+      </Button>
+
+      {sessions.length > 0 && (
+        <VStack className="mt-10 w-full px-5" space="lg">
+          <Text className="text-2xl font-bold text-sky-900">Recent Sessions</Text>
+
+          <VStack space="md">
+            {sessions.slice(0, 3).map((session) => (
+              <TouchableOpacity
+                key={session.id}                       
+                activeOpacity={0.8}
+                onPress={() => handleSessionPress(session.id!)} 
+              >
+                <VStack className="bg-white p-5 rounded-xl shadow-md" space="sm">
+                  <Text className="text-lg font-bold text-sky-900">
+                    {new Date(session.date).toLocaleDateString()}
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    {new Date(session.date).toLocaleTimeString()}
+                  </Text>
+
+                  <HStack className="mt-2" space="xl">
+                    <VStack space="xs">
+                      <Text className="text-xs text-gray-500">Duration</Text>
+                      <Text className="text-base font-semibold text-sky-900">
+                        {Math.floor(session.duration / 60)}:
+                        {(session.duration % 60).toString().padStart(2, '0')}
+                      </Text>
+                    </VStack>
+
+                    <VStack space="xs">
+                      <Text className="text-xs text-gray-500">Distance</Text>
+                      <Text className="text-base font-semibold text-sky-900">
+                        {session.distance.toFixed(2)} km
+                      </Text>
+                    </VStack>
+                  </HStack>
+                </VStack>
+              </TouchableOpacity>
+            ))}
+          </VStack>
         </VStack>
-      </VStack>
-    )}
-  </View>
-);
+      )}
+    </View>
+  );
 }
 
 export default Session;

@@ -34,6 +34,7 @@ export default function SessionDetail() {
         ...data,
         date: new Date(data.date),
         created_at: new Date(data.created_at),
+        route: data.route || [],
       });
     } catch (error) {
       console.error('Error fetching session:', error);
