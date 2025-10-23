@@ -1,65 +1,107 @@
-import * as WebBrowser from 'expo-web-browser';
+import { handleStravaAuth, StravaAthleteData } from '@/lib/strava';
 import React, { useState } from 'react';
-import { Button, View } from 'react-native';
+import { ActivityIndicator, Button, StyleSheet, Text, View } from 'react-native';
 
+export default function Leaderboard() {
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tokenData, setTokenData] = useState<StravaAthleteData | null>(null);
+  const [error, setError] = useState<string>('');
 
-const REDIRECT_URI = 'exp://localhost:8081'; 
-const STRAVA_CLIENT_ID = '182126';
-const STRAVA_CLIENT_SECRET = 'de2a59a3d9026bbba09dec5043c515d93618dc54';
-const STRAVA_AUTH_URL = `http://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&approval_prompt=force&scope=activity:read_all`;
-const STRAVA_TOKEN_URL = `https://www.strava.com/oauth/token`;
-export default function StravaAuth() {
-  const [authCode, setAuthCode] = useState<string>('');
+  const handleConnectStrava = async () => {
+    setIsLoading(true);
+    setError('');
 
-  const handleAuthorize = async () => {
-    const result = await WebBrowser.openAuthSessionAsync(
-      STRAVA_AUTH_URL,
-      REDIRECT_URI
-    );
+    try { 
+      const data = await handleStravaAuth();
 
-    console.log('Result:', result);
-
-    if (result.type === 'success' && result.url) {
-      const code = result.url.split('code=')[1]?.split('&')[0];
-      setAuthCode(code || '');
-      console.log('Auth code:', code);
-
-      if (code) {
-        const accessToken = await getAccessToken(code);
-        console.log('Access Token:', accessToken);
+      if (data) {
+        setIsConnected(true);
+        setTokenData(data);
+      } else {
+        setError('Failed to connect to Strava.');
       }
-    } else {
-      console.log('Auth result:', result.type);
+    } catch (err) {
+      setError('An error occurred during Strava authentication.');
+      console.error('Strava Auth Error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const getAccessToken = async (authCode: string) => {
-    try {
-      const response = await fetch(STRAVA_TOKEN_URL, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: STRAVA_CLIENT_ID,
-        client_secret: STRAVA_CLIENT_SECRET,
-        code: authCode,
-        grant_type: 'authorization_code',
-      }).toString(),
-    });
-
-      const data = await response.json();
-      console.log('Access Token Response:', data);
-      return data.access_token;
-    } catch (error) {
-      console.error('Error fetching access token:', error);
-      return null;
-    }
+   const getAthleteName = () => {
+    const athleteName = tokenData ? tokenData.athlete?.firstname + ' ' + tokenData.athlete?.lastname : '';
+    console.log('Athlete Name:', athleteName);
+    return athleteName;
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#FC4C02" />
+        <Text style={styles.loadingText}>Connecting to Strava...</Text>
+      </View>
+    );
+  }
+
+  if (!isConnected) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Connect to Strava</Text>
+        <Text style={styles.description}>
+          Connect your Strava account to access your activities
+        </Text>
+        <Button
+          title="Connect with Strava"
+          onPress={handleConnectStrava}
+          color="#FC4C02"
+        />
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+      </View>
+    );
+  }
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-      <Button title="Authorize Strava" onPress={handleAuthorize} />
+    <View style={styles.container}>
+      <Text style={styles.title}>Connected to Strava!</Text>
+      <Text style={styles.athleteName}>
+        Welcome, {getAthleteName()}
+      </Text>
     </View>
   );
-};
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  description: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#666',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    marginTop: 10,
+    color: 'red',
+    textAlign: 'center',
+  },
+  athleteName: {
+    fontSize: 18,
+    marginBottom: 20,
+    color: '#333',
+  },
+});
