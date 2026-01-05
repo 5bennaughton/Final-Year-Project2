@@ -18,3 +18,31 @@ export interface LocationPoint {
   timestamp: number;
   speed?: number;
 }
+
+export interface StravaActivity {
+  id: number;
+  name: string;
+  distance: number;
+  moving_time: number;
+  elapsed_time: number;
+  total_elevation_gain: number;
+  sport_type: string;
+  start_date: string;
+  start_date_local: string;
+  average_speed: number;
+  max_speed: number;
+  average_heartrate?: number;
+  max_heartrate?: number;
+  calories?: number;
+  map?: {
+    id: string;
+    summary_polyline: string;
+  };
+  athlete?: {
+    id: number;
+    firstname: string;
+    lastname: string;
+    city?: string;
+  };
+  description?: string;
+}

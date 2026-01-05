@@ -1,0 +1,40 @@
+[
+  {
+    "id": 1234567890123,
+    "name": "Kitesurfing in Silverstand",
+    "distance": 15200.5,
+    "moving_time": 3600,
+    "elapsed_time": 4200,
+    "total_elevation_gain": 0,
+    "sport_type": "Kitesurf",
+    "start_date": "2025-10-23T14:30:00Z",
+    "start_date_local": "2025-10-23T15:30:00Z",
+    "average_speed": 4.22,
+    "max_speed": 10.5,
+    "average_heartrate": 145,
+    "max_heartrate": 176,
+    "calories": 720,
+    "map": { "id": "a1234567890", "summary_polyline": "abcdEfghIjklMnopQrstUvwxYz" },
+    "athlete": { "id": 191445644, "firstname": "Ben", "lastname": "Naughton", "city": "Galway" },
+    "description": "Kitesurfing session with strong westerly winds."
+  },
+  {
+    "id": 9876543210987,
+    "name": "Evening Kitesurf in Salthill",
+    "distance": 10800.2,
+    "moving_time": 2700,
+    "elapsed_time": 3000,
+    "total_elevation_gain": 0,
+    "sport_type": "Kitesurf",
+    "start_date": "2025-10-24T17:00:00Z",
+    "start_date_local": "2025-10-24T18:00:00Z",
+    "average_speed": 4.0,
+    "max_speed": 9.8,
+    "average_heartrate": 138,
+    "max_heartrate": 170,
+    "calories": 580,
+    "map": { "id": "a9876543210", "summary_polyline": "zyxwVutsRqpoNmlkJihgFe" },
+    "athlete": { "id": 191445644, "firstname": "Ben", "lastname": "Naughton", "city": "Galway" },
+    "description": "Evening session with steady 20 knots. Smooth riding!"
+  }
+]

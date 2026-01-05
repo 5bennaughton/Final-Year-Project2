@@ -1,14 +1,36 @@
-import { HStack } from '@/components/ui/hstack';
-import { Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { getAuthToken, getAuthUser } from "@/lib/auth";
+import React, { useEffect, useState } from "react";
+import { Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-// eslint-disable-next-line react/display-name
-export default () => {
+export default function Home() {
+  const [displayName, setDisplayName] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    Promise.all([getAuthToken(), getAuthUser()]).then(([token, user]) => {
+      if (!isMounted) return;
+      if (!token) {
+        setDisplayName(null);
+        return;
+      }
+      setDisplayName(user?.name || user?.email || null);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
-    <SafeAreaView>
-      <HStack className='justify-betweens '>
-        <Text className='text-md font-bold'>Home Screen</Text>
-      </HStack>
+    <SafeAreaView style={{ flex: 1, padding: 20, justifyContent: "center" }}>
+      <View style={{ gap: 8 }}>
+        <Text style={{ fontSize: 28, fontWeight: "700" }}>
+          Hello{displayName ? `, ${displayName}` : ""}
+        </Text>
+        <Text style={{ color: "#666" }}>Welcome back.</Text>
+      </View>
     </SafeAreaView>
   );
 }

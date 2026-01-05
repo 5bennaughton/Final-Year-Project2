@@ -1,171 +1,193 @@
-import { useAuth } from '@/Providers/AuthProvider';
-import LiveSession from '@/app/(session)/LiveSession';
-import { Button, ButtonText } from '@/components/ui/button';
-import { HStack } from '@/components/ui/hstack';
-import { Text } from '@/components/ui/text';
-import { VStack } from '@/components/ui/vstack';
-import { SessionInterface } from '@/helpers/types';
-import { supabase } from '@/lib/supabase';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { authFetch } from "@/lib/auth";
+import * as WebBrowser from "expo-web-browser";
+import React, { useState } from "react";
+import {
+  ActivityIndicator,
+  Button,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
-const Session: React.FC = () => {
-  const { user } = useAuth();
-  const router = useRouter();
-  const [sessionActive, setSessionActive] = useState(false);
-  const [sessions, setSessions] = useState<SessionInterface[]>([]);
+const API_BASE = "http://192.168.68.61:5001";
+
+type LatestActivity = {
+  id: string | number;
+  sport: string;
+  title: string;
+  distanceKm: string;
+  movingTimeMin: number;
+  avgSpeedKmh: string;
+  maxSpeedKmh: string;
+  startDate: string;
+  location: string;
+  mapPolyline?: string | null;
+};
+
+const isLatestActivity = (value: unknown): value is LatestActivity => {
+  if (!value || typeof value !== "object") return false;
+  return (
+    "title" in value &&
+    "distanceKm" in value &&
+    "startDate" in value &&
+    "movingTimeMin" in value
+  );
+};
+
+const formatSession = (data: LatestActivity) => {
+  return {
+    id: String(data.id),
+    title: data.title,
+    date: new Date(data.startDate).toLocaleDateString(),
+    durationMinutes: data.movingTimeMin,
+    distanceKm: data.distanceKm,
+    avgSpeedKmh: data.avgSpeedKmh,
+    maxSpeedKmh: data.maxSpeedKmh,
+    city: data.location,
+    sport: data.sport,
+  };
+};
+
+export default function SessionSummary() {
+  const [sessions, setSessions] = useState<LatestActivity[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Fetch sessions from the database
-   */
-  useEffect(() => {
-    if (user) {
-      fetchSessions();
-    }
-  }, [user]);
+  const connectStrava = async () => {
+    await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
+    setIsConnected(true);
+  };
 
-  const fetchSessions = async () => {
+  const importSessions = async () => {
     setLoading(true);
+    setError(null);
+
     try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .order('date', { ascending: false })
-        .limit(10);
+      const res = await authFetch(`${API_BASE}/sessions/strava/latest-activity`);
+      const data = await res.json().catch(() => null);
 
-      if (error) throw error;
+      if (!res.ok) {
+        const msg = data?.message ?? data?.error ?? "Failed to import sessions";
+        throw new Error(msg);
+      }
 
-      // Convert date strings to Date objects
-      const sessionsWithDates = data?.map(session => ({
-        ...session,
-        date: new Date(session.date),
-        created_at: new Date(session.created_at),
-      })) || [];
+      const rawItems = Array.isArray(data) ? data : data ? [data] : [];
+      const items = rawItems.filter(isLatestActivity);
 
-      setSessions(sessionsWithDates);
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
+      if (items.length === 0 && rawItems.length > 0) {
+        throw new Error("Unexpected response from server");
+      }
+
+      setSessions(items);
+    } catch (err: any) {
+      setError(err?.message ?? "Could not import sessions.");
+      setSessions([]);
     } finally {
       setLoading(false);
     }
   };
-      
-
-  /**
-   * Starts a new session
-   */
-  const handleStart = () => {
-    setSessionActive(true);
-  };
-
-  /**
-   * Ends the current session and saves it to the supabase database
-   */
-  const handleSessionEnd = async (session: SessionInterface) => {
-    try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .insert([
-          {
-            user_id: user?.id,
-            duration: session.duration,
-            distance: session.distance,
-            date: session.date.toISOString(),
-          },
-        ])
-        .select()
-        .single();
-        
-      if (error) throw error;
-
-      // Add the new session to local state
-      setSessions(prev => [
-        {
-          ...session,
-          date: new Date(data.date),
-          created_at: new Date(data.created_at),
-        },
-        ...prev,
-      ]);
-      setSessionActive(false);
-    } catch (error) {
-      console.error('Error saving session:', error);
-      alert('Failed to save session. Please try again.');
-    }
-  };
-
-  if (sessionActive) {
-    return <LiveSession onSessionEnd={handleSessionEnd} />;
-  }
-
-  /**
-   * Handles pressing on a session to view the session details
-   * @param sessionId ID of the session to view details for
-   */
-  const handleSessionPress = (sessionId: string) => {
-    console.log('Session pressed');
-    router.push({
-      pathname: '/(session)/session',
-      params: { id: sessionId },
-    });
-};
 
   return (
-    <View className="flex-1 justify-center items-center p-5">
-      <Text className="text-4xl mb-2">🏄</Text>
-      <Text className="text-2xl text-black font-bold mb-6">Start a New Session</Text>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+      <View style={styles.actions}>
+        <Button title="Connect Strava" onPress={connectStrava} />
+        <Button
+          title={loading ? "Importing..." : "Import sessions"}
+          onPress={importSessions}
+          disabled={!isConnected || loading}
+        />
+        {!isConnected && (
+          <Text style={styles.muted}>Connect to Strava to import sessions.</Text>
+        )}
+      </View>
 
-      <Button onPress={handleStart} size="xl">
-        <ButtonText>Start Session</ButtonText>
-      </Button>
+      {loading && <ActivityIndicator style={styles.loading} />}
+      {error && <Text style={styles.error}>{error}</Text>}
 
-      {/* Recent Sessions */}
-      {sessions.length > 0 && (
-        <VStack className="mt-10 w-full px-5" space="lg">
-          <Text className="text-2xl font-bold text-sky-900">Recent Sessions</Text>
-
-          <VStack space="md">
-            {sessions.slice(0, 3).map((session) => (
-              <TouchableOpacity
-                key={session.id}
-                activeOpacity={0.8}
-                onPress={() => handleSessionPress(session.id!)}
-              >
-                <VStack className="bg-white p-5 rounded-xl shadow-md" space="sm">
-                  <Text className="text-lg font-bold text-sky-900">
-                    {new Date(session.date).toLocaleDateString()}
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    {new Date(session.date).toLocaleTimeString()}
-                  </Text>
-
-                  <HStack className="mt-2" space="xl">
-                    <VStack space="xs">
-                      <Text className="text-xs text-gray-500">Duration</Text>
-                      <Text className="text-base font-semibold text-sky-900">
-                        {Math.floor(session.duration / 60)}:
-                        {(session.duration % 60).toString().padStart(2, '0')}
-                      </Text>
-                    </VStack>
-
-                    <VStack space="xs">
-                      <Text className="text-xs text-gray-500">Distance</Text>
-                      <Text className="text-base font-semibold text-sky-900">
-                        {session.distance.toFixed(2)} km
-                      </Text>
-                    </VStack>
-                  </HStack>
-                </VStack>
-              </TouchableOpacity>
-            ))}
-          </VStack>
-        </VStack>
+      {sessions.length === 0 && !loading && !error && (
+        <Text style={styles.muted}>No sessions imported yet.</Text>
       )}
-    </View>
+
+      {sessions.map((item) => {
+        const session = formatSession(item);
+        return (
+          <View key={session.id} style={styles.card}>
+            <Text style={styles.title}>{session.title}</Text>
+            <Text style={styles.text}>
+              📅 <Text style={styles.bold}>Date:</Text> {session.date}
+            </Text>
+            <Text style={styles.text}>
+              🎯 <Text style={styles.bold}>Sport:</Text> {session.sport}
+            </Text>
+            <Text style={styles.text}>
+              📍 <Text style={styles.bold}>Location:</Text> {session.city}
+            </Text>
+            <Text style={styles.text}>
+              📏 <Text style={styles.bold}>Distance:</Text> {session.distanceKm} km
+            </Text>
+            <Text style={styles.text}>
+              ⏱️ <Text style={styles.bold}>Duration:</Text> {session.durationMinutes} min
+            </Text>
+            <Text style={styles.text}>
+              💨 <Text style={styles.bold}>Avg Speed:</Text> {session.avgSpeedKmh} km/h
+            </Text>
+            <Text style={styles.text}>
+              🚀 <Text style={styles.bold}>Max Speed:</Text> {session.maxSpeedKmh} km/h
+            </Text>
+          </View>
+        );
+      })}
+    </ScrollView>
   );
 }
 
-export default Session;
+const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+    backgroundColor: "#f9f9f9",
+  },
+  content: {
+    paddingBottom: 24,
+  },
+  actions: {
+    gap: 10,
+    padding: 16,
+    marginTop: 24,
+  },
+  loading: {
+    marginTop: 8,
+  },
+  card: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: "700",
+    marginBottom: 10,
+  },
+  text: {
+    fontSize: 16,
+    marginBottom: 4,
+  },
+  bold: {
+    fontWeight: "600",
+  },
+  muted: {
+    color: "#666",
+  },
+  error: {
+    marginTop: 8,
+    color: "#b91c1c",
+    paddingHorizontal: 16,
+  },
+});
