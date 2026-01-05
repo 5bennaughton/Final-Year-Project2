@@ -1,4 +1,3 @@
-import { authFetch } from "@/lib/auth";
 import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
@@ -56,8 +55,8 @@ export default function SessionSummary() {
   const [error, setError] = useState<string | null>(null);
 
   const connectStrava = async () => {
-    await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
-    setIsConnected(true);
+   await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
+   setIsConnected(true);
   };
 
   const importSessions = async () => {
@@ -65,7 +64,7 @@ export default function SessionSummary() {
     setError(null);
 
     try {
-      const res = await authFetch(`${API_BASE}/sessions/strava/latest-activity`);
+      const res = await fetch(`${API_BASE}/sessions/strava/latest-activity`);
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {

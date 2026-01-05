@@ -1,6 +1,6 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
-import { setAuthToken, setAuthUser } from "@/lib/auth";
+import { setAuthToken } from "@/lib/auth";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
@@ -48,13 +48,6 @@ export default function Login({ apiBase, onSuccess, onGoToRegister }: Props) {
         Alert.alert("Login failed", msg);
         return;
       }
-
-      const user = data?.user;
-      await setAuthUser({
-        id: String(user?.id ?? "unknown"),
-        email: user?.email ?? form.email,
-        name: user?.name ?? user?.username ?? form.email,
-      });
 
       await setAuthToken(data.token);
       onSuccess?.(data);
