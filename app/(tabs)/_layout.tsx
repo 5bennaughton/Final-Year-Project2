@@ -30,6 +30,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="Friends"
+        options={{
+          title: 'Friends',
+          tabBarIcon: ({ color, focused }) => (
+            <User color={color} size={24} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="leaderboard"
         options={{
           title: 'Leaderboard',
