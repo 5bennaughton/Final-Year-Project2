@@ -1,3 +1,4 @@
+import { API_BASE } from "@/constants/api";
 import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {
@@ -9,7 +10,6 @@ import {
   View,
 } from "react-native";
 
-const API_BASE = "http://192.168.68.61:5001";
 
 type LatestActivity = {
   id: string | number;

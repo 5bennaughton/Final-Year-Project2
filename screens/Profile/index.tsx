@@ -1,3 +1,4 @@
+import { API_BASE } from "@/constants/api";
 import { Button, ButtonText } from "@/components/ui/button";
 import { authFetch, clearAuthToken, clearAuthUser, getAuthToken } from "@/lib/auth";
 import { useRouter } from "expo-router";
@@ -9,7 +10,6 @@ const HomePage: React.FC = () => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const API_BASE = "http://192.168.68.61:5001";
 
   useEffect(() => {
     getAuthToken().then(setToken);

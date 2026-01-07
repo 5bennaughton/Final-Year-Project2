@@ -1,3 +1,4 @@
+import { API_BASE } from "@/constants/api";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,7 +11,6 @@ type Mode = "login" | "register";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("register"); // only register for now
-  const API_BASE = "http://192.168.68.61:5001";
   const router = useRouter();
 
   useEffect(() => {

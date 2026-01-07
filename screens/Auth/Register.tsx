@@ -1,5 +1,6 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
+import { API_BASE } from "@/constants/api";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
@@ -15,14 +16,12 @@ type Props = {
   onGoToLogin?: () => void;
 };
 
-export default function Register({ apiBase, onSuccess, onGoToLogin }: Props) {
+export default function Register({ onSuccess, onGoToLogin }: Props) {
   const [form, setForm] = useState<RegisterBody>({
     name: "",
     email: "",
     password: "",
   });
-
-  const API_BASE = apiBase ?? "http://192.168.68.61:5001";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

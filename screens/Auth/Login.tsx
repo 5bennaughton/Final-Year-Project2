@@ -1,5 +1,6 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
+import { API_BASE } from "@/constants/api";
 import { setAuthToken } from "@/lib/auth";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
@@ -15,9 +16,8 @@ type Props = {
   onGoToRegister?: () => void;
 };
 
-export default function Login({ apiBase, onSuccess, onGoToRegister }: Props) {
+export default function Login({ onSuccess, onGoToRegister }: Props) {
   const [form, setForm] = useState<LoginBody>({ email: "", password: "" });
-  const API_BASE = apiBase ?? "http://192.168.68.61:5001";
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
