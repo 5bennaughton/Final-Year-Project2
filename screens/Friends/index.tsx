@@ -1,7 +1,7 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { API_BASE } from "@/constants/constants";
-import { requestJson } from "@/helpers/helpers";
+import { requestJson, useUserSearch, type UserResult } from "@/helpers/helpers";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -14,12 +14,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 const FRIENDS_BASE = `${API_BASE}/friends`;
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-type UserResult = {
-  id: string;
-  name: string;
-  email: string;
-};
-
 type FriendRequest = {
   id: string;
   requesterId: string;
@@ -29,11 +23,6 @@ type FriendRequest = {
   requesterEmail?: string;
 };
 
-// Build the URL for searching users by name.
-function buildSearchUrl(query: string) {
-  return `${FRIENDS_BASE}/search-users?q=${encodeURIComponent(query)}`;
-}
-
 // Prefer a human-readable name if the API provides it.
 function getRequesterLabel(request: FriendRequest) {
   return request.requesterName || request.requesterEmail || request.requesterId;
@@ -41,9 +30,7 @@ function getRequesterLabel(request: FriendRequest) {
 
 export default function Friends() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<UserResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searchError, setSearchError] = useState<string | null>(null);
+  const { results, searching, searchError, search } = useUserSearch();
 
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -64,36 +51,9 @@ export default function Friends() {
 
   // Search users by name.
   const searchUsers = async () => {
-    const trimmed = query.trim();
-
-    if (!trimmed) {
-      setSearchError("Enter a name to search.");
-      return;
-    }
-
-    setSearching(true);
-    setSearchError(null);
-    setResults([]);
     setRequestMessage(null);
     setRequestError(null);
-
-    try {
-      const data = await requestJson(
-        buildSearchUrl(trimmed),
-        {},
-        "Search failed"
-      );
-      if (!data || !Array.isArray(data.users)) {
-        setResults([]);
-        setSearchError("Unexpected response from server.");
-        return;
-      }
-      setResults(data.users);
-    } catch (err: any) {
-      setSearchError(err?.message ?? "Search failed");
-    } finally {
-      setSearching(false);
-    }
+    await search(query);
   };
 
   // Send a friend request to another user.
@@ -248,15 +208,9 @@ export default function Friends() {
             {searching ? <ActivityIndicator color="white" /> : <ButtonText>Search</ButtonText>}
           </Button>
           {searchError && <Text style={{ color: "red" }}>{searchError}</Text>}
-        </View>
-
-        {/* Results section */}
-        <View style={{ gap: 12 }}>
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>Results</Text>
           {results.length === 0 && !searching && !searchError && (
             <Text style={{ color: "#666" }}>No results yet.</Text>
           )}
-
           {results.map((user) => (
             <View
               key={user.id}
