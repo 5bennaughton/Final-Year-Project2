@@ -1,4 +1,4 @@
-import { API_BASE } from "@/constants/api";
+import { API_BASE } from "@/constants/constants";
 import * as WebBrowser from "expo-web-browser";
 import React, { useState } from "react";
 import {

@@ -1,51 +1,270 @@
-import { API_BASE } from "@/constants/api";
 import { Button, ButtonText } from "@/components/ui/button";
-import { authFetch, clearAuthToken, clearAuthUser, getAuthToken } from "@/lib/auth";
+import { Input, InputField } from "@/components/ui/input";
+import { API_BASE } from "@/constants/constants";
+import { requestJson } from "@/helpers/helpers";
+import { authFetch, clearAuthToken, clearAuthUser } from "@/lib/auth";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Text, View } from "react-native";
+import React, { useState } from "react";
+import { ActivityIndicator, Modal, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const HomePage: React.FC = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+const SPORT_OPTIONS = ["kitesurfing", "wingfoiling", "windsurfing", "surfing"];
+type Sport = (typeof SPORT_OPTIONS)[number];
+
+const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+type SessionPayload = {
+  sport: Sport;
+  time: string;
+  location: string;
+};
+
+type SessionPost = {
+  id: string;
+  sport: Sport;
+  time: string;
+  location: string;
+  notes?: string | null;
+};
+
+export default function HomePage() {
   const router = useRouter();
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [sport, setSport] = useState<Sport | "">("");
+  const [time, setTime] = useState("");
+  const [location, setLocation] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [createMessage, setCreateMessage] = useState<string | null>(null);
+  const [posts, setPosts] = useState<SessionPost[]>([]);
+  const [postsError, setPostsError] = useState<string | null>(null);
+  const [loadingPosts, setLoadingPosts] = useState(false);
 
-  useEffect(() => {
-    getAuthToken().then(setToken);
-  }, []);
+  const canSubmit = Boolean(sport && time.trim() && location.trim());
 
-  const onLogout = async () => {
-    setLoading(true);
+  /**
+   * Logs the User out
+   * may need to catch an error here at some stage 
+   */
+  async function logout() {
     try {
-      await authFetch(`${API_BASE}/logout`, { method: "POST" });
+      await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
     } finally {
       await clearAuthToken();
       await clearAuthUser();
-      setToken(null);
-      setLoading(false);
       router.replace("/(auth)");
     }
   };
 
+  function openCreateForm() {
+    setCreateError(null);
+    setCreateMessage(null);
+    setShowCreateForm(true);
+  }
+
+  function closeCreateForm() {
+    setShowCreateForm(false);
+  }
+
+  function resetCreateForm() {
+    setSport("");
+    setTime("");
+    setLocation("");
+  }
+
+  /**
+   * Checks that all required fields are filled (sport, time, location).
+   * If any are missing/empty, it returns null.
+   * If everything is valid, it returns an object with the cleaned values (trimmed strings)
+   */
+  function buildPayload(): SessionPayload | null {
+    if (!sport || !time.trim() || !location.trim()) {
+      return null;
+    }
+
+    return {
+      sport,
+      time: time.trim(),
+      location: location.trim(),
+    };
+  }
+
+  /**
+   * Create a future session and store it in the DB.
+   */
+  async function createPost() {
+    const payload = buildPayload();
+    if (!payload) {
+      setCreateError("Please fill out sport, time, and location.");
+      return;
+    }
+
+    setCreating(true);
+    setCreateError(null);
+    setCreateMessage(null);
+
+    try {
+      await requestJson(
+        `${FUTURE_SESSIONS_BASE}/post-session`,
+        {
+          method: "POST",
+          headers: JSON_HEADERS,
+          body: JSON.stringify(payload),
+        },
+        "Create session failed"
+      );
+
+      setCreateMessage("Session created.");
+      resetCreateForm();
+      setShowCreateForm(false);
+    } catch (e: any) {
+      setCreateError(e?.message ?? "Create session failed");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function listPosts() {
+    setLoadingPosts(true);
+    setPostsError(null);
+    try {
+      const data = await requestJson(
+        `${FUTURE_SESSIONS_BASE}/list-posts`,
+        {
+          method: "GET",
+          headers: JSON_HEADERS,
+        },
+        "Fetch posts failed"
+      );
+
+      const items = Array.isArray(data?.posts) ? data.posts : [];
+      setPosts(items);
+
+    } catch (e: any) {
+      setPosts([]);
+      setPostsError(e?.message ?? "Fetch posts failed");
+    } finally {
+      setLoadingPosts(false);
+    }
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, padding: 20 }}>
-      <View style={{ gap: 16 }}>
-        <Text style={{ fontSize: 20, fontWeight: "700" }}>Profile</Text>
-        <Text style={{ color: "black" }}>
-          {token ? "Logged in with JWT token stored locally." : "Not logged in."}
-        </Text>
-        {!!token && (
-          <Text style={{ color: "#666" }} numberOfLines={2}>
-            Token: {token}
-          </Text>
-        )}
-        <Button onPress={onLogout} disabled={loading || !token}>
-          {loading ? <ActivityIndicator color="white" /> : <ButtonText>Logout</ButtonText>}
+      <Text style={{ fontSize: 20, fontWeight: "700" }}>Profile</Text>
+
+      <View style={{ gap: 10, marginTop: 16 }}>
+        <Button onPress={openCreateForm}>
+          <ButtonText>Create Post</ButtonText>
+        </Button>
+        {createMessage && <Text style={{ color: "green" }}>{createMessage}</Text>}
+        {createError && <Text style={{ color: "red" }}>{createError}</Text>}
+      </View>
+
+      <View style={{ marginTop: 16 }}>
+        <Button onPress={logout}>
+          <ButtonText>Logout</ButtonText>
         </Button>
       </View>
+
+      <View style={{ marginTop: 16 }}>
+        <Button onPress={listPosts} disabled={loadingPosts}>
+          {loadingPosts ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <ButtonText>List posts</ButtonText>
+          )}
+        </Button>
+        
+        {postsError && <Text style={{ color: "red" }}>{postsError}</Text>}
+        {posts.length === 0 && !loadingPosts && !postsError &&
+          <Text style={{ color: "#666" }}>No posts yet.</Text>
+          }
+
+        {posts.map((post) => (
+          <View key={post.id} style={{ marginTop: 10 }}>
+            <Text style={{ fontWeight: "600" }}>
+              {post.sport} • {new Date(post.time).toLocaleString()}
+            </Text>
+            <Text style={{ color: "#666" }}>{post.location}</Text>
+          </View>
+        ))}
+      </View>
+
+      <Modal visible={showCreateForm} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <View style={{ backgroundColor: "white", padding: 16, borderRadius: 12, gap: 12 }}>
+            <Text style={{ fontSize: 18, fontWeight: "600" }}>Create session</Text>
+
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontSize: 14, fontWeight: "500" }}>Sport</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {SPORT_OPTIONS.map((option) => (
+                  <Button
+                    key={option}
+                    onPress={() => setSport(option)}
+                    action={sport === option ? "primary" : "secondary"}
+                    variant="outline"
+                  >
+                    <ButtonText>{option}</ButtonText>
+                  </Button>
+                ))}
+              </View>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontSize: 14, fontWeight: "500" }}>Time</Text>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="YYYY-MM-DD HH:MM"
+                  value={time}
+                  onChangeText={setTime}
+                  autoCapitalize="none"
+                  style={{ color: "black" }}
+                  placeholderTextColor="gray"
+                />
+              </Input>
+            </View>
+
+            <View style={{ gap: 8 }}>
+              <Text style={{ fontSize: 14, fontWeight: "500" }}>Location</Text>
+              <Input variant="outline" size="md">
+                <InputField
+                  placeholder="Beach or spot name"
+                  value={location}
+                  onChangeText={setLocation}
+                  autoCapitalize="words"
+                  style={{ color: "black" }}
+                  placeholderTextColor="gray"
+                />
+              </Input>
+            </View>
+
+            {createError && <Text style={{ color: "red" }}>{createError}</Text>}
+
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Button onPress={closeCreateForm} action="secondary" variant="outline">
+                <ButtonText>Cancel</ButtonText>
+              </Button>
+              <Button onPress={createPost} disabled={!canSubmit || creating}>
+                {creating ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>Post</ButtonText>
+                )}
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 };
-
-export default HomePage;

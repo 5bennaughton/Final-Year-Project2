@@ -1,9 +1,9 @@
-import { API_BASE } from "@/constants/api";
+import { API_BASE } from "@/constants/constants";
+import { getAuthToken } from "@/lib/auth";
+import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { getAuthToken } from "@/lib/auth";
 import Login from "../Auth/Login";
 import Register from "../Auth/Register";
 

@@ -1,7 +1,7 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
-import { API_BASE } from "@/constants/api";
-import { authFetch } from "@/lib/auth";
+import { API_BASE } from "@/constants/constants";
+import { requestJson } from "@/helpers/helpers";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -20,46 +20,23 @@ type UserResult = {
   email: string;
 };
 
-/*
-Safely parse a JSON response body. Returns null for empty or invalid JSON.
-*/
-async function readJson(res: Response) {
-  const rawText = await res.text();
-  if (!rawText) return null;
+type FriendRequest = {
+  id: string;
+  requesterId: string;
+  addresseeId: string;
+  status: string;
+  requesterName?: string;
+  requesterEmail?: string;
+};
 
-  try {
-    return JSON.parse(rawText);
-  } catch {
-    return null;
-  }
-}
-
-/*
-Create a consistent error message from API responses.
-*/
-function getErrorMessage(data: any, res: Response, fallback: string) {
-  return data?.message ?? data?.error ?? `${fallback} (${res.status})`;
-}
-
-/*
-Auth-aware fetch that returns parsed JSON and throws on non-2xx responses.
-*/
-async function requestJson(url: string, init: RequestInit, fallback: string) {
-  const res = await authFetch(url, init);
-  const data = await readJson(res);
-
-  if (!res.ok) {
-    throw new Error(getErrorMessage(data, res, fallback));
-  }
-
-  return data;
-}
-
-/*
-Build the URL for searching users by name.
-*/
+// Build the URL for searching users by name.
 function buildSearchUrl(query: string) {
   return `${FRIENDS_BASE}/search?q=${encodeURIComponent(query)}`;
+}
+
+// Prefer a human-readable name if the API provides it.
+function getRequesterLabel(request: FriendRequest) {
+  return request.requesterName || request.requesterEmail || request.requesterId;
 }
 
 export default function Friends() {
@@ -72,14 +49,20 @@ export default function Friends() {
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestMessage, setRequestMessage] = useState<string | null>(null);
 
-  const [requestId, setRequestId] = useState("");
-  const [responding, setResponding] = useState(false);
-  const [respondError, setRespondError] = useState<string | null>(null);
-  const [respondMessage, setRespondMessage] = useState<string | null>(null);
+  const [showFriends, setShowFriends] = useState(false);
+  const [friends, setFriends] = useState<UserResult[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+  const [friendsError, setFriendsError] = useState<string | null>(null);
+  const [friendsMessage, setFriendsMessage] = useState<string | null>(null);
 
-  /*
-  Search users by name.
-  */
+  const [showRequests, setShowRequests] = useState(false);
+  const [requests, setRequests] = useState<FriendRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [requestsError, setRequestsError] = useState<string | null>(null);
+  const [requestsMessage, setRequestsMessage] = useState<string | null>(null);
+  const [actingRequestId, setActingRequestId] = useState<string | null>(null);
+
+  // Search users by name.
   const searchUsers = async () => {
     const trimmed = query.trim();
 
@@ -113,20 +96,22 @@ export default function Friends() {
     }
   };
 
-  /*
-  Send a friend request to another user.
-  */
+  // Send a friend request to another user.
   const sendFriendRequest = async (addresseeId: string) => {
     setRequestingId(addresseeId);
     setRequestError(null);
     setRequestMessage(null);
 
     try {
-      await requestJson(`${FRIENDS_BASE}/requests`, {
-        method: "POST",
-        headers: JSON_HEADERS,
-        body: JSON.stringify({ addresseeId }),
-      }, "Request failed");
+      await requestJson(
+        `${FRIENDS_BASE}/requests`,
+        {
+          method: "POST",
+          headers: JSON_HEADERS,
+          body: JSON.stringify({ addresseeId }),
+        },
+        "Request failed"
+      );
       setRequestMessage("Friend request sent.");
     } catch (err: any) {
       setRequestError(err?.message ?? "Request failed");
@@ -135,24 +120,94 @@ export default function Friends() {
     }
   };
 
-  /*
-  Accept or decline a pending friend request by its id.
-  */
-  const respondToRequest = async (action: "accept" | "decline") => {
-    const trimmed = requestId.trim();
+  // Load accepted friends for the current user.
+  const loadFriends = async () => {
+    setLoadingFriends(true);
+    setFriendsError(null);
+    setFriendsMessage(null);
 
-    if (!trimmed) {
-      setRespondError("Request id is required.");
+    try {
+      const data = await requestJson(
+        `${FRIENDS_BASE}/list`,
+        {},
+        "Fetch friends failed"
+      );
+      if (!data || !Array.isArray(data.friends)) {
+        setFriends([]);
+        setFriendsError("Unexpected response from server.");
+        return;
+      }
+
+      setFriends(data.friends);
+
+      if (data.friends.length === 0) {
+        setFriendsMessage("No friends yet.");
+      }
+      
+    } catch (err: any) {
+      setFriendsError(err?.message ?? "Fetch friends failed");
+    } finally {
+      setLoadingFriends(false);
+    }
+  };
+
+  // Toggle the friends list and load it when opening.
+  const toggleFriends = async () => {
+    if (showFriends) {
+      setShowFriends(false);
       return;
     }
+    setShowFriends(true);
+    await loadFriends();
+  };
 
-    setResponding(true);
-    setRespondError(null);
-    setRespondMessage(null);
+  // Load pending incoming requests so the user can respond to them.
+  const loadFriendRequests = async () => {
+    setLoadingRequests(true);
+    setRequestsError(null);
+    setRequestsMessage(null);
+
+    try {
+      const data = await requestJson(
+        `${FRIENDS_BASE}/list-requests?type=incoming`,
+        {},
+        "Fetch requests failed"
+      );
+      if (!data || !Array.isArray(data.requests)) {
+        setRequests([]);
+        setRequestsError("Unexpected response from server.");
+        return;
+      }
+      setRequests(data.requests);
+      if (data.requests.length === 0) {
+        setRequestsMessage("No pending requests.");
+      }
+    } catch (err: any) {
+      setRequestsError(err?.message ?? "Fetch requests failed");
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  // Toggle the request list and load it when opening.
+  const toggleRequests = async () => {
+    if (showRequests) {
+      setShowRequests(false);
+      return;
+    }
+    setShowRequests(true);
+    await loadFriendRequests();
+  };
+
+  // Accept or decline a pending friend request by its id.
+  const respondToRequest = async (requestId: string, action: "accept" | "decline") => {
+    setActingRequestId(requestId);
+    setRequestsError(null);
+    setRequestsMessage(null);
 
     try {
       await requestJson(
-        `${FRIENDS_BASE}/requests/${encodeURIComponent(trimmed)}`,
+        `${FRIENDS_BASE}/requests-re/${encodeURIComponent(requestId)}`,
         {
           method: "PATCH",
           headers: JSON_HEADERS,
@@ -160,14 +215,14 @@ export default function Friends() {
         },
         "Request failed"
       );
-      setRespondMessage(
+      setRequests((prev) => prev.filter((request) => request.id !== requestId));
+      setRequestsMessage(
         action === "accept" ? "Friend request accepted." : "Friend request declined."
       );
-      setRequestId("");
     } catch (err: any) {
-      setRespondError(err?.message ?? "Request failed");
+      setRequestsError(err?.message ?? "Request failed");
     } finally {
-      setResponding(false);
+      setActingRequestId(null);
     }
   };
 
@@ -189,8 +244,8 @@ export default function Friends() {
               placeholderTextColor="gray"
             />
           </Input>
-          <Button onPress={searchUsers} >
-            <ButtonText>Search</ButtonText>
+          <Button onPress={searchUsers}>
+            {searching ? <ActivityIndicator color="white" /> : <ButtonText>Search</ButtonText>}
           </Button>
           {searchError && <Text style={{ color: "red" }}>{searchError}</Text>}
         </View>
@@ -231,29 +286,109 @@ export default function Friends() {
           {requestError && <Text style={{ color: "red" }}>{requestError}</Text>}
         </View>
 
-        {/* Respond section */}
+        {/* Friends section */}
         <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>Respond to request</Text>
-          <Input variant="outline" size="md">
-            <InputField
-              placeholder="Request id"
-              value={requestId}
-              onChangeText={setRequestId}
-              autoCapitalize="none"
-              style={{ color: "black" }}
-              placeholderTextColor="gray"
-            />
-          </Input>
-          <View style={{ gap: 10 }}>
-            <Button onPress={() => respondToRequest("accept")} disabled={responding}>
-              {responding ? <ActivityIndicator color="white" /> : <ButtonText>Accept</ButtonText>}
-            </Button>
-            <Button onPress={() => respondToRequest("decline")} disabled={responding}>
-              {responding ? <ActivityIndicator color="white" /> : <ButtonText>Decline</ButtonText>}
-            </Button>
-          </View>
-          {respondMessage && <Text style={{ color: "green" }}>{respondMessage}</Text>}
-          {respondError && <Text style={{ color: "red" }}>{respondError}</Text>}
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>Your friends</Text>
+          <Button onPress={toggleFriends}>
+            <ButtonText>{showFriends ? "Hide friends" : "Show friends"}</ButtonText>
+          </Button>
+
+          {showFriends && (
+            <View style={{ gap: 10 }}>
+              <Button onPress={loadFriends} disabled={loadingFriends}>
+                {loadingFriends ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>Refresh friends</ButtonText>
+                )}
+              </Button>
+
+              {friends.length === 0 && !loadingFriends && !friendsError && (
+                <Text style={{ color: "#666" }}>No friends yet.</Text>
+              )}
+
+              {friends.map((friend) => (
+                <View
+                  key={friend.id}
+                  style={{
+                    padding: 12,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: "#ddd",
+                    gap: 6,
+                  }}
+                >
+                  <Text style={{ fontWeight: "600" }}>{friend.name}</Text>
+                  <Text style={{ color: "#666" }}>{friend.email}</Text>
+                </View>
+              ))}
+
+              {friendsMessage && <Text style={{ color: "green" }}>{friendsMessage}</Text>}
+              {friendsError && <Text style={{ color: "red" }}>{friendsError}</Text>}
+            </View>
+          )}
+        </View>
+
+        {/* Friend requests section */}
+        <View style={{ gap: 10 }}>
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>Friend requests</Text>
+          <Button onPress={toggleRequests}>
+            <ButtonText>{showRequests ? "Hide requests" : "Show requests"}</ButtonText>
+          </Button>
+
+          {showRequests && (
+            <View style={{ gap: 10 }}>
+              <Button onPress={loadFriendRequests} disabled={loadingRequests}>
+                {loadingRequests ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>Refresh requests</ButtonText>
+                )}
+              </Button>
+
+              {requests.length === 0 && !loadingRequests && !requestsError && (
+                <Text style={{ color: "#666" }}>No pending requests.</Text>
+              )}
+
+              {requests.map((request) => {
+                const isActing = actingRequestId === request.id;
+                return (
+                  <View
+                    key={request.id}
+                    style={{
+                      padding: 12,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={{ fontWeight: "600" }}>{getRequesterLabel(request)}</Text>
+                    <Text style={{ color: "#666" }}>Request id: {request.id}</Text>
+                    <View style={{ gap: 10 }}>
+                      <Button onPress={() => respondToRequest(request.id, "accept")} disabled={isActing}>
+                        {isActing ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <ButtonText>Accept</ButtonText>
+                        )}
+                      </Button>
+                      <Button onPress={() => respondToRequest(request.id, "decline")} disabled={isActing}>
+                        {isActing ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <ButtonText>Decline</ButtonText>
+                        )}
+                      </Button>
+                    </View>
+                  </View>
+                );
+              })}
+
+              {requestsMessage && <Text style={{ color: "green" }}>{requestsMessage}</Text>}
+              {requestsError && <Text style={{ color: "red" }}>{requestsError}</Text>}
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

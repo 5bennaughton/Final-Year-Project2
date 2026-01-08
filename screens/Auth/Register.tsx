@@ -1,6 +1,6 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
-import { API_BASE } from "@/constants/api";
+import { API_BASE } from "@/constants/constants";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
