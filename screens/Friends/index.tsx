@@ -31,7 +31,7 @@ type FriendRequest = {
 
 // Build the URL for searching users by name.
 function buildSearchUrl(query: string) {
-  return `${FRIENDS_BASE}/search?q=${encodeURIComponent(query)}`;
+  return `${FRIENDS_BASE}/search-users?q=${encodeURIComponent(query)}`;
 }
 
 // Prefer a human-readable name if the API provides it.
