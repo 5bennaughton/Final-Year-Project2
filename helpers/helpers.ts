@@ -1,5 +1,5 @@
 import { API_BASE } from "@/constants/constants";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { authFetch } from "../lib/auth";
 
 const FRIENDS_BASE = `${API_BASE}/friends`;
@@ -98,7 +98,7 @@ export function useListPosts(defaultUserId?: string) {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
 
-  const listPosts = async (userId?: string) => {
+  const listPosts = useCallback(async (userId?: string) => {
     setLoadingPosts(true);
     setPostsError(null);
     const targetUserId = userId?.trim() || defaultUserId?.trim();
@@ -123,7 +123,7 @@ export function useListPosts(defaultUserId?: string) {
     } finally {
       setLoadingPosts(false);
     }
-  };
+  }, [defaultUserId]);
 
   return { posts, loadingPosts, postsError, listPosts };
 }

@@ -1,7 +1,6 @@
-import { Button, ButtonText } from "@/components/ui/button";
 import { useListPosts } from "@/helpers/helpers";
 import { Stack, useLocalSearchParams } from "expo-router";
-import React from "react";
+import React, { useEffect } from "react";
 import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -10,6 +9,10 @@ export default function UserPage() {
   const { posts, postsError, loadingPosts, listPosts } = useListPosts(
     typeof id === "string" ? id : undefined
   );
+
+  useEffect(() => {
+    listPosts();
+  }, [listPosts]);
 
   return (
     <SafeAreaView
@@ -25,14 +28,7 @@ export default function UserPage() {
         </Text>
       </View>
       <View style={{ marginTop: 16 }}>
-        <Button onPress={() => listPosts()} disabled={loadingPosts}>
-          {loadingPosts ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <ButtonText>List posts</ButtonText>
-          )}
-        </Button>
-
+        {loadingPosts && <ActivityIndicator color="white" />}
         {postsError && <Text style={{ color: "red" }}>{postsError}</Text>}
         {posts.length === 0 && !loadingPosts && !postsError && (
           <Text style={{ color: "#666" }}>No posts yet.</Text>

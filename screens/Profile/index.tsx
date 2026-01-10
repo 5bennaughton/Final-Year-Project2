@@ -1,7 +1,7 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { API_BASE } from "@/constants/constants";
-import { requestJson, useListPosts } from "@/helpers/helpers";
+import { requestJson, useListPosts, type SessionPost } from "@/helpers/helpers";
 import {
   authFetch,
   clearAuthToken,
@@ -10,7 +10,7 @@ import {
 } from "@/lib/auth";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, Text, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SPORT_OPTIONS = ["kitesurfing", "wingfoiling", "windsurfing", "surfing"];
@@ -40,6 +40,9 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createMessage, setCreateMessage] = useState<string | null>(null);
+  const [selectedPost, setSelectedPost] = useState<SessionPost | null>(null);
+  const [deletingPost, setDeletingPost] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const { posts, postsError, loadingPosts, listPosts } = useListPosts();
 
   const canSubmit = Boolean(sport && time.trim() && location.trim());
@@ -82,6 +85,10 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    listPosts();
+  }, [listPosts]);
+
   /**
    * Logs the User out
    * may need to catch an error here at some stage 
@@ -110,6 +117,16 @@ export default function HomePage() {
     setSport("");
     setTime("");
     setLocation("");
+  }
+
+  function openDeleteModal(post: SessionPost) {
+    setSelectedPost(post);
+    setDeleteError(null);
+  }
+
+  function closeDeleteModal() {
+    setSelectedPost(null);
+    setDeleteError(null);
   }
 
   /**
@@ -155,12 +172,33 @@ export default function HomePage() {
       );
 
       setCreateMessage("Session created.");
+      await listPosts();
       resetCreateForm();
       setShowCreateForm(false);
     } catch (e: any) {
       setCreateError(e?.message ?? "Create session failed");
     } finally {
       setCreating(false);
+    }
+  }
+
+  async function deletePost() {
+    if (!selectedPost) return;
+    setDeletingPost(true);
+    setDeleteError(null);
+
+    try {
+      await requestJson(
+        `${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`,
+        { method: "DELETE" },
+        "Delete session failed"
+      );
+      await listPosts();
+      setSelectedPost(null);
+    } catch (e: any) {
+      setDeleteError(e?.message ?? "Delete session failed");
+    } finally {
+      setDeletingPost(false);
     }
   }
 
@@ -190,26 +228,23 @@ export default function HomePage() {
       </View>
 
       <View style={{ marginTop: 16 }}>
-        <Button onPress={() => listPosts()} disabled={loadingPosts}>
-          {loadingPosts ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <ButtonText>List posts</ButtonText>
-          )}
-        </Button>
-        
+        {loadingPosts && <ActivityIndicator color="white" />}
         {postsError && <Text style={{ color: "red" }}>{postsError}</Text>}
         {posts.length === 0 && !loadingPosts && !postsError &&
           <Text style={{ color: "#666" }}>No posts yet.</Text>
           }
 
         {posts.map((post) => (
-          <View key={post.id} style={{ marginTop: 10 }}>
+          <Pressable
+            key={post.id}
+            onPress={() => openDeleteModal(post)}
+            style={{ marginTop: 10 }}
+          >
             <Text style={{ fontWeight: "600" }}>
               {post.sport} • {new Date(post.time).toLocaleString()}
             </Text>
             <Text style={{ color: "#666" }}>{post.location}</Text>
-          </View>
+          </Pressable>
         ))}
       </View>
 
@@ -280,6 +315,38 @@ export default function HomePage() {
                   <ActivityIndicator color="white" />
                 ) : (
                   <ButtonText>Post</ButtonText>
+                )}
+              </Button>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={Boolean(selectedPost)} transparent animationType="fade">
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <View style={{ backgroundColor: "white", padding: 16, borderRadius: 12, gap: 12 }}>
+            <Text style={{ fontSize: 18, fontWeight: "600" }}>Delete session</Text>
+            <Text style={{ color: "#666" }}>
+              {selectedPost?.sport} •{" "}
+              {selectedPost ? new Date(selectedPost.time).toLocaleString() : ""}
+            </Text>
+            {deleteError && <Text style={{ color: "red" }}>{deleteError}</Text>}
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              <Button onPress={closeDeleteModal} action="secondary" variant="outline">
+                <ButtonText>Cancel</ButtonText>
+              </Button>
+              <Button onPress={deletePost} disabled={deletingPost}>
+                {deletingPost ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>Delete</ButtonText>
                 )}
               </Button>
             </View>
