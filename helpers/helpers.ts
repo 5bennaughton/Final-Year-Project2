@@ -3,11 +3,21 @@ import { useState } from "react";
 import { authFetch } from "../lib/auth";
 
 const FRIENDS_BASE = `${API_BASE}/friends`;
+const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
+const JSON_HEADERS = { "Content-Type": "application/json" };
 
 export type UserResult = {
   id: string;
   name: string;
   email: string;
+};
+
+export type SessionPost = {
+  id: string;
+  sport: string;
+  time: string;
+  location: string;
+  notes?: string | null;
 };
 
 function buildSearchUrl(query: string) {
@@ -83,3 +93,37 @@ export function useUserSearch() {
   return { results, searching, searchError, search };
 }
 
+export function useListPosts(defaultUserId?: string) {
+  const [posts, setPosts] = useState<SessionPost[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
+  const [postsError, setPostsError] = useState<string | null>(null);
+
+  const listPosts = async (userId?: string) => {
+    setLoadingPosts(true);
+    setPostsError(null);
+    const targetUserId = userId?.trim() || defaultUserId?.trim();
+
+    try {
+      const baseUrl = `${FUTURE_SESSIONS_BASE}/list-posts`;
+      const url = targetUserId ? `${baseUrl}/${encodeURIComponent(targetUserId)}` : baseUrl;
+      const data = await requestJson(
+        url,
+        {
+          method: "GET",
+          headers: JSON_HEADERS,
+        },
+        "Fetch posts failed"
+      );
+
+      const items = Array.isArray(data?.posts) ? data.posts : [];
+      setPosts(items);
+    } catch (err: any) {
+      setPosts([]);
+      setPostsError(err?.message ?? "Fetch posts failed");
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
+
+  return { posts, loadingPosts, postsError, listPosts };
+}

@@ -1,10 +1,15 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { API_BASE } from "@/constants/constants";
-import { requestJson } from "@/helpers/helpers";
-import { authFetch, clearAuthToken, clearAuthUser } from "@/lib/auth";
+import { requestJson, useListPosts } from "@/helpers/helpers";
+import {
+  authFetch,
+  clearAuthToken,
+  clearAuthUser,
+  getAuthUser,
+} from "@/lib/auth";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ActivityIndicator, Modal, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -20,16 +25,14 @@ type SessionPayload = {
   location: string;
 };
 
-type SessionPost = {
-  id: string;
-  sport: Sport;
-  time: string;
-  location: string;
-  notes?: string | null;
+type MeResponse = {
+  name?: string;
 };
 
 export default function HomePage() {
   const router = useRouter();
+  const [userName, setUserName] = useState<string | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [sport, setSport] = useState<Sport | "">("");
   const [time, setTime] = useState("");
@@ -37,11 +40,47 @@ export default function HomePage() {
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [createMessage, setCreateMessage] = useState<string | null>(null);
-  const [posts, setPosts] = useState<SessionPost[]>([]);
-  const [postsError, setPostsError] = useState<string | null>(null);
-  const [loadingPosts, setLoadingPosts] = useState(false);
+  const { posts, postsError, loadingPosts, listPosts } = useListPosts();
 
   const canSubmit = Boolean(sport && time.trim() && location.trim());
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      setLoadingUser(true);
+      try {
+        const stored = await getAuthUser();
+        if (stored?.name && isMounted) {
+          setUserName(stored.name);
+        }
+
+        const data = (await requestJson(
+          `${API_BASE}/auth/me`,
+          {},
+          "Fetch profile failed"
+        )) as MeResponse | null;
+        const name = typeof data?.name === "string" ? data.name : null;
+        if (isMounted) {
+          setUserName(name);
+        }
+      } catch {
+        if (isMounted) {
+          setUserName(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingUser(false);
+        }
+      }
+    };
+
+    loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * Logs the User out
@@ -125,33 +164,16 @@ export default function HomePage() {
     }
   }
 
-  async function listPosts() {
-    setLoadingPosts(true);
-    setPostsError(null);
-    try {
-      const data = await requestJson(
-        `${FUTURE_SESSIONS_BASE}/list-posts`,
-        {
-          method: "GET",
-          headers: JSON_HEADERS,
-        },
-        "Fetch posts failed"
-      );
-
-      const items = Array.isArray(data?.posts) ? data.posts : [];
-      setPosts(items);
-
-    } catch (e: any) {
-      setPosts([]);
-      setPostsError(e?.message ?? "Fetch posts failed");
-    } finally {
-      setLoadingPosts(false);
-    }
-  }
-
   return (
     <SafeAreaView style={{ flex: 1, padding: 20 }}>
-      <Text style={{ fontSize: 20, fontWeight: "700" }}>Profile</Text>
+      <View style={{ alignItems: "center", marginBottom: 12 }}>
+        <Text style={{ fontSize: 20, fontWeight: "700", textAlign: "center" }}>
+          {userName ?? "Profile"}
+        </Text>
+        {loadingUser && !userName && (
+          <ActivityIndicator style={{ marginTop: 6 }} />
+        )}
+      </View>
 
       <View style={{ gap: 10, marginTop: 16 }}>
         <Button onPress={openCreateForm}>
@@ -168,7 +190,7 @@ export default function HomePage() {
       </View>
 
       <View style={{ marginTop: 16 }}>
-        <Button onPress={listPosts} disabled={loadingPosts}>
+        <Button onPress={() => listPosts()} disabled={loadingPosts}>
           {loadingPosts ? (
             <ActivityIndicator color="white" />
           ) : (

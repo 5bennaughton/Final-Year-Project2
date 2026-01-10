@@ -39,7 +39,7 @@ export default function Home() {
         {results.map((user) => (
           <Pressable
             key={user.id}
-            onPress={() => router.push({ pathname: "/user", params: { name: user.name } })}
+            onPress={() => router.push({ pathname: "/user", params: { id: user.id, name: user.name } })}
             style={{
               padding: 12,
               borderRadius: 10,

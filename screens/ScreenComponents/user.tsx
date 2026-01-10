@@ -1,23 +1,52 @@
+import { Button, ButtonText } from "@/components/ui/button";
+import { useListPosts } from "@/helpers/helpers";
 import { Stack, useLocalSearchParams } from "expo-router";
 import React from "react";
-import { Text } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function UserPage() {
-  const { name } = useLocalSearchParams<{ name?: string }>();
+  const { id, name } = useLocalSearchParams<{ id?: string; name?: string }>();
+  const { posts, postsError, loadingPosts, listPosts } = useListPosts(
+    typeof id === "string" ? id : undefined
+  );
 
   return (
     <SafeAreaView
       style={{
         flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
+        padding: 20,
       }}
     >
       <Stack.Screen options={{ headerShown: false }} />
-      <Text style={{ color: "black", fontSize: 20, fontWeight: "600" }}>
-        {name ?? "User"}
-      </Text>
+      <View>
+        <Text style={{ color: "black", fontSize: 20, fontWeight: "600" }}>
+          {name ?? "User"}
+        </Text>
+      </View>
+      <View style={{ marginTop: 16 }}>
+        <Button onPress={() => listPosts()} disabled={loadingPosts}>
+          {loadingPosts ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <ButtonText>List posts</ButtonText>
+          )}
+        </Button>
+
+        {postsError && <Text style={{ color: "red" }}>{postsError}</Text>}
+        {posts.length === 0 && !loadingPosts && !postsError && (
+          <Text style={{ color: "#666" }}>No posts yet.</Text>
+        )}
+
+        {posts.map((post) => (
+          <View key={post.id} style={{ marginTop: 10 }}>
+            <Text style={{ fontWeight: "600" }}>
+              {post.sport} • {new Date(post.time).toLocaleString()}
+            </Text>
+            <Text style={{ color: "#666" }}>{post.location}</Text>
+          </View>
+        ))}
+      </View>
     </SafeAreaView>
   );
 }
