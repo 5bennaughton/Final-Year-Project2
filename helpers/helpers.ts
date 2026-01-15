@@ -59,7 +59,13 @@ export function useUserSearch() {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
-  const search = async (query: string) => {
+  const clearResults = useCallback(() => {
+    setResults([]);
+    setSearching(false);
+    setSearchError(null);
+  }, []);
+
+  const search = useCallback(async (query: string) => {
     const trimmed = query.trim();
 
     if (!trimmed) {
@@ -88,9 +94,9 @@ export function useUserSearch() {
     } finally {
       setSearching(false);
     }
-  };
+  }, []);
 
-  return { results, searching, searchError, search };
+  return { results, searching, searchError, search, clearResults };
 }
 
 export function useListPosts(defaultUserId?: string) {

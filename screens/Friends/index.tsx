@@ -2,7 +2,7 @@ import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { API_BASE } from "@/constants/constants";
 import { requestJson, useUserSearch, type UserResult } from "@/helpers/helpers";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -30,7 +30,7 @@ function getRequesterLabel(request: FriendRequest) {
 
 export default function Friends() {
   const [query, setQuery] = useState("");
-  const { results, searching, searchError, search } = useUserSearch();
+  const { results, searching, searchError, search, clearResults } = useUserSearch();
 
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -49,11 +49,31 @@ export default function Friends() {
   const [requestsMessage, setRequestsMessage] = useState<string | null>(null);
   const [actingRequestId, setActingRequestId] = useState<string | null>(null);
 
-  // Search users by name.
-  const searchUsers = async () => {
+  useEffect(() => {
+    const trimmed = query.trim();
+
+    if (!trimmed) {
+      clearResults();
+      return;
+    }
+
     setRequestMessage(null);
     setRequestError(null);
-    await search(query);
+
+    const handle = setTimeout(() => {
+      search(trimmed);
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [query, clearResults, search]);
+
+  // Search users by name.
+  const searchUsers = async (value?: string) => {
+    const trimmed = (value ?? query).trim();
+  
+    if (!trimmed) return;
+    setRequestMessage(null);
+    setRequestError(null);
+    await search(trimmed);
   };
 
   // Send a friend request to another user.
@@ -199,14 +219,14 @@ export default function Friends() {
               placeholder="Search by name"
               value={query}
               onChangeText={setQuery}
+              onSubmitEditing={() => searchUsers(query)}
+              returnKeyType="search"
               autoCapitalize="words"
               style={{ color: "black" }}
               placeholderTextColor="gray"
             />
           </Input>
-          <Button onPress={searchUsers}>
-            {searching ? <ActivityIndicator color="white" /> : <ButtonText>Search</ButtonText>}
-          </Button>
+          {searching && <ActivityIndicator />}
           {searchError && <Text style={{ color: "red" }}>{searchError}</Text>}
           {results.length === 0 && !searching && !searchError && (
             <Text style={{ color: "#666" }}>No results yet.</Text>

@@ -1,5 +1,5 @@
 import { Button, ButtonText } from "@/components/ui/button";
-import { Input, InputField } from "@/components/ui/input";
+import { CreateSessionModal, DeleteSessionModal } from "@/components/ui/modals";
 import { API_BASE } from "@/constants/constants";
 import { requestJson, useListPosts, type SessionPost } from "@/helpers/helpers";
 import {
@@ -10,7 +10,7 @@ import {
 } from "@/lib/auth";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Modal, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const SPORT_OPTIONS = ["kitesurfing", "wingfoiling", "windsurfing", "surfing"];
@@ -248,111 +248,30 @@ export default function HomePage() {
         ))}
       </View>
 
-      <Modal visible={showCreateForm} transparent animationType="fade">
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <View style={{ backgroundColor: "white", padding: 16, borderRadius: 12, gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: "600" }}>Create session</Text>
+      <CreateSessionModal
+        visible={showCreateForm}
+        sportOptions={SPORT_OPTIONS}
+        selectedSport={sport}
+        onSelectSport={(value) => setSport(value as Sport)}
+        time={time}
+        onChangeTime={setTime}
+        location={location}
+        onChangeLocation={setLocation}
+        createError={createError}
+        creating={creating}
+        canSubmit={canSubmit}
+        onCancel={closeCreateForm}
+        onSubmit={createPost}
+      />
 
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: "500" }}>Sport</Text>
-              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                {SPORT_OPTIONS.map((option) => (
-                  <Button
-                    key={option}
-                    onPress={() => setSport(option)}
-                    action={sport === option ? "primary" : "secondary"}
-                    variant="outline"
-                  >
-                    <ButtonText>{option}</ButtonText>
-                  </Button>
-                ))}
-              </View>
-            </View>
-
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: "500" }}>Time</Text>
-              <Input variant="outline" size="md">
-                <InputField
-                  placeholder="YYYY-MM-DD HH:MM"
-                  value={time}
-                  onChangeText={setTime}
-                  autoCapitalize="none"
-                  style={{ color: "black" }}
-                  placeholderTextColor="gray"
-                />
-              </Input>
-            </View>
-
-            <View style={{ gap: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: "500" }}>Location</Text>
-              <Input variant="outline" size="md">
-                <InputField
-                  placeholder="Beach or spot name"
-                  value={location}
-                  onChangeText={setLocation}
-                  autoCapitalize="words"
-                  style={{ color: "black" }}
-                  placeholderTextColor="gray"
-                />
-              </Input>
-            </View>
-
-            {createError && <Text style={{ color: "red" }}>{createError}</Text>}
-
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Button onPress={closeCreateForm} action="secondary" variant="outline">
-                <ButtonText>Cancel</ButtonText>
-              </Button>
-              <Button onPress={createPost} disabled={!canSubmit || creating}>
-                {creating ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <ButtonText>Post</ButtonText>
-                )}
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={Boolean(selectedPost)} transparent animationType="fade">
-        <View
-          style={{
-            flex: 1,
-            backgroundColor: "rgba(0, 0, 0, 0.4)",
-            justifyContent: "center",
-            padding: 20,
-          }}
-        >
-          <View style={{ backgroundColor: "white", padding: 16, borderRadius: 12, gap: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: "600" }}>Delete session</Text>
-            <Text style={{ color: "#666" }}>
-              {selectedPost?.sport} •{" "}
-              {selectedPost ? new Date(selectedPost.time).toLocaleString() : ""}
-            </Text>
-            {deleteError && <Text style={{ color: "red" }}>{deleteError}</Text>}
-            <View style={{ flexDirection: "row", gap: 10 }}>
-              <Button onPress={closeDeleteModal} action="secondary" variant="outline">
-                <ButtonText>Cancel</ButtonText>
-              </Button>
-              <Button onPress={deletePost} disabled={deletingPost}>
-                {deletingPost ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <ButtonText>Delete</ButtonText>
-                )}
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <DeleteSessionModal
+        visible={Boolean(selectedPost)}
+        post={selectedPost}
+        deleting={deletingPost}
+        deleteError={deleteError}
+        onCancel={closeDeleteModal}
+        onDelete={deletePost}
+      />
 
     </SafeAreaView>
   );
