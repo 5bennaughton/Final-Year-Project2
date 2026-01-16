@@ -20,6 +20,12 @@ export type SessionPost = {
   notes?: string | null;
 };
 
+export type LocationSuggestion = {
+  label: string;
+  lat: number;
+  lon: number;
+};
+
 function buildSearchUrl(query: string) {
   return `${FRIENDS_BASE}/search-users?q=${encodeURIComponent(query)}`;
 }

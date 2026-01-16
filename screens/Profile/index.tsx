@@ -1,5 +1,5 @@
 import { Button, ButtonText } from "@/components/ui/button";
-import { CreateSessionModal, DeleteSessionModal } from "@/components/ui/modals";
+import { DeleteSessionModal } from "@/components/ui/modals";
 import { API_BASE } from "@/constants/constants";
 import { requestJson, useListPosts, type SessionPost } from "@/helpers/helpers";
 import {
@@ -8,22 +8,13 @@ import {
   clearAuthUser,
   getAuthUser,
 } from "@/lib/auth";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const SPORT_OPTIONS = ["kitesurfing", "wingfoiling", "windsurfing", "surfing"];
-type Sport = (typeof SPORT_OPTIONS)[number];
-
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
-const JSON_HEADERS = { "Content-Type": "application/json" };
-
-type SessionPayload = {
-  sport: Sport;
-  time: string;
-  location: string;
-};
 
 type MeResponse = {
   name?: string;
@@ -33,19 +24,10 @@ export default function HomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [sport, setSport] = useState<Sport | "">("");
-  const [time, setTime] = useState("");
-  const [location, setLocation] = useState("");
-  const [creating, setCreating] = useState(false);
-  const [createError, setCreateError] = useState<string | null>(null);
-  const [createMessage, setCreateMessage] = useState<string | null>(null);
   const [selectedPost, setSelectedPost] = useState<SessionPost | null>(null);
   const [deletingPost, setDeletingPost] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { posts, postsError, loadingPosts, listPosts } = useListPosts();
-
-  const canSubmit = Boolean(sport && time.trim() && location.trim());
 
   useEffect(() => {
     let isMounted = true;
@@ -85,9 +67,11 @@ export default function HomePage() {
     };
   }, []);
 
-  useEffect(() => {
-    listPosts();
-  }, [listPosts]);
+  useFocusEffect(
+    useCallback(() => {
+      listPosts();
+    }, [listPosts])
+  );
 
   /**
    * Logs the User out
@@ -103,20 +87,8 @@ export default function HomePage() {
     }
   };
 
-  function openCreateForm() {
-    setCreateError(null);
-    setCreateMessage(null);
-    setShowCreateForm(true);
-  }
-
-  function closeCreateForm() {
-    setShowCreateForm(false);
-  }
-
-  function resetCreateForm() {
-    setSport("");
-    setTime("");
-    setLocation("");
+  function goToCreatePost() {
+    router.push("/create-session");
   }
 
   function openDeleteModal(post: SessionPost) {
@@ -129,58 +101,6 @@ export default function HomePage() {
     setDeleteError(null);
   }
 
-  /**
-   * Checks that all required fields are filled (sport, time, location).
-   * If any are missing/empty, it returns null.
-   * If everything is valid, it returns an object with the cleaned values (trimmed strings)
-   */
-  function buildPayload(): SessionPayload | null {
-    if (!sport || !time.trim() || !location.trim()) {
-      return null;
-    }
-
-    return {
-      sport,
-      time: time.trim(),
-      location: location.trim(),
-    };
-  }
-
-  /**
-   * Create a future session and store it in the DB.
-   */
-  async function createPost() {
-    const payload = buildPayload();
-    if (!payload) {
-      setCreateError("Please fill out sport, time, and location.");
-      return;
-    }
-
-    setCreating(true);
-    setCreateError(null);
-    setCreateMessage(null);
-
-    try {
-      await requestJson(
-        `${FUTURE_SESSIONS_BASE}/post-session`,
-        {
-          method: "POST",
-          headers: JSON_HEADERS,
-          body: JSON.stringify(payload),
-        },
-        "Create session failed"
-      );
-
-      setCreateMessage("Session created.");
-      await listPosts();
-      resetCreateForm();
-      setShowCreateForm(false);
-    } catch (e: any) {
-      setCreateError(e?.message ?? "Create session failed");
-    } finally {
-      setCreating(false);
-    }
-  }
 
   async function deletePost() {
     if (!selectedPost) return;
@@ -214,11 +134,9 @@ export default function HomePage() {
       </View>
 
       <View style={{ gap: 10, marginTop: 16 }}>
-        <Button onPress={openCreateForm}>
+        <Button onPress={goToCreatePost}>
           <ButtonText>Create Post</ButtonText>
         </Button>
-        {createMessage && <Text style={{ color: "green" }}>{createMessage}</Text>}
-        {createError && <Text style={{ color: "red" }}>{createError}</Text>}
       </View>
 
       <View style={{ marginTop: 16 }}>
@@ -247,22 +165,6 @@ export default function HomePage() {
           </Pressable>
         ))}
       </View>
-
-      <CreateSessionModal
-        visible={showCreateForm}
-        sportOptions={SPORT_OPTIONS}
-        selectedSport={sport}
-        onSelectSport={(value) => setSport(value as Sport)}
-        time={time}
-        onChangeTime={setTime}
-        location={location}
-        onChangeLocation={setLocation}
-        createError={createError}
-        creating={creating}
-        canSubmit={canSubmit}
-        onCancel={closeCreateForm}
-        onSubmit={createPost}
-      />
 
       <DeleteSessionModal
         visible={Boolean(selectedPost)}
