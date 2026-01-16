@@ -40,6 +40,8 @@ type SessionPayload = {
   sport: Sport;
   time: string;
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 type LocationCoords = {
@@ -193,6 +195,8 @@ export default function CreateSessionScreen() {
       sport,
       time: dateTime.toISOString(),
       location: location.trim(),
+      latitude: locationCoords?.latitude ?? null,
+      longitude: locationCoords?.longitude ?? null,
     };
   }
 

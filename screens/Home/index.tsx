@@ -11,6 +11,7 @@ import {
   Text,
   View,
 } from "react-native";
+import MapView, { Marker, UrlTile } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FeedPost = {
@@ -20,6 +21,8 @@ type FeedPost = {
   sport: string;
   time: string;
   location: string;
+  latitude?: number | null;
+  longitude?: number | null;
   notes?: string | null;
 };
 
@@ -178,6 +181,41 @@ export default function Home() {
                 </View>
               </View>
               <Text style={{ marginTop: 8, fontWeight: "600" }}>{post.location}</Text>
+              {typeof post.latitude === "number" &&
+              typeof post.longitude === "number" &&
+              Number.isFinite(post.latitude) &&
+              Number.isFinite(post.longitude) ? (
+                <View
+                  style={{
+                    marginTop: 10,
+                    height: 150,
+                    borderRadius: 12,
+                    overflow: "hidden",
+                    borderWidth: 1,
+                    borderColor: "#e3e3e3",
+                  }}
+                >
+                  <MapView
+                    style={{ flex: 1 }}
+                    region={{
+                      latitude: post.latitude,
+                      longitude: post.longitude,
+                      latitudeDelta: 0.02,
+                      longitudeDelta: 0.02,
+                    }}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    <UrlTile
+                      urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      maximumZ={19}
+                    />
+                    <Marker coordinate={{ latitude: post.latitude, longitude: post.longitude }} />
+                  </MapView>
+                </View>
+              ) : null}
               {post.notes ? (
                 <Text style={{ marginTop: 6, color: "#666" }}>{post.notes}</Text>
               ) : null}
