@@ -1,9 +1,18 @@
 import { API_BASE } from "@/constants/constants";
 import { requestJson } from "@/helpers/helpers";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import MapView, { Marker, UrlTile } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 
 type FeedPost = {
   id: string;
@@ -14,6 +23,15 @@ type FeedPost = {
   latitude: number | null;
   longitude: number | null;
   notes: string | null;
+};
+
+type CommentItem = {
+  id: string;
+  postId: string;
+  userId: string;
+  body: string;
+  createdAt?: string;
+  userName?: string;
 };
 
 /**
@@ -45,15 +63,88 @@ function normalizePost(raw: any, index: number): FeedPost {
   };
 }
 
+
 /**
- * Home screen showing the friends feed with optional map pins.
+ * Home screen showing the friends feed with map pins and comments.
  * Fetches posts once on mount and renders a simple list.
  */
 export default function Home() {
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [commentsByPost, setCommentsByPost] = useState<Record<string, CommentItem[]>>({});
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const [commentsError, setCommentsError] = useState<string | null>(null);
 
+  /**
+   * Fetch comments for one post and store them by post id.
+   * Keeps the state as a simple postId -> comments map.
+   */
+  const fetchComments = async (postId: string) => {
+    try {
+      const data = await requestJson(
+        `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(postId)}/display-comments`,
+        {},
+        "Fetch comments failed"
+      );
+      const comments = Array.isArray(data?.comments) ? data.comments : [];
+      setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
+    } catch (err: any) {
+      setCommentsError(err?.message ?? "Fetch comments failed");
+    }
+  };
+
+  /**
+   * Fetch comments for each post in the feed.
+   * Runs in parallel for a faster initial render.
+   */
+  const fetchCommentsForPosts = async (posts: FeedPost[]) => {
+    setCommentsError(null);
+    await Promise.all(posts.map((post) => fetchComments(post.id)));
+  };
+
+  /**
+   * Update the draft comment text for a specific post.
+   * Keeps input state in a simple key/value map.
+   */
+  const updateCommentInput = (postId: string, value: string) => {
+    setCommentInputs((prev) => ({ ...prev, [postId]: value }));
+  };
+
+  /**
+   * Submit a comment for a post and refresh its comment list.
+   * Uses a single error message for simplicity.
+   */
+  const addComment = async (postId: string) => {
+    const body = commentInputs[postId]?.trim() ?? "";
+    if (!body) {
+      setCommentsError("Enter a comment.");
+      return;
+    }
+
+    setCommentsError(null);
+
+    try {
+      await requestJson(
+        `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(postId)}/add-comment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ body }),
+        },
+        "Add comment failed"
+      );
+      updateCommentInput(postId, "");
+      await fetchComments(postId);
+    } catch (err: any) {
+      setCommentsError(err?.message ?? "Add comment failed");
+    }
+  };
+
+  /**
+   * Fetch the friends feed and then fetch comments for each post.
+   * Keeps the flow straightforward and predictable.
+   */
   const loadFeed = async () => {
     setLoading(true);
     setError(null);
@@ -64,12 +155,20 @@ export default function Home() {
         {},
         "Fetch feed failed"
       );
+
       const posts = Array.isArray(data?.posts) ? data.posts : [];
-      const normalized = posts.map((post: any, index: number) => normalizePost(post, index));
+
+      const normalized = posts.map((post: any, index: number) =>
+        normalizePost(post, index)
+      );
+
       setFeedPosts(normalized);
+      await fetchCommentsForPosts(normalized);
+
     } catch (err: any) {
       setFeedPosts([]);
       setError(err?.message ?? "Fetch feed failed");
+
     } finally {
       setLoading(false);
     }
@@ -77,7 +176,7 @@ export default function Home() {
 
   useEffect(() => {
     loadFeed();
-  }, []);
+  },[] );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f6f2" }}>
@@ -102,6 +201,7 @@ export default function Home() {
               ? post.time
               : new Date(parsedTime).toLocaleString()
             : "Unknown time";
+          const comments = commentsByPost[post.id] ?? [];
 
           return (
             <View
@@ -166,6 +266,91 @@ export default function Home() {
                   {post.notes}
                 </Text>
               ) : null}
+
+              <View style={{ marginTop: 12, gap: 8 }}>
+                <Text style={{ fontWeight: "600" }}>Comments</Text>
+                {commentsError && (
+                  <Text style={{ color: "red" }}>{commentsError}</Text>
+                )}
+                {comments.length === 0 && !commentsError && (
+                  <Text style={{ color: "#666" }}>No comments yet.</Text>
+                )}
+
+                {comments.map((comment) => {
+                  const createdAt = comment.createdAt ? new Date(comment.createdAt).toLocaleString() : "";
+                  const displayName = comment.userName ?? "User";
+
+                  return (
+                    <View
+                      key={comment.id}
+                      style={{
+                        backgroundColor: "#f2f2f2",
+                        borderRadius: 8,
+                        padding: 8,
+                      }}
+                    >
+                      <View style={{ alignItems: "flex-end" }}>
+                        <Pressable>
+                        <Text style={{ color: "#777", fontSize: 12 }}>
+                          {displayName}
+                        </Text>
+                        </Pressable>
+                      </View>
+
+                      <Text>{comment.body}</Text>
+
+                      {createdAt ? (
+                        <Text
+                          style={{
+                            marginTop: 4,
+                            color: "#777",
+                            fontSize: 12,
+                          }}
+                        >
+                          {createdAt}
+                        </Text>
+                      ) : null}
+                    </View>
+                  );
+                })}
+
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <TextInput
+                    value={commentInputs[post.id] ?? ""}
+                    onChangeText={(text) => updateCommentInput(post.id, text)}
+                    placeholder="Add a comment"
+                    placeholderTextColor="#888"
+                    style={{
+                      flex: 1,
+                      backgroundColor: "#fff",
+                      borderWidth: 1,
+                      borderColor: "#ddd",
+                      borderRadius: 8,
+                      paddingHorizontal: 10,
+                      paddingVertical: 8,
+                    }}
+                  />
+                  <Pressable
+                    onPress={() => addComment(post.id)}
+                    style={{
+                      backgroundColor: "#1f6f5f",
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontWeight: "600" }}>
+                      Post
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           );
         })}
