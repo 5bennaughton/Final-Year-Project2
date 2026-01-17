@@ -1,5 +1,6 @@
 import { API_BASE } from "@/constants/constants";
 import { requestJson } from "@/helpers/helpers";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -69,6 +70,7 @@ function normalizePost(raw: any, index: number): FeedPost {
  * Fetches posts once on mount and renders a simple list.
  */
 export default function Home() {
+  const router = useRouter();
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +183,7 @@ export default function Home() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f6f2" }}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+
         <Text style={{ fontSize: 22, fontWeight: "700" }}>
           Friends Feed
         </Text>
@@ -192,15 +195,19 @@ export default function Home() {
         )}
 
         {feedPosts.map((post) => {
+          
           const hasCoords =
             typeof post.latitude === "number" &&
             typeof post.longitude === "number";
+
           const parsedTime = Date.parse(post.time);
+
           const timeLabel = post.time
             ? Number.isNaN(parsedTime)
               ? post.time
               : new Date(parsedTime).toLocaleString()
             : "Unknown time";
+
           const comments = commentsByPost[post.id] ?? [];
 
           return (
@@ -217,13 +224,16 @@ export default function Home() {
               <Text style={{ fontSize: 16, fontWeight: "700" }}>
                 {post.userName}
               </Text>
+
               <Text style={{ color: "#777", marginTop: 2 }}>{timeLabel}</Text>
+
               <Text style={{ marginTop: 8, fontWeight: "600" }}>
                 {post.sport}
               </Text>
+
               <Text style={{ marginTop: 4 }}>{post.location}</Text>
 
-              {hasCoords ? (
+              {hasCoords ? (         
                 <View
                   style={{
                     marginTop: 10,
@@ -269,9 +279,11 @@ export default function Home() {
 
               <View style={{ marginTop: 12, gap: 8 }}>
                 <Text style={{ fontWeight: "600" }}>Comments</Text>
+
                 {commentsError && (
                   <Text style={{ color: "red" }}>{commentsError}</Text>
                 )}
+
                 {comments.length === 0 && !commentsError && (
                   <Text style={{ color: "#666" }}>No comments yet.</Text>
                 )}
@@ -283,44 +295,38 @@ export default function Home() {
                   return (
                     <View
                       key={comment.id}
-                      style={{
-                        backgroundColor: "#f2f2f2",
-                        borderRadius: 8,
-                        padding: 8,
-                      }}
-                    >
+                      style={{ backgroundColor: "#f2f2f2", borderRadius: 8, padding: 8 }}>
+
                       <View style={{ alignItems: "flex-end" }}>
-                        <Pressable>
-                        <Text style={{ color: "#777", fontSize: 12 }}>
-                          {displayName}
-                        </Text>
+                        <Pressable
+                          onPress={() =>
+                            router.push({
+                              pathname: "/user",
+                              params: { id: comment.userId, name: displayName },
+                            })
+                          }
+                        >
+                          <Text style={{ color: "#777", fontSize: 12 }}>
+                            {displayName}
+                          </Text>
                         </Pressable>
                       </View>
 
                       <Text>{comment.body}</Text>
 
                       {createdAt ? (
-                        <Text
-                          style={{
-                            marginTop: 4,
-                            color: "#777",
-                            fontSize: 12,
-                          }}
-                        >
+                        <Text style={{ marginTop: 4, color: "#777", fontSize: 12, }}>
                           {createdAt}
                         </Text>
                       ) : null}
+
                     </View>
                   );
                 })}
 
                 <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8, }}>
+              
                   <TextInput
                     value={commentInputs[post.id] ?? ""}
                     onChangeText={(text) => updateCommentInput(post.id, text)}
@@ -342,13 +348,14 @@ export default function Home() {
                       backgroundColor: "#1f6f5f",
                       paddingHorizontal: 12,
                       paddingVertical: 10,
-                      borderRadius: 8,
-                    }}
-                  >
+                      borderRadius: 8, }}>
+                 
                     <Text style={{ color: "white", fontWeight: "600" }}>
                       Post
                     </Text>
+
                   </Pressable>
+
                 </View>
               </View>
             </View>
