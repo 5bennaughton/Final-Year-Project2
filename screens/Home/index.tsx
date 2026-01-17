@@ -1,55 +1,77 @@
-
-import { Input, InputField } from "@/components/ui/input";
 import { API_BASE } from "@/constants/constants";
-import { requestJson, useUserSearch } from "@/helpers/helpers";
-import { useRouter } from "expo-router";
+import { requestJson } from "@/helpers/helpers";
 import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import MapView, { Marker, UrlTile } from "react-native-maps";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FeedPost = {
   id: string;
-  userId: string;
-  userName?: string;
+  userName: string;
   sport: string;
   time: string;
   location: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  notes?: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  notes: string | null;
 };
 
+/**
+ * Convert an unknown value to a finite number for coordinates.
+ * Returns null for empty or invalid values.
+ */
+function toNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+/**
+ * Normalize the API feed response into a consistent post shape.
+ * Handles nested futureSessions payloads and fills minimal defaults.
+ */
+function normalizePost(raw: any, index: number): FeedPost {
+  const base = raw?.futureSessions ?? raw ?? {};
+  return {
+    id: typeof base.id === "string" ? base.id : `post-${index}`,
+    userName: typeof raw?.userName === "string" ? raw.userName : "Friend",
+    sport: typeof base.sport === "string" ? base.sport : "Session",
+    time: typeof base.time === "string" ? base.time : "",
+    location: typeof base.location === "string" ? base.location : "",
+    latitude: toNumber(base.latitude),
+    longitude: toNumber(base.longitude),
+    notes: typeof base.notes === "string" ? base.notes : null,
+  };
+}
+
+/**
+ * Home screen showing the friends feed with optional map pins.
+ * Fetches posts once on mount and renders a simple list.
+ */
 export default function Home() {
-  const [query, setQuery] = useState("");
-  const { results, searching, searchError, search, clearResults } = useUserSearch();
-  const router = useRouter();
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
-  const [loadingFeed, setLoadingFeed] = useState(false);
-  const [feedError, setFeedError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadFeed = async () => {
-    setLoadingFeed(true);
-    setFeedError(null);
+    setLoading(true);
+    setError(null);
 
     try {
-      const data = await requestJson(`${API_BASE}/feed/posts`, {}, "Fetch feed failed");
-    
+      const data = await requestJson(
+        `${API_BASE}/feed/posts`,
+        {},
+        "Fetch feed failed"
+      );
       const posts = Array.isArray(data?.posts) ? data.posts : [];
-
-      setFeedPosts(posts);
-
+      const normalized = posts.map((post: any, index: number) => normalizePost(post, index));
+      setFeedPosts(normalized);
     } catch (err: any) {
       setFeedPosts([]);
-      setFeedError(err?.message ?? "Fetch feed failed");
+      setError(err?.message ?? "Fetch feed failed");
     } finally {
-      setLoadingFeed(false);
+      setLoading(false);
     }
   };
 
@@ -57,138 +79,55 @@ export default function Home() {
     loadFeed();
   }, []);
 
-  useEffect(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      clearResults();
-      return;
-    }
-    const handle = setTimeout(() => {
-      search(trimmed);
-    }, 350);
-    return () => clearTimeout(handle);
-  }, [query, search, clearResults]);
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f7f6f2" }}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 18, paddingBottom: 32 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+        <Text style={{ fontSize: 22, fontWeight: "700" }}>
+          Friends Feed
+        </Text>
 
-        <View style={{ gap: 6 }}>
-          <Text style={{ fontSize: 22, fontWeight: "700" }}>Home</Text>
-        </View>
+        {loading && <ActivityIndicator />}
+        {error && <Text style={{ color: "red" }}>{error}</Text>}
+        {!loading && !error && feedPosts.length === 0 && (
+          <Text style={{ color: "#666" }}>No friend posts yet.</Text>
+        )}
 
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>Search users</Text>
-          <Input variant="outline" size="md">
-            <InputField
-              placeholder="Search by name"
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={() => search(query.trim())}
-              returnKeyType="search"
-              autoCapitalize="words"
-              style={{ color: "black" }}
-              placeholderTextColor="gray"
-            />
-          </Input>
-          {searching && <ActivityIndicator />}
-          {searchError && <Text style={{ color: "red" }}>{searchError}</Text>}
-        </View>
+        {feedPosts.map((post) => {
+          const hasCoords =
+            typeof post.latitude === "number" &&
+            typeof post.longitude === "number";
+          const parsedTime = Date.parse(post.time);
+          const timeLabel = post.time
+            ? Number.isNaN(parsedTime)
+              ? post.time
+              : new Date(parsedTime).toLocaleString()
+            : "Unknown time";
 
-        <View style={{ gap: 8 }}>
-          {results.length === 0 && !searching && !searchError && (
-            <Text style={{ color: "#666" }}>No results yet.</Text>
-          )}
-          {results.map((user) => (
-            <Pressable
-              key={user.id}
-              onPress={() => router.push({ pathname: "/user", params: { id: user.id, name: user.name } })}
-              style={{
-                padding: 12,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: "#ddd",
-                gap: 4,
-                backgroundColor: "white",
-              }}
-            >
-              <Text style={{ fontWeight: "600" }}>{user.name}</Text>
-              <Text style={{ color: "#666" }}>{user.email}</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <View style={{ gap: 12 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-            <Text style={{ fontSize: 16, fontWeight: "600" }}>Friends feed</Text>
-            <Pressable
-              onPress={loadFeed}
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                borderRadius: 999,
-                backgroundColor: "#e6f2ee",
-              }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: "600", color: "#1f6f5f" }}>
-                Refresh
-              </Text>
-            </Pressable>
-          </View>
-
-          {loadingFeed && <ActivityIndicator />}
-          {feedError && <Text style={{ color: "red" }}>{feedError}</Text>}
-          {feedPosts.length === 0 && !loadingFeed && !feedError && (
-            <Text style={{ color: "#666" }}>No friend posts yet.</Text>
-          )}
-
-          {feedPosts.map((post) => (
+          return (
             <View
               key={post.id}
               style={{
                 backgroundColor: "white",
-                borderRadius: 14,
+                borderRadius: 12,
                 padding: 14,
                 borderWidth: 1,
                 borderColor: "#ececec",
-                shadowColor: "#000",
-                shadowOpacity: 0.08,
-                shadowOffset: { width: 0, height: 2 },
-                shadowRadius: 6,
-                elevation: 2,
               }}
             >
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View style={{ flexShrink: 1 }}>
-                  <Text style={{ fontSize: 16, fontWeight: "700" }}>
-                    {post.userName ?? "Friend"}
-                  </Text>
-                  <Text style={{ color: "#777", marginTop: 2 }}>
-                    {new Date(post.time).toLocaleString()}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    backgroundColor: "#f2f0ea",
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: 999,
-                  }}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: "#4b4b4b" }}>
-                    {post.sport}
-                  </Text>
-                </View>
-              </View>
-              <Text style={{ marginTop: 8, fontWeight: "600" }}>{post.location}</Text>
-              {typeof post.latitude === "number" &&
-              typeof post.longitude === "number" &&
-              Number.isFinite(post.latitude) &&
-              Number.isFinite(post.longitude) ? (
+              <Text style={{ fontSize: 16, fontWeight: "700" }}>
+                {post.userName}
+              </Text>
+              <Text style={{ color: "#777", marginTop: 2 }}>{timeLabel}</Text>
+              <Text style={{ marginTop: 8, fontWeight: "600" }}>
+                {post.sport}
+              </Text>
+              <Text style={{ marginTop: 4 }}>{post.location}</Text>
+
+              {hasCoords ? (
                 <View
                   style={{
                     marginTop: 10,
-                    height: 150,
+                    height: 160,
                     borderRadius: 12,
                     overflow: "hidden",
                     borderWidth: 1,
@@ -197,9 +136,9 @@ export default function Home() {
                 >
                   <MapView
                     style={{ flex: 1 }}
-                    region={{
-                      latitude: post.latitude,
-                      longitude: post.longitude,
+                    initialRegion={{
+                      latitude: post.latitude as number,
+                      longitude: post.longitude as number,
                       latitudeDelta: 0.02,
                       longitudeDelta: 0.02,
                     }}
@@ -212,18 +151,24 @@ export default function Home() {
                       urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       maximumZ={19}
                     />
-                    <Marker coordinate={{ latitude: post.latitude, longitude: post.longitude }} />
+                    <Marker
+                      coordinate={{
+                        latitude: post.latitude as number,
+                        longitude: post.longitude as number,
+                      }}
+                    />
                   </MapView>
                 </View>
               ) : null}
+
               {post.notes ? (
-                <Text style={{ marginTop: 6, color: "#666" }}>{post.notes}</Text>
+                <Text style={{ marginTop: 6, color: "#666" }}>
+                  {post.notes}
+                </Text>
               ) : null}
             </View>
-          ))}
-        </View>
-
-        <View style={{ height: 1, backgroundColor: "#e2e2e2" }} />
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
