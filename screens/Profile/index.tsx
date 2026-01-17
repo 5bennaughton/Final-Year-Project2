@@ -20,6 +20,10 @@ type MeResponse = {
   name?: string;
 };
 
+/**
+ * Render the profile screen with user info and future posts.
+ * Handles logout, navigation, and post deletion flow.
+ */
 export default function HomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState<string | null>(null);
@@ -29,9 +33,16 @@ export default function HomePage() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { posts, postsError, loadingPosts, listPosts } = useListPosts();
 
+  /**
+   * Load the current user's profile name on mount.
+   */
   useEffect(() => {
     let isMounted = true;
 
+    /**
+     * Fetch stored user data and refresh it from the API.
+     * Uses a mounted flag to avoid state updates after unmount.
+     */
     const loadUser = async () => {
       setLoadingUser(true);
       try {
@@ -67,6 +78,9 @@ export default function HomePage() {
     };
   }, []);
 
+  /**
+   * Refresh the user's posts when the screen gains focus.
+   */
   useFocusEffect(
     useCallback(() => {
       listPosts();
@@ -74,8 +88,8 @@ export default function HomePage() {
   );
 
   /**
-   * Logs the User out
-   * may need to catch an error here at some stage 
+   * Log out the user and clear local auth data.
+   * Always navigates back to the auth stack.
    */
   async function logout() {
     try {
@@ -87,21 +101,33 @@ export default function HomePage() {
     }
   };
 
+  /**
+   * Navigate to the Create Session screen.
+   */
   function goToCreatePost() {
     router.push("/create-session");
   }
 
+  /**
+   * Open the delete modal for a selected post.
+   */
   function openDeleteModal(post: SessionPost) {
     setSelectedPost(post);
     setDeleteError(null);
   }
 
+  /**
+   * Close the delete modal and clear any errors.
+   */
   function closeDeleteModal() {
     setSelectedPost(null);
     setDeleteError(null);
   }
 
 
+  /**
+   * Delete the selected post and refresh the list.
+   */
   async function deletePost() {
     if (!selectedPost) return;
     setDeletingPost(true);

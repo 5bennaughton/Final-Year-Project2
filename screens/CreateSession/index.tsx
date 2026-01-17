@@ -49,6 +49,9 @@ type LocationCoords = {
   longitude: number;
 };
 
+/**
+ * Format a date into a short month/day label.
+ */
 function formatDate(value: Date) {
   return value.toLocaleDateString(undefined, {
     month: "short",
@@ -56,6 +59,9 @@ function formatDate(value: Date) {
   });
 }
 
+/**
+ * Format a time into a localized hour/minute string.
+ */
 function formatTime(value: Date) {
   return value.toLocaleTimeString(undefined, {
     hour: "numeric",
@@ -63,10 +69,17 @@ function formatTime(value: Date) {
   });
 }
 
+/**
+ * Combine the formatted date and time for display.
+ */
 function formatDateTime(value: Date) {
   return `${formatDate(value)} | ${formatTime(value)}`;
 }
 
+/**
+ * Render the Create Session screen and manage form state.
+ * Handles location autocomplete and date/time selection.
+ */
 export default function CreateSessionScreen() {
   const router = useRouter();
   const [sport, setSport] = useState<Sport | "">("");
@@ -85,7 +98,10 @@ export default function CreateSessionScreen() {
   const canSubmit = Boolean(sport && dateTime && location.trim());
   const formattedDateTime = dateTime ? formatDateTime(dateTime) : "";
 
-  // Pull location suggestions from the backend proxy.
+  /**
+   * Pull location suggestions from the backend proxy.
+   * Normalizes response data and handles loading/error state.
+   */
   const fetchLocationSuggestions = useCallback(async (query: string) => {
     setLocationSearching(true);
     setLocationError(null);
@@ -112,6 +128,9 @@ export default function CreateSessionScreen() {
     }
   }, []);
 
+  /**
+   * Debounce autocomplete requests based on the location input.
+   */
   useEffect(() => {
     const trimmed = location.trim();
     if (trimmed.length < AUTOCOMPLETE_MIN_CHARS) {
@@ -133,13 +152,18 @@ export default function CreateSessionScreen() {
     return () => clearTimeout(handle);
   }, [fetchLocationSuggestions, location, selectedLocationLabel]);
 
+  /**
+   * Update the location input and reset any selected coordinates.
+   */
   function handleChangeLocation(value: string) {
     setLocation(value);
     setSelectedLocationLabel(null);
     setLocationCoords(null);
   }
 
-  // Persist the selected suggestion and lock the map to its coordinates.
+  /**
+   * Persist the selected suggestion and lock the map to its coordinates.
+   */
   function handleSelectLocation(suggestion: LocationSuggestion) {
     setLocation(suggestion.label);
     setSelectedLocationLabel(suggestion.label);
@@ -149,20 +173,32 @@ export default function CreateSessionScreen() {
     setLocationError(null);
   }
 
+  /**
+   * Open the date/time picker and seed it with the current value.
+   */
   function openDateTimePicker() {
     setDraftDateTime(dateTime ?? new Date());
     setPickerVisible(true);
   }
 
+  /**
+   * Close the date/time picker without saving changes.
+   */
   function closeDateTimePicker() {
     setPickerVisible(false);
   }
 
+  /**
+   * Persist the draft date/time and close the picker.
+   */
   function confirmDateTimePicker() {
     setDateTime(draftDateTime);
     setPickerVisible(false);
   }
 
+  /**
+   * Apply date changes to the draft date/time state.
+   */
   function handleDraftDateChange(_event: DateTimePickerEvent, selected?: Date) {
     if (!selected) return;
     setDraftDateTime((prev) => {
@@ -172,6 +208,9 @@ export default function CreateSessionScreen() {
     });
   }
 
+  /**
+   * Apply time changes to the draft date/time state.
+   */
   function handleDraftTimeChange(_event: DateTimePickerEvent, selected?: Date) {
     if (!selected) return;
     setDraftDateTime((prev) => {
@@ -202,6 +241,7 @@ export default function CreateSessionScreen() {
 
   /**
    * Create a future session and return to the profile page.
+   * Validates the form and handles API errors.
    */
   async function createPost() {
     const payload = buildPayload();

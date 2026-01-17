@@ -9,10 +9,16 @@ import Register from "../Auth/Register";
 
 type Mode = "login" | "register";
 
+/**
+ * Render the auth screen and redirect if already logged in.
+ */
 export default function AuthPage() {
   const [mode, setMode] = useState<Mode>("register"); // only register for now
   const router = useRouter();
 
+  /**
+   * Check for an existing token and redirect to the app.
+   */
   useEffect(() => {
     let isMounted = true;
 

@@ -16,6 +16,10 @@ type Props = {
   onGoToLogin?: () => void;
 };
 
+/**
+ * Render the registration form and handle account creation.
+ * Tracks status messages and clears the form on success.
+ */
 export default function Register({ onSuccess, onGoToLogin }: Props) {
   const [form, setForm] = useState<RegisterBody>({
     name: "",
@@ -27,6 +31,10 @@ export default function Register({ onSuccess, onGoToLogin }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  /**
+   * Submit registration data to the API and handle errors.
+   * Resets form state and invokes the success callback.
+   */
   const onSubmit = async () => {
     setError(null);
     setSuccess(null);

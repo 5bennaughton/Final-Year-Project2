@@ -24,6 +24,9 @@ type LatestActivity = {
   mapPolyline?: string | null;
 };
 
+/**
+ * Type guard for validating the Strava activity payload shape.
+ */
 const isLatestActivity = (value: unknown): value is LatestActivity => {
   if (!value || typeof value !== "object") return false;
   return (
@@ -34,6 +37,9 @@ const isLatestActivity = (value: unknown): value is LatestActivity => {
   );
 };
 
+/**
+ * Normalize a Strava activity into the UI-friendly session shape.
+ */
 const formatSession = (data: LatestActivity) => {
   return {
     id: String(data.id),
@@ -48,17 +54,27 @@ const formatSession = (data: LatestActivity) => {
   };
 };
 
+/**
+ * Render the Strava import screen and session summaries.
+ */
 export default function SessionSummary() {
   const [sessions, setSessions] = useState<LatestActivity[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Open the Strava OAuth flow and mark the user as connected.
+   */
   const connectStrava = async () => {
    await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
    setIsConnected(true);
   };
 
+  /**
+   * Fetch latest Strava activities and validate the response payload.
+   * Updates loading and error state based on the request result.
+   */
   const importSessions = async () => {
     setLoading(true);
     setError(null);

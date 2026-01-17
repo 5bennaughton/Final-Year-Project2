@@ -16,12 +16,20 @@ type Props = {
   onGoToRegister?: () => void;
 };
 
+/**
+ * Render the login form and handle authentication flow.
+ * Updates local state and persists the auth token on success.
+ */
 export default function Login({ onSuccess, onGoToRegister }: Props) {
   const [form, setForm] = useState<LoginBody>({ email: "", password: "" });
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Submit login credentials to the API and handle errors.
+   * Persists the token and triggers the success callback.
+   */
   const onSubmit = async () => {
     setError(null);
     setLoading(true);

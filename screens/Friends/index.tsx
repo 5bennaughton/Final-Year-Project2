@@ -23,11 +23,17 @@ type FriendRequest = {
   requesterEmail?: string;
 };
 
-// Prefer a human-readable name if the API provides it.
+/**
+ * Prefer a human-readable label if the API provides it.
+ */
 function getRequesterLabel(request: FriendRequest) {
   return request.requesterName || request.requesterEmail || request.requesterId;
 }
 
+/**
+ * Render the Friends screen and manage search/request state.
+ * Handles friend list loading and request actions.
+ */
 export default function Friends() {
   const [query, setQuery] = useState("");
   const { results, searching, searchError, search, clearResults } = useUserSearch();
@@ -49,6 +55,9 @@ export default function Friends() {
   const [requestsMessage, setRequestsMessage] = useState<string | null>(null);
   const [actingRequestId, setActingRequestId] = useState<string | null>(null);
 
+  /**
+   * Debounce the user search input and clear results when empty.
+   */
   useEffect(() => {
     const trimmed = query.trim();
 
@@ -66,7 +75,9 @@ export default function Friends() {
     return () => clearTimeout(handle);
   }, [query, clearResults, search]);
 
-  // Search users by name.
+  /**
+   * Search users by name using the existing query or a provided value.
+   */
   const searchUsers = async (value?: string) => {
     const trimmed = (value ?? query).trim();
   
@@ -76,7 +87,10 @@ export default function Friends() {
     await search(trimmed);
   };
 
-  // Send a friend request to another user.
+  /**
+   * Send a friend request to another user.
+   * Tracks per-request loading and error state.
+   */
   const sendFriendRequest = async (addresseeId: string) => {
     setRequestingId(addresseeId);
     setRequestError(null);
@@ -100,7 +114,10 @@ export default function Friends() {
     }
   };
 
-  // Load accepted friends for the current user.
+  /**
+   * Load accepted friends for the current user.
+   * Updates loading and empty-state messaging.
+   */
   const loadFriends = async () => {
     setLoadingFriends(true);
     setFriendsError(null);
@@ -131,7 +148,10 @@ export default function Friends() {
     }
   };
 
-  // Toggle the friends list and load it when opening.
+  /**
+   * Toggle the friends list and load it when opening.
+   * Avoids extra requests when closing.
+   */
   const toggleFriends = async () => {
     if (showFriends) {
       setShowFriends(false);
@@ -141,7 +161,10 @@ export default function Friends() {
     await loadFriends();
   };
 
-  // Load pending incoming requests so the user can respond to them.
+  /**
+   * Load pending incoming requests so the user can respond to them.
+   * Updates loading and empty-state messaging.
+   */
   const loadFriendRequests = async () => {
     setLoadingRequests(true);
     setRequestsError(null);
@@ -169,7 +192,10 @@ export default function Friends() {
     }
   };
 
-  // Toggle the request list and load it when opening.
+  /**
+   * Toggle the request list and load it when opening.
+   * Avoids extra requests when closing.
+   */
   const toggleRequests = async () => {
     if (showRequests) {
       setShowRequests(false);
@@ -179,7 +205,10 @@ export default function Friends() {
     await loadFriendRequests();
   };
 
-  // Accept or decline a pending friend request by its id.
+  /**
+   * Accept or decline a pending friend request by its id.
+   * Updates the list and shows a status message.
+   */
   const respondToRequest = async (requestId: string, action: "accept" | "decline") => {
     setActingRequestId(requestId);
     setRequestsError(null);
