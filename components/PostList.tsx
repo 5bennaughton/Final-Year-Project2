@@ -1,9 +1,11 @@
 import PostCard from '@/components/PostCard';
 import { API_BASE } from '@/constants/constants';
 import { requestJson, type PostCardData } from '@/helpers/helpers';
+import { getAuthUser } from '@/lib/auth';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   Text,
   TextInput,
@@ -55,6 +57,24 @@ export default function PostList({
     {}
   );
   const [commentsError, setCommentsError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      const user = await getAuthUser();
+      if (isMounted) {
+        setCurrentUserId(user?.id ?? null);
+      }
+    };
+
+    loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   /**
    * Fetch comments for one post and store them by post id.
@@ -119,6 +139,41 @@ export default function PostList({
   };
 
   /**
+   * Delete a comment for a post and refresh its comment list.
+   */
+  const deleteComment = async (postId: string, commentId: string) => {
+    setCommentsError(null);
+
+    try {
+      await requestJson(
+        `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(
+          postId
+        )}/delete-comment/${encodeURIComponent(commentId)}`,
+        { method: 'DELETE' },
+        'Delete comment failed'
+      );
+      await fetchComments(postId);
+    } catch (err: any) {
+      setCommentsError(err?.message ?? 'Delete comment failed');
+    }
+  };
+
+  const confirmDeleteComment = (postId: string, commentId: string) => {
+    Alert.alert(
+      'Delete comment?',
+      'Are you sure you want to delete this comment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteComment(postId, commentId),
+        },
+      ]
+    );
+  };
+
+  /**
    * Refresh comments whenever the posts list changes.
    */
   useEffect(() => {
@@ -163,7 +218,9 @@ export default function PostList({
                     const createdAt = comment.createdAt
                       ? new Date(comment.createdAt).toLocaleString()
                       : '';
+
                     const displayName = comment.userName ?? 'User';
+                    const canDelete = currentUserId === comment.userId;
 
                     return (
                       <View
@@ -190,6 +247,28 @@ export default function PostList({
                               {displayName}
                             </Text>
                           )}
+
+                          {/**
+                           * This here is checking is the current user logged in
+                           * If the user is logged in it will display a delete button to delete comments
+                           */}
+                          {canDelete ? (
+                            <Pressable
+                              onPress={() =>
+                                confirmDeleteComment(post.id, comment.id)
+                              }
+                              style={{
+                                backgroundColor: '#f5d5d5',
+                                paddingHorizontal: 6,
+                                paddingVertical: 2,
+                                borderRadius: 6,
+                              }}
+                            >
+                              <Text style={{ color: '#7a1f1f', fontSize: 12 }}>
+                                Delete
+                              </Text>
+                            </Pressable>
+                          ) : null}
                         </View>
 
                         <Text>{comment.body}</Text>

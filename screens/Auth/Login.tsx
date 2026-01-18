@@ -1,7 +1,7 @@
 import { Button, ButtonText } from "@/components/ui/button";
 import { Input, InputField } from "@/components/ui/input";
 import { API_BASE } from "@/constants/constants";
-import { setAuthToken } from "@/lib/auth";
+import { setAuthToken, setAuthUser } from "@/lib/auth";
 import React, { useState } from "react";
 import { ActivityIndicator, Alert, Text, View } from "react-native";
 
@@ -58,6 +58,13 @@ export default function Login({ onSuccess, onGoToRegister }: Props) {
       }
 
       await setAuthToken(data.token);
+      if (data?.user?.id) {
+        await setAuthUser({
+          id: data.user.id,
+          email: data.user.email,
+          name: data.user.name,
+        });
+      }
       onSuccess?.(data);
     } catch {
       setError("Could not connect to server");
