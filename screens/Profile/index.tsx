@@ -1,18 +1,25 @@
-import { Button, ButtonText } from "@/components/ui/button";
-import { DeleteSessionModal } from "@/components/ui/modals";
-import { API_BASE } from "@/constants/constants";
-import { requestJson, useListPosts, type SessionPost } from "@/helpers/helpers";
+import PostList from '@/components/PostList';
+import { Button, ButtonText } from '@/components/ui/button';
+import { DeleteSessionModal } from '@/components/ui/modals';
+import { API_BASE } from '@/constants/constants';
+import { normalizePostCard, requestJson, useListPosts, type PostCardData, type SessionPost } from '@/helpers/helpers';
 import {
   authFetch,
   clearAuthToken,
   clearAuthUser,
   getAuthUser,
-} from "@/lib/auth";
-import { useFocusEffect } from "@react-navigation/native";
-import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+} from '@/lib/auth';
+import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 
@@ -32,6 +39,7 @@ export default function HomePage() {
   const [deletingPost, setDeletingPost] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { posts, postsError, loadingPosts, listPosts } = useListPosts();
+  const [profilePosts, setProfilePosts] = useState<PostCardData[]>([]);
 
   /**
    * Load the current user's profile name on mount.
@@ -54,9 +62,9 @@ export default function HomePage() {
         const data = (await requestJson(
           `${API_BASE}/auth/me`,
           {},
-          "Fetch profile failed"
+          'Fetch profile failed'
         )) as MeResponse | null;
-        const name = typeof data?.name === "string" ? data.name : null;
+        const name = typeof data?.name === 'string' ? data.name : null;
         if (isMounted) {
           setUserName(name);
         }
@@ -87,25 +95,33 @@ export default function HomePage() {
     }, [listPosts])
   );
 
+  useEffect(() => {
+    setProfilePosts(
+      posts.map((post, index) =>
+        normalizePostCard(post, index, { userName: userName ?? 'You' })
+      )
+    );
+  }, [posts, userName]);
+
   /**
    * Log out the user and clear local auth data.
    * Always navigates back to the auth stack.
    */
   async function logout() {
     try {
-      await authFetch(`${API_BASE}/auth/logout`, { method: "POST" });
+      await authFetch(`${API_BASE}/auth/logout`, { method: 'POST' });
     } finally {
       await clearAuthToken();
       await clearAuthUser();
-      router.replace("/(auth)");
+      router.replace('/(auth)');
     }
-  };
+  }
 
   /**
    * Navigate to the Create Session screen.
    */
   function goToCreatePost() {
-    router.push("/create-session");
+    router.push('/create-session');
   }
 
   /**
@@ -124,7 +140,6 @@ export default function HomePage() {
     setDeleteError(null);
   }
 
-
   /**
    * Delete the selected post and refresh the list.
    */
@@ -136,61 +151,74 @@ export default function HomePage() {
     try {
       await requestJson(
         `${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`,
-        { method: "DELETE" },
-        "Delete session failed"
+        { method: 'DELETE' },
+        'Delete session failed'
       );
       await listPosts();
       setSelectedPost(null);
     } catch (e: any) {
-      setDeleteError(e?.message ?? "Delete session failed");
+      setDeleteError(e?.message ?? 'Delete session failed');
     } finally {
       setDeletingPost(false);
     }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 20 }}>
-      <View style={{ alignItems: "center", marginBottom: 12 }}>
-        <Text style={{ fontSize: 20, fontWeight: "700", textAlign: "center" }}>
-          {userName ?? "Profile"}
-        </Text>
-        {loadingUser && !userName && (
-          <ActivityIndicator style={{ marginTop: 6 }} />
-        )}
-      </View>
-
-      <View style={{ gap: 10, marginTop: 16 }}>
-        <Button onPress={goToCreatePost}>
-          <ButtonText>Create Post</ButtonText>
-        </Button>
-      </View>
-
-      <View style={{ marginTop: 16 }}>
-        <Button onPress={logout}>
-          <ButtonText>Logout</ButtonText>
-        </Button>
-      </View>
-
-      <View style={{ marginTop: 16 }}>
-        {loadingPosts && <ActivityIndicator color="white" />}
-        {postsError && <Text style={{ color: "red" }}>{postsError}</Text>}
-        {posts.length === 0 && !loadingPosts && !postsError &&
-          <Text style={{ color: "#666" }}>No posts yet.</Text>
-          }
-
-        {posts.map((post) => (
-          <Pressable
-            key={post.id}
-            onPress={() => openDeleteModal(post)}
-            style={{ marginTop: 10 }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+        <View style={{ alignItems: 'center' }}>
+          <Text
+            style={{ fontSize: 20, fontWeight: '700', textAlign: 'center' }}
           >
-            <Text style={{ fontWeight: "600" }}>
-              {post.sport} • {new Date(post.time).toLocaleString()}
-            </Text>
-            <Text style={{ color: "#666" }}>{post.location}</Text>
-          </Pressable>
-        ))}
-      </View>
+            {userName ?? 'Profile'}
+          </Text>
+          {loadingUser && !userName && (
+            <ActivityIndicator style={{ marginTop: 6 }} />
+          )}
+        </View>
+
+        <View style={{ gap: 10 }}>
+          <Button onPress={goToCreatePost}>
+            <ButtonText>Create Post</ButtonText>
+          </Button>
+        </View>
+
+        <View>
+          <Button onPress={logout}>
+            <ButtonText>Logout</ButtonText>
+          </Button>
+        </View>
+
+        <PostList
+          posts={profilePosts}
+          loading={loadingPosts}
+          error={postsError}
+          emptyMessage="No posts yet."
+          renderActions={(post) => {
+            const target = posts.find((item) => item.id === post.id);
+
+            if (!target) return null;
+
+            return (
+              <View style={{ alignItems: 'flex-end' }}>
+                <Pressable
+                  onPress={() => openDeleteModal(target)}
+                  style={{
+                    backgroundColor: '#f5d5d5',
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                    borderRadius: 6,
+                  }}
+                >
+                  <Text style={{ color: '#7a1f1f', fontWeight: '600' }}>
+                    Delete
+                  </Text>
+                </Pressable>
+              </View>
+            );
+          }}
+        />
+      </ScrollView>
 
       <DeleteSessionModal
         visible={Boolean(selectedPost)}
@@ -200,7 +228,6 @@ export default function HomePage() {
         onCancel={closeDeleteModal}
         onDelete={deletePost}
       />
-
     </SafeAreaView>
   );
-};
+}
