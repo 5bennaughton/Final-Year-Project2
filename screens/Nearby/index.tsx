@@ -1,18 +1,18 @@
 import PostList from '@/components/PostList';
 import { API_BASE } from '@/constants/constants';
-import { normalizePostCard, requestJson, type PostCardData } from '@/helpers/helpers';
-import * as Location from 'expo-location';
+import {
+  GeoCoords,
+  getCurrentLocation,
+  normalizePostCard,
+  requestJson,
+  type PostCardData,
+} from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const NEARBY_BASE = `${API_BASE}/future-sessions/nearby`;
-
-type GeoCoords = {
-  latitude: number;
-  longitude: number;
-};
 
 /**
  * Parse a string radius input into a positive number.
@@ -34,25 +34,6 @@ export default function NearbySessionsScreen() {
   const [coords, setCoords] = useState<GeoCoords | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  /**
-   * Ask for location permission and return current coordinates.
-   */
-  const getCurrentLocation = async (): Promise<GeoCoords> => {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      throw new Error('Location permission denied.');
-    }
-
-    const position = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-
-    return {
-      latitude: position.coords.latitude,
-      longitude: position.coords.longitude,
-    };
-  };
 
   /**
    * Fetch nearby sessions from the API using the current location.

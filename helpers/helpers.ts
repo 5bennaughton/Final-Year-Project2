@@ -1,4 +1,5 @@
 import { API_BASE } from '@/constants/constants';
+import * as Location from 'expo-location';
 import { useCallback, useState } from 'react';
 import { authFetch } from '../lib/auth';
 
@@ -38,6 +39,11 @@ export type PostCardData = {
   latitude?: number | null;
   longitude?: number | null;
   notes?: string | null;
+};
+
+export type GeoCoords = {
+  latitude: number;
+  longitude: number;
 };
 
 function buildSearchUrl(query: string) {
@@ -196,4 +202,23 @@ export function normalizePostCard(
   };
 
   return { ...normalized, ...overrides };
+}
+
+/**
+ * Ask for location permission and return current coordinates.
+ */
+export async function getCurrentLocation(): Promise<GeoCoords> {
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    throw new Error('Location permission denied.');
+  }
+
+  const position = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+
+  return {
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+  };
 }

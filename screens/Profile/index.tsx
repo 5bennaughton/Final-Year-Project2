@@ -2,7 +2,13 @@ import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
 import { API_BASE } from '@/constants/constants';
-import { normalizePostCard, requestJson, useListPosts, type PostCardData, type SessionPost } from '@/helpers/helpers';
+import {
+  normalizePostCard,
+  requestJson,
+  useListPosts,
+  type PostCardData,
+  type SessionPost,
+} from '@/helpers/helpers';
 import {
   authFetch,
   clearAuthToken,
@@ -125,6 +131,13 @@ export default function HomePage() {
   }
 
   /**
+   * Navigate to the spots builder screen.
+   */
+  function goToSpots() {
+    router.push('/spots');
+  }
+
+  /**
    * Open the delete modal for a selected post.
    */
   function openDeleteModal(post: SessionPost) {
@@ -180,6 +193,9 @@ export default function HomePage() {
         <View style={{ gap: 10 }}>
           <Button onPress={goToCreatePost}>
             <ButtonText>Create Post</ButtonText>
+          </Button>
+          <Button onPress={goToSpots} variant="outline">
+            <ButtonText>Spots Map</ButtonText>
           </Button>
         </View>
 
