@@ -1,7 +1,6 @@
 import { Tabs } from 'expo-router';
-import { Activity, Home, Trophy, User } from 'lucide-react-native';
+import { Activity, Home, User } from 'lucide-react-native';
 import React from 'react';
-
 
 export default function TabsLayout() {
   return (
@@ -15,9 +14,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <Home color={color} size={24} />
-          ),
+          tabBarIcon: ({ color, focused }) => <Home color={color} size={24} />,
         }}
       />
       <Tabs.Screen
@@ -33,27 +30,14 @@ export default function TabsLayout() {
         name="Friends"
         options={{
           title: 'Friends',
-          tabBarIcon: ({ color, focused }) => (
-            <User color={color} size={24} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="leaderboard"
-        options={{
-          title: 'Leaderboard',
-          tabBarIcon: ({ color, focused }) => (
-            <Trophy color={color} size={24} />
-          ),
+          tabBarIcon: ({ color, focused }) => <User color={color} size={24} />,
         }}
       />
       <Tabs.Screen
         name="Profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ color, focused }) => (
-            <User color={color} size={24} />
-          ),
+          tabBarIcon: ({ color, focused }) => <User color={color} size={24} />,
         }}
       />
     </Tabs>
