@@ -3,7 +3,7 @@ import { getCurrentLocation, requestJson } from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import MapView, { Marker, type Region } from 'react-native-maps';
+import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type Pin = {
@@ -17,6 +17,7 @@ type Spot = {
   type: string;
   latitude: number;
   longitude: number;
+  description?: string | null;
 };
 
 export default function SpotsScreen() {
@@ -126,6 +127,12 @@ export default function SpotsScreen() {
             initialRegion={initialRegion}
             showsUserLocation
             onRegionChangeComplete={updateVisibleSpots}
+            onPress={() => {
+              // Tap away to clear the temporary pin.
+              if (pendingSpot) {
+                setPendingSpot(null);
+              }
+            }}
             onLongPress={(event) => {
               // Drop a temporary pin where the user long-presses.
               const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -141,7 +148,32 @@ export default function SpotsScreen() {
                 }}
                 title={spot.name}
                 description={spot.type}
-              />
+              >
+                {/* Simple callout that links to the details screen, params are listd*/}
+                <Callout
+                  onPress={() =>
+                    router.push({
+                      pathname: '/spot-details',
+                      params: {
+                        id: spot.id,
+                        name: spot.name,
+                        type: spot.type,
+                        description: spot.description ?? '',
+                        lat: String(spot.latitude),
+                        lng: String(spot.longitude),
+                      },
+                    })
+                  }
+                >
+                  <View style={{ maxWidth: 180, gap: 6 }}>
+                    <Text style={{ fontWeight: '700' }}>{spot.name}</Text>
+                    <Text style={{ color: '#666' }}>{spot.type}</Text>
+                    <Text style={{ color: '#1f6f5f', fontWeight: '600' }}>
+                      View details
+                    </Text>
+                  </View>
+                </Callout>
+              </Marker>
             ))}
             {pendingSpot ? (
               <Marker coordinate={pendingSpot} title="New spot" />
