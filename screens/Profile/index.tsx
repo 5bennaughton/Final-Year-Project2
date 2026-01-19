@@ -103,9 +103,11 @@ export default function HomePage() {
 
   useEffect(() => {
     setProfilePosts(
-      posts.map((post, index) =>
-        normalizePostCard(post, index, { userName: userName ?? 'You' })
-      )
+      [...posts]
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .map((post, index) =>
+          normalizePostCard(post, index, { userName: userName ?? 'You' })
+        )
     );
   }, [posts, userName]);
 
