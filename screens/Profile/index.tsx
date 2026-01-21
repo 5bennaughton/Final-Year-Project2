@@ -2,35 +2,20 @@ import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
 import { API_BASE } from '@/constants/constants';
-import {
-  normalizePostCard,
-  requestJson,
-  useListPosts,
-  type PostCardData,
-  type SessionPost,
-} from '@/helpers/helpers';
-import {
-  authFetch,
-  clearAuthToken,
-  clearAuthUser,
-  getAuthUser,
-} from '@/lib/auth';
+import { normalizePostCard, requestJson, useListPosts, type PostCardData, type SessionPost } from '@/helpers/helpers';
+import { getAuthUser } from '@/lib/auth';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 
 type MeResponse = {
   name?: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
 };
 
 /**
@@ -40,6 +25,8 @@ type MeResponse = {
 export default function HomePage() {
   const router = useRouter();
   const [userName, setUserName] = useState<string | null>(null);
+  const [userBio, setUserBio] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [selectedPost, setSelectedPost] = useState<SessionPost | null>(null);
   const [deletingPost, setDeletingPost] = useState(false);
@@ -65,18 +52,29 @@ export default function HomePage() {
           setUserName(stored.name);
         }
 
-        const data = (await requestJson(
-          `${API_BASE}/auth/me`,
-          {},
-          'Fetch profile failed'
-        )) as MeResponse | null;
+        if (stored?.bio && isMounted) {
+          setUserBio(stored.bio);
+        }
+
+        if (stored?.avatarUrl && isMounted) {
+          setUserAvatar(stored.avatarUrl);
+        }
+
+        const data = (await requestJson(`${API_BASE}/auth/me`, {}, 'Fetch profile failed')) as MeResponse | null;
         const name = typeof data?.name === 'string' ? data.name : null;
+        const bio = typeof data?.bio === 'string' ? data.bio : (data?.bio ?? null);
+        const avatarUrl = typeof data?.avatarUrl === 'string' ? data.avatarUrl : (data?.avatarUrl ?? null);
+
         if (isMounted) {
           setUserName(name);
+          setUserBio(bio);
+          setUserAvatar(avatarUrl);
         }
       } catch {
         if (isMounted) {
           setUserName(null);
+          setUserBio(null);
+          setUserAvatar(null);
         }
       } finally {
         if (isMounted) {
@@ -93,37 +91,33 @@ export default function HomePage() {
   }, []);
 
   /**
-   * Refresh the user's posts when the screen gains focus.
+   * Refresh the user's posts and cached profile fields when the screen gains focus.
+   * This keeps the profile in sync after editing settings.
    */
   useFocusEffect(
     useCallback(() => {
+      let isMounted = true;
+
+      const syncStoredProfile = async () => {
+        const stored = await getAuthUser();
+        if (!isMounted) return;
+        setUserName(stored?.name ?? null);
+        setUserBio(stored?.bio ?? null);
+        setUserAvatar(stored?.avatarUrl ?? null);
+      };
+
+      syncStoredProfile();
       listPosts();
+
+      return () => {
+        isMounted = false;
+      };
     }, [listPosts])
   );
 
   useEffect(() => {
-    setProfilePosts(
-      [...posts]
-        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .map((post, index) =>
-          normalizePostCard(post, index, { userName: userName ?? 'You' })
-        )
-    );
+    setProfilePosts([...posts].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).map((post, index) => normalizePostCard(post, index, { userName: userName ?? 'You' })));
   }, [posts, userName]);
-
-  /**
-   * Log out the user and clear local auth data.
-   * Always navigates back to the auth stack.
-   */
-  async function logout() {
-    try {
-      await authFetch(`${API_BASE}/auth/logout`, { method: 'POST' });
-    } finally {
-      await clearAuthToken();
-      await clearAuthUser();
-      router.replace('/(auth)');
-    }
-  }
 
   /**
    * Navigate to the Create Session screen.
@@ -133,10 +127,17 @@ export default function HomePage() {
   }
 
   /**
-   * Navigate to the spots builder screen.
+   * Navigate to the sessions screen.
    */
-  function goToSpots() {
-    router.push('/spots');
+  function goToSessions() {
+    router.push('/session');
+  }
+
+  /**
+   * Navigate to the settings screen.
+   */
+  function goToSettings() {
+    router.push('/settings');
   }
 
   /**
@@ -164,11 +165,7 @@ export default function HomePage() {
     setDeleteError(null);
 
     try {
-      await requestJson(
-        `${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`,
-        { method: 'DELETE' },
-        'Delete session failed'
-      );
+      await requestJson(`${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`, { method: 'DELETE' }, 'Delete session failed');
       await listPosts();
       setSelectedPost(null);
     } catch (e: any) {
@@ -178,34 +175,101 @@ export default function HomePage() {
     }
   }
 
+  const displayName = userName ?? 'Your Name';
+  const displayInitial = displayName.trim().charAt(0).toUpperCase() || 'U';
+  const bioText = userBio?.trim() || 'Add a short bio about your riding style or favorite spots.';
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-        <View style={{ alignItems: 'center' }}>
-          <Text
-            style={{ fontSize: 20, fontWeight: '700', textAlign: 'center' }}
-          >
-            {userName ?? 'Profile'}
-          </Text>
-          {loadingUser && !userName && (
-            <ActivityIndicator style={{ marginTop: 6 }} />
-          )}
+        {/* Profile header: avatar, name, and quick actions */}
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            {/* Avatar image if set, otherwise a simple placeholder */}
+            {userAvatar ? (
+              <Image
+                source={{ uri: userAvatar }}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: '#e6e6e6',
+                }}
+              />
+            ) : (
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 32,
+                  backgroundColor: '#e6e6e6',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text style={{ fontSize: 24, fontWeight: '700', color: '#555' }}>{displayInitial}</Text>
+              </View>
+            )}
+
+            <View style={{ gap: 2 }}>
+              <Text style={{ fontSize: 20, fontWeight: '700' }}>{displayName}</Text>
+              {loadingUser && !userName && <ActivityIndicator style={{ marginTop: 6 }} />}
+            </View>
+          </View>
+
+          {/* Small buttons for map + settings */}
+          <View style={{ gap: 8 }}>
+            <Pressable
+              onPress={goToSessions}
+              style={{
+                borderWidth: 1,
+                borderColor: '#ddd',
+                backgroundColor: '#fff',
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '600' }}>Sessions</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={goToSettings}
+              style={{
+                borderWidth: 1,
+                borderColor: '#ddd',
+                backgroundColor: '#fff',
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '600' }}>Settings</Text>
+            </Pressable>
+          </View>
         </View>
 
+        {/* Bio section */}
+        <View>
+          <Text style={{ color: '#555' }}>{bioText}</Text>
+        </View>
+
+        {/* Primary actions */}
         <View style={{ gap: 10 }}>
           <Button onPress={goToCreatePost}>
             <ButtonText>Create Post</ButtonText>
           </Button>
-          <Button onPress={goToSpots} variant="outline">
-            <ButtonText>Spots Map</ButtonText>
-          </Button>
         </View>
 
-        <View>
-          <Button onPress={logout}>
-            <ButtonText>Logout</ButtonText>
-          </Button>
-        </View>
+        {/* Posts list */}
+        <Text style={{ fontSize: 18, fontWeight: '700' }}>Your Posts</Text>
 
         <PostList
           posts={profilePosts}
@@ -228,9 +292,7 @@ export default function HomePage() {
                     borderRadius: 6,
                   }}
                 >
-                  <Text style={{ color: '#7a1f1f', fontWeight: '600' }}>
-                    Delete
-                  </Text>
+                  <Text style={{ color: '#7a1f1f', fontWeight: '600' }}>Delete</Text>
                 </Pressable>
               </View>
             );
@@ -238,14 +300,7 @@ export default function HomePage() {
         />
       </ScrollView>
 
-      <DeleteSessionModal
-        visible={Boolean(selectedPost)}
-        post={selectedPost}
-        deleting={deletingPost}
-        deleteError={deleteError}
-        onCancel={closeDeleteModal}
-        onDelete={deletePost}
-      />
+      <DeleteSessionModal visible={Boolean(selectedPost)} post={selectedPost} deleting={deletingPost} deleteError={deleteError} onCancel={closeDeleteModal} onDelete={deletePost} />
     </SafeAreaView>
   );
 }

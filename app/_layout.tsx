@@ -22,15 +22,13 @@ export default function RootLayout() {
   }
 
   return (
-    
     <GluestackUIProvider mode="dark">
-      <Stack initialRouteName='(auth)'>
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="create-session" options={{ headerShown: false }} />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+      <Stack initialRouteName="(auth)" screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="create-session" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
     </GluestackUIProvider>
-  
   );
 }

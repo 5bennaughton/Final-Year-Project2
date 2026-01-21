@@ -96,7 +96,10 @@ export default function AddSpot() {
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 22, fontWeight: '700' }}>Add Spot</Text>
 
-        <Button variant="outline" onPress={() => router.replace('/spots')}>
+        <Button
+          variant="outline"
+          onPress={() => router.replace('/(tabs)/Map')}
+        >
           <ButtonText>Back to Map</ButtonText>
         </Button>
 

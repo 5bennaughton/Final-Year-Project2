@@ -120,7 +120,7 @@ export default function SpotDetails() {
         </View>
 
         {/* Simple back button */}
-        <Button variant="outline" onPress={() => router.push('/spots')}>
+        <Button variant="outline" onPress={() => router.push('/(tabs)/Map')}>
           <ButtonText>Back to Map</ButtonText>
         </Button>
       </ScrollView>

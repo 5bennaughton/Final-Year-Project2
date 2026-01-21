@@ -63,6 +63,8 @@ export default function Login({ onSuccess, onGoToRegister }: Props) {
           id: data.user.id,
           email: data.user.email,
           name: data.user.name,
+          bio: data.user.bio ?? null,
+          avatarUrl: data.user.avatarUrl ?? null,
         });
       }
       onSuccess?.(data);

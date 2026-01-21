@@ -26,17 +26,11 @@ export default function Home() {
     setError(null);
 
     try {
-      const data = await requestJson(
-        `${API_BASE}/feed/posts`,
-        {},
-        'Fetch feed failed'
-      );
+      const data = await requestJson(`${API_BASE}/feed/posts`, {}, 'Fetch feed failed');
 
       const posts = Array.isArray(data?.posts) ? data.posts : [];
 
-      const normalized = posts.map((post: any, index: number) =>
-        normalizePostCard(post, index)
-      );
+      const normalized = posts.map((post: any, index: number) => normalizePostCard(post, index));
 
       setFeedPosts(normalized);
     } catch (err: any) {
@@ -66,9 +60,7 @@ export default function Home() {
             borderRadius: 8,
           }}
         >
-          <Text style={{ color: 'white', fontWeight: '600' }}>
-            Find Sessions Nearby
-          </Text>
+          <Text style={{ color: 'white', fontWeight: '600' }}>Find Sessions Nearby</Text>
         </Pressable>
 
         <PostList

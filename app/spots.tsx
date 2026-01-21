@@ -1,4 +1,4 @@
-import SpotsScreen from '@/screens/Spots';
+import { Redirect } from 'expo-router';
 
 // eslint-disable-next-line react/display-name
-export default () => <SpotsScreen />;
+export default () => <Redirect href="/(tabs)/Map" />;
