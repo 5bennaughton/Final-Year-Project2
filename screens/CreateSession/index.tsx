@@ -32,6 +32,7 @@ type SessionPayload = {
   location: string;
   latitude?: number | null;
   longitude?: number | null;
+  spotId?: string | null;
 };
 
 type LocationCoords = {
@@ -94,6 +95,8 @@ export default function CreateSessionScreen() {
   );
   const [spotSuggestions, setSpotSuggestions] = useState<SpotSuggestion[]>([]);
   const [allSpots, setAllSpots] = useState<SpotSuggestion[]>([]);
+  // Stores the selected community spot id (when a user picks one).
+  const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [selectedLocationLabel, setSelectedLocationLabel] = useState<
     string | null
   >(null);
@@ -219,6 +222,7 @@ export default function CreateSessionScreen() {
     setLocation(value);
     setSelectedLocationLabel(null);
     setLocationCoords(null);
+    setSelectedSpotId(null);
   }
 
   /**
@@ -228,6 +232,7 @@ export default function CreateSessionScreen() {
     setLocation(suggestion.label);
     setSelectedLocationLabel(suggestion.label);
     setLocationCoords({ latitude: suggestion.lat, longitude: suggestion.lon });
+    setSelectedSpotId(null);
     setLocationSuggestions([]);
     setSpotSuggestions([]);
     setLocationSearching(false);
@@ -241,6 +246,7 @@ export default function CreateSessionScreen() {
     setLocation(spot.name);
     setSelectedLocationLabel(spot.name);
     setLocationCoords({ latitude: spot.latitude, longitude: spot.longitude });
+    setSelectedSpotId(spot.id);
     setLocationSuggestions([]);
     setSpotSuggestions([]);
     setLocationSearching(false);
@@ -314,6 +320,8 @@ export default function CreateSessionScreen() {
       location: location.trim(),
       latitude: locationCoords?.latitude ?? null,
       longitude: locationCoords?.longitude ?? null,
+      // Include the spotId when the user chose a known spot.
+      spotId: selectedSpotId ?? null,
     };
   }
 
