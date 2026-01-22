@@ -4,7 +4,13 @@ import { API_BASE } from '@/constants/constants';
 import { requestJson, useUserSearch, type UserResult } from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FRIENDS_BASE = `${API_BASE}/friends`;
@@ -33,7 +39,8 @@ function getRequesterLabel(request: FriendRequest) {
 export default function Friends() {
   const router = useRouter();
   const [query, setQuery] = useState('');
-  const { results, searching, searchError, search, clearResults } = useUserSearch();
+  const { results, searching, searchError, search, clearResults } =
+    useUserSearch();
 
   const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
@@ -121,7 +128,11 @@ export default function Friends() {
     setFriendsMessage(null);
 
     try {
-      const data = await requestJson(`${FRIENDS_BASE}/list`, {}, 'Fetch friends failed');
+      const data = await requestJson(
+        `${FRIENDS_BASE}/list`,
+        {},
+        'Fetch friends failed'
+      );
       if (!data || !Array.isArray(data.friends)) {
         setFriends([]);
         setFriendsError('Unexpected response from server.');
@@ -163,7 +174,11 @@ export default function Friends() {
     setRequestsMessage(null);
 
     try {
-      const data = await requestJson(`${FRIENDS_BASE}/list-requests?type=incoming`, {}, 'Fetch requests failed');
+      const data = await requestJson(
+        `${FRIENDS_BASE}/list-requests?type=incoming`,
+        {},
+        'Fetch requests failed'
+      );
       if (!data || !Array.isArray(data.requests)) {
         setRequests([]);
         setRequestsError('Unexpected response from server.');
@@ -197,7 +212,10 @@ export default function Friends() {
    * Accept or decline a pending friend request by its id.
    * Updates the list and shows a status message.
    */
-  const respondToRequest = async (requestId: string, action: 'accept' | 'decline') => {
+  const respondToRequest = async (
+    requestId: string,
+    action: 'accept' | 'decline'
+  ) => {
     setActingRequestId(requestId);
     setRequestsError(null);
     setRequestsMessage(null);
@@ -213,7 +231,11 @@ export default function Friends() {
         'Request failed'
       );
       setRequests((prev) => prev.filter((request) => request.id !== requestId));
-      setRequestsMessage(action === 'accept' ? 'Friend request accepted.' : 'Friend request declined.');
+      setRequestsMessage(
+        action === 'accept'
+          ? 'Friend request accepted.'
+          : 'Friend request declined.'
+      );
     } catch (err: any) {
       setRequestsError(err?.message ?? 'Request failed');
     } finally {
@@ -230,11 +252,22 @@ export default function Friends() {
         <View style={{ gap: 10 }}>
           <Text style={{ fontSize: 16, fontWeight: '600' }}>Search users</Text>
           <Input variant="outline" size="md">
-            <InputField placeholder="Search by name" value={query} onChangeText={setQuery} onSubmitEditing={() => searchUsers(query)} returnKeyType="search" autoCapitalize="words" style={{ color: 'black' }} placeholderTextColor="gray" />
+            <InputField
+              placeholder="Search by name"
+              value={query}
+              onChangeText={setQuery}
+              onSubmitEditing={() => searchUsers(query)}
+              returnKeyType="search"
+              autoCapitalize="words"
+              style={{ color: 'black' }}
+              placeholderTextColor="gray"
+            />
           </Input>
           {searching && <ActivityIndicator />}
           {searchError && <Text style={{ color: 'red' }}>{searchError}</Text>}
-          {results.length === 0 && !searching && !searchError && <Text style={{ color: '#666' }}>No results yet.</Text>}
+          {results.length === 0 && !searching && !searchError && (
+            <Text style={{ color: '#666' }}>No results yet.</Text>
+          )}
           {results.map((user) => (
             <Pressable
               key={user.id}
@@ -256,7 +289,9 @@ export default function Friends() {
               <Text style={{ color: '#666' }}>{user.email}</Text>
             </Pressable>
           ))}
-          {requestMessage && <Text style={{ color: 'green' }}>{requestMessage}</Text>}
+          {requestMessage && (
+            <Text style={{ color: 'green' }}>{requestMessage}</Text>
+          )}
           {requestError && <Text style={{ color: 'red' }}>{requestError}</Text>}
         </View>
 
@@ -264,16 +299,24 @@ export default function Friends() {
         <View style={{ gap: 10 }}>
           <Text style={{ fontSize: 16, fontWeight: '600' }}>Your friends</Text>
           <Button onPress={toggleFriends}>
-            <ButtonText>{showFriends ? 'Hide friends' : 'Show friends'}</ButtonText>
+            <ButtonText>
+              {showFriends ? 'Hide friends' : 'Show friends'}
+            </ButtonText>
           </Button>
 
           {showFriends && (
             <View style={{ gap: 10 }}>
               <Button onPress={loadFriends} disabled={loadingFriends}>
-                {loadingFriends ? <ActivityIndicator color="white" /> : <ButtonText>Refresh friends</ButtonText>}
+                {loadingFriends ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>Refresh friends</ButtonText>
+                )}
               </Button>
 
-              {friends.length === 0 && !loadingFriends && !friendsError && <Text style={{ color: '#666' }}>No friends yet.</Text>}
+              {friends.length === 0 && !loadingFriends && !friendsError && (
+                <Text style={{ color: '#666' }}>No friends yet.</Text>
+              )}
 
               {friends.map((friend) => (
                 <View
@@ -291,26 +334,40 @@ export default function Friends() {
                 </View>
               ))}
 
-              {friendsMessage && <Text style={{ color: 'green' }}>{friendsMessage}</Text>}
-              {friendsError && <Text style={{ color: 'red' }}>{friendsError}</Text>}
+              {friendsMessage && (
+                <Text style={{ color: 'green' }}>{friendsMessage}</Text>
+              )}
+              {friendsError && (
+                <Text style={{ color: 'red' }}>{friendsError}</Text>
+              )}
             </View>
           )}
         </View>
 
         {/* Friend requests section */}
         <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>Friend requests</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600' }}>
+            Friend requests
+          </Text>
           <Button onPress={toggleRequests}>
-            <ButtonText>{showRequests ? 'Hide requests' : 'Show requests'}</ButtonText>
+            <ButtonText>
+              {showRequests ? 'Hide requests' : 'Show requests'}
+            </ButtonText>
           </Button>
 
           {showRequests && (
             <View style={{ gap: 10 }}>
               <Button onPress={loadFriendRequests} disabled={loadingRequests}>
-                {loadingRequests ? <ActivityIndicator color="white" /> : <ButtonText>Refresh requests</ButtonText>}
+                {loadingRequests ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>Refresh requests</ButtonText>
+                )}
               </Button>
 
-              {requests.length === 0 && !loadingRequests && !requestsError && <Text style={{ color: '#666' }}>No pending requests.</Text>}
+              {requests.length === 0 && !loadingRequests && !requestsError && (
+                <Text style={{ color: '#666' }}>No pending requests.</Text>
+              )}
 
               {requests.map((request) => {
                 const isActing = actingRequestId === request.id;
@@ -325,22 +382,44 @@ export default function Friends() {
                       gap: 8,
                     }}
                   >
-                    <Text style={{ fontWeight: '600' }}>{getRequesterLabel(request)}</Text>
-                    <Text style={{ color: '#666' }}>Request id: {request.id}</Text>
+                    <Text style={{ fontWeight: '600' }}>
+                      {getRequesterLabel(request)}
+                    </Text>
+                    <Text style={{ color: '#666' }}>
+                      Request id: {request.id}
+                    </Text>
                     <View style={{ gap: 10 }}>
-                      <Button onPress={() => respondToRequest(request.id, 'accept')} disabled={isActing}>
-                        {isActing ? <ActivityIndicator color="white" /> : <ButtonText>Accept</ButtonText>}
+                      <Button
+                        onPress={() => respondToRequest(request.id, 'accept')}
+                        disabled={isActing}
+                      >
+                        {isActing ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <ButtonText>Accept</ButtonText>
+                        )}
                       </Button>
-                      <Button onPress={() => respondToRequest(request.id, 'decline')} disabled={isActing}>
-                        {isActing ? <ActivityIndicator color="white" /> : <ButtonText>Decline</ButtonText>}
+                      <Button
+                        onPress={() => respondToRequest(request.id, 'decline')}
+                        disabled={isActing}
+                      >
+                        {isActing ? (
+                          <ActivityIndicator color="white" />
+                        ) : (
+                          <ButtonText>Decline</ButtonText>
+                        )}
                       </Button>
                     </View>
                   </View>
                 );
               })}
 
-              {requestsMessage && <Text style={{ color: 'green' }}>{requestsMessage}</Text>}
-              {requestsError && <Text style={{ color: 'red' }}>{requestsError}</Text>}
+              {requestsMessage && (
+                <Text style={{ color: 'green' }}>{requestsMessage}</Text>
+              )}
+              {requestsError && (
+                <Text style={{ color: 'red' }}>{requestsError}</Text>
+              )}
             </View>
           )}
         </View>

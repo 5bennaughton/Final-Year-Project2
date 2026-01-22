@@ -1,7 +1,7 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const TOKEN_KEY = "auth.jwt";
-const USER_KEY = "auth.user";
+const TOKEN_KEY = 'auth.jwt';
+const USER_KEY = 'auth.user';
 
 export type AuthUser = {
   id: string;
@@ -67,7 +67,7 @@ export const authFetch = async (url: string, init: RequestInit = {}) => {
   const headers = new Headers(init.headers ?? undefined);
 
   if (token) {
-    headers.set("Authorization", `Bearer ${token}`);
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   return fetch(url, { ...init, headers });

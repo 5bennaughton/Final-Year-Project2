@@ -1,8 +1,14 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { API_BASE } from '@/constants/constants';
-import { requestJson } from '@/helpers/helpers';
-import { authFetch, clearAuthToken, clearAuthUser, getAuthUser, setAuthUser } from '@/lib/auth';
+import { requestJson, useMeProfile } from '@/helpers/helpers';
+import {
+  authFetch,
+  clearAuthToken,
+  clearAuthUser,
+  getAuthUser,
+  setAuthUser,
+} from '@/lib/auth';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -34,72 +40,33 @@ async function logout() {
  */
 export default function SettingsScreen() {
   const router = useRouter();
+  const {
+    profile,
+    loading: loadingProfile,
+    error: profileError,
+    refresh,
+  } = useMeProfile();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   /**
    * Load the current profile so the form is pre-filled.
    */
   useEffect(() => {
-    let isMounted = true;
+    if (!profile || hasHydrated) return;
 
-    const loadProfile = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        // Prefer locally stored data first so UI feels instant.
-        const stored = await getAuthUser();
-        if (stored?.name && isMounted) {
-          setName(stored.name);
-        }
-        if (stored?.bio && isMounted) {
-          setBio(stored.bio ?? '');
-        }
-        if (stored?.avatarUrl && isMounted) {
-          setAvatarUrl(stored.avatarUrl);
-        }
-
-        const data = (await requestJson(`${API_BASE}/auth/me`, {}, 'Fetch profile failed')) as MeResponse | null;
-
-        const apiName = typeof data?.name === 'string' ? data.name : undefined;
-        const apiBio = typeof data?.bio === 'string' ? data.bio : data?.bio === null ? '' : undefined;
-        const apiAvatar = typeof data?.avatarUrl === 'string' ? data.avatarUrl : data?.avatarUrl === null ? null : undefined;
-
-        if (isMounted) {
-          if (apiName !== undefined) {
-            setName(apiName);
-          }
-          if (apiBio !== undefined) {
-            setBio(apiBio);
-          }
-          if (apiAvatar !== undefined) {
-            setAvatarUrl(apiAvatar);
-          }
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          setError(err?.message ?? 'Fetch profile failed');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadProfile();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+    // Hydrate the form once from the profile hook.
+    setName(profile.name ?? '');
+    setBio(profile.bio ?? '');
+    setAvatarUrl(profile.avatarUrl ?? null);
+    setHasHydrated(true);
+  }, [profile, hasHydrated]);
 
   /**
    * Save name + bio updates to the backend.
@@ -133,13 +100,18 @@ export default function SettingsScreen() {
       )) as MeResponse | null;
 
       const nextName = typeof data?.name === 'string' ? data.name : trimmedName;
-      const nextBio = typeof data?.bio === 'string' ? data.bio : (data?.bio ?? '');
-      const nextAvatar = typeof data?.avatarUrl === 'string' ? data.avatarUrl : (data?.avatarUrl ?? avatarUrl ?? null);
+      const nextBio =
+        typeof data?.bio === 'string' ? data.bio : (data?.bio ?? '');
+      const nextAvatar =
+        typeof data?.avatarUrl === 'string'
+          ? data.avatarUrl
+          : (data?.avatarUrl ?? avatarUrl ?? null);
 
       setName(nextName);
       setBio(nextBio || '');
       setAvatarUrl(nextAvatar);
       setSuccess('Profile updated.');
+      refresh();
 
       // Keep local cached profile in sync for the Profile screen.
       const stored = await getAuthUser();
@@ -222,10 +194,12 @@ export default function SettingsScreen() {
         'Update avatar failed'
       )) as MeResponse | null;
 
-      const nextAvatar = typeof updated?.avatarUrl === 'string' ? updated.avatarUrl : url;
+      const nextAvatar =
+        typeof updated?.avatarUrl === 'string' ? updated.avatarUrl : url;
 
       setAvatarUrl(nextAvatar);
       setSuccess('Avatar updated.');
+      refresh();
 
       // Keep local cached profile in sync for the Profile screen.
       const stored = await getAuthUser();
@@ -275,20 +249,44 @@ export default function SettingsScreen() {
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 26, fontWeight: '700', color: '#555' }}>{(name.trim().charAt(0) || 'U').toUpperCase()}</Text>
+                <Text
+                  style={{ fontSize: 26, fontWeight: '700', color: '#555' }}
+                >
+                  {(name.trim().charAt(0) || 'U').toUpperCase()}
+                </Text>
               </View>
             )}
 
             <Button onPress={pickAvatar} disabled={uploadingAvatar}>
-              {uploadingAvatar ? <ActivityIndicator /> : <ButtonText>Change Photo</ButtonText>}
+              {uploadingAvatar ? (
+                <ActivityIndicator />
+              ) : (
+                <ButtonText>Change Photo</ButtonText>
+              )}
             </Button>
           </View>
 
-          <Input variant="outline" size="md" style={{ backgroundColor: '#fff', borderColor: '#ddd' }}>
-            <InputField placeholder="Name" value={name} onChangeText={setName} autoCapitalize="words" selectionColor="#1f6f5f" style={{ color: '#1A1A1A' }} placeholderTextColor="#777" />
+          <Input
+            variant="outline"
+            size="md"
+            style={{ backgroundColor: '#fff', borderColor: '#ddd' }}
+          >
+            <InputField
+              placeholder="Name"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              selectionColor="#1f6f5f"
+              style={{ color: '#1A1A1A' }}
+              placeholderTextColor="#777"
+            />
           </Input>
 
-          <Input variant="outline" size="md" style={{ backgroundColor: '#fff', borderColor: '#ddd' }}>
+          <Input
+            variant="outline"
+            size="md"
+            style={{ backgroundColor: '#fff', borderColor: '#ddd' }}
+          >
             <InputField
               placeholder="Bio"
               value={bio}
@@ -304,10 +302,15 @@ export default function SettingsScreen() {
           </Input>
 
           <Button onPress={saveProfile} disabled={saving}>
-            {saving ? <ActivityIndicator color="white" /> : <ButtonText>Save Profile</ButtonText>}
+            {saving ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <ButtonText>Save Profile</ButtonText>
+            )}
           </Button>
 
-          {loading && <ActivityIndicator />}
+          {loadingProfile && <ActivityIndicator />}
+          {profileError && <Text style={{ color: 'red' }}>{profileError}</Text>}
           {error && <Text style={{ color: 'red' }}>{error}</Text>}
           {success && <Text style={{ color: '#1f6f5f' }}>{success}</Text>}
         </View>
@@ -315,12 +318,16 @@ export default function SettingsScreen() {
         {/* Simple placeholders for future sections */}
         <View style={{ gap: 10 }}>
           <Text style={{ fontWeight: '700' }}>Privacy</Text>
-          <Text style={{ color: '#666' }}>Profile visibility, post visibility</Text>
+          <Text style={{ color: '#666' }}>
+            Profile visibility, post visibility
+          </Text>
         </View>
 
         <View style={{ gap: 10 }}>
           <Text style={{ fontWeight: '700' }}>Notifications</Text>
-          <Text style={{ color: '#666' }}>Future session reminders, comments</Text>
+          <Text style={{ color: '#666' }}>
+            Future session reminders, comments
+          </Text>
         </View>
 
         <View>

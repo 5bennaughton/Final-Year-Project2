@@ -2,21 +2,28 @@ import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
 import { API_BASE } from '@/constants/constants';
-import { normalizePostCard, requestJson, useListPosts, type PostCardData, type SessionPost } from '@/helpers/helpers';
-import { getAuthUser } from '@/lib/auth';
+import {
+  normalizePostCard,
+  requestJson,
+  useListPosts,
+  useMeProfile,
+  type PostCardData,
+  type SessionPost,
+} from '@/helpers/helpers';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
-
-type MeResponse = {
-  name?: string;
-  bio?: string | null;
-  avatarUrl?: string | null;
-};
 
 /**
  * Render the profile screen with user info and future posts.
@@ -24,10 +31,12 @@ type MeResponse = {
  */
 export default function HomePage() {
   const router = useRouter();
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userBio, setUserBio] = useState<string | null>(null);
-  const [userAvatar, setUserAvatar] = useState<string | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const {
+    profile,
+    loading: loadingUser,
+    error: profileError,
+    refresh,
+  } = useMeProfile();
   const [selectedPost, setSelectedPost] = useState<SessionPost | null>(null);
   const [deletingPost, setDeletingPost] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -35,89 +44,24 @@ export default function HomePage() {
   const [profilePosts, setProfilePosts] = useState<PostCardData[]>([]);
 
   /**
-   * Load the current user's profile name on mount.
-   */
-  useEffect(() => {
-    let isMounted = true;
-
-    /**
-     * Fetch stored user data and refresh it from the API.
-     * Uses a mounted flag to avoid state updates after unmount.
-     */
-    const loadUser = async () => {
-      setLoadingUser(true);
-      try {
-        const stored = await getAuthUser();
-        if (stored?.name && isMounted) {
-          setUserName(stored.name);
-        }
-
-        if (stored?.bio && isMounted) {
-          setUserBio(stored.bio);
-        }
-
-        if (stored?.avatarUrl && isMounted) {
-          setUserAvatar(stored.avatarUrl);
-        }
-
-        const data = (await requestJson(`${API_BASE}/auth/me`, {}, 'Fetch profile failed')) as MeResponse | null;
-        const name = typeof data?.name === 'string' ? data.name : null;
-        const bio = typeof data?.bio === 'string' ? data.bio : (data?.bio ?? null);
-        const avatarUrl = typeof data?.avatarUrl === 'string' ? data.avatarUrl : (data?.avatarUrl ?? null);
-
-        if (isMounted) {
-          setUserName(name);
-          setUserBio(bio);
-          setUserAvatar(avatarUrl);
-        }
-      } catch {
-        if (isMounted) {
-          setUserName(null);
-          setUserBio(null);
-          setUserAvatar(null);
-        }
-      } finally {
-        if (isMounted) {
-          setLoadingUser(false);
-        }
-      }
-    };
-
-    loadUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  /**
-   * Refresh the user's posts and cached profile fields when the screen gains focus.
-   * This keeps the profile in sync after editing settings.
+   * Refresh the user's posts and profile data when the screen gains focus.
    */
   useFocusEffect(
     useCallback(() => {
-      let isMounted = true;
-
-      const syncStoredProfile = async () => {
-        const stored = await getAuthUser();
-        if (!isMounted) return;
-        setUserName(stored?.name ?? null);
-        setUserBio(stored?.bio ?? null);
-        setUserAvatar(stored?.avatarUrl ?? null);
-      };
-
-      syncStoredProfile();
+      refresh();
       listPosts();
-
-      return () => {
-        isMounted = false;
-      };
-    }, [listPosts])
+    }, [listPosts, refresh])
   );
 
   useEffect(() => {
-    setProfilePosts([...posts].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).map((post, index) => normalizePostCard(post, index, { userName: userName ?? 'You' })));
-  }, [posts, userName]);
+    setProfilePosts(
+      [...posts]
+        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
+        .map((post, index) =>
+          normalizePostCard(post, index, { userName: profile?.name ?? 'You' })
+        )
+    );
+  }, [posts, profile?.name]);
 
   /**
    * Navigate to the Create Session screen.
@@ -165,7 +109,11 @@ export default function HomePage() {
     setDeleteError(null);
 
     try {
-      await requestJson(`${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`, { method: 'DELETE' }, 'Delete session failed');
+      await requestJson(
+        `${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`,
+        { method: 'DELETE' },
+        'Delete session failed'
+      );
       await listPosts();
       setSelectedPost(null);
     } catch (e: any) {
@@ -175,9 +123,11 @@ export default function HomePage() {
     }
   }
 
-  const displayName = userName ?? 'Your Name';
+  const displayName = profile?.name ?? 'Your Name';
   const displayInitial = displayName.trim().charAt(0).toUpperCase() || 'U';
-  const bioText = userBio?.trim() || 'Add a short bio about your riding style or favorite spots.';
+  const bioText =
+    profile?.bio?.trim() ||
+    'Add a short bio about your riding style or favorite spots.';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
@@ -193,9 +143,9 @@ export default function HomePage() {
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             {/* Avatar image if set, otherwise a simple placeholder */}
-            {userAvatar ? (
+            {profile?.avatarUrl ? (
               <Image
-                source={{ uri: userAvatar }}
+                source={{ uri: profile.avatarUrl }}
                 style={{
                   width: 64,
                   height: 64,
@@ -214,13 +164,21 @@ export default function HomePage() {
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 24, fontWeight: '700', color: '#555' }}>{displayInitial}</Text>
+                <Text
+                  style={{ fontSize: 24, fontWeight: '700', color: '#555' }}
+                >
+                  {displayInitial}
+                </Text>
               </View>
             )}
 
             <View style={{ gap: 2 }}>
-              <Text style={{ fontSize: 20, fontWeight: '700' }}>{displayName}</Text>
-              {loadingUser && !userName && <ActivityIndicator style={{ marginTop: 6 }} />}
+              <Text style={{ fontSize: 20, fontWeight: '700' }}>
+                {displayName}
+              </Text>
+              {loadingUser && !profile?.name && (
+                <ActivityIndicator style={{ marginTop: 6 }} />
+              )}
             </View>
           </View>
 
@@ -259,6 +217,7 @@ export default function HomePage() {
         {/* Bio section */}
         <View>
           <Text style={{ color: '#555' }}>{bioText}</Text>
+          {profileError && <Text style={{ color: 'red' }}>{profileError}</Text>}
         </View>
 
         {/* Primary actions */}
@@ -292,7 +251,9 @@ export default function HomePage() {
                     borderRadius: 6,
                   }}
                 >
-                  <Text style={{ color: '#7a1f1f', fontWeight: '600' }}>Delete</Text>
+                  <Text style={{ color: '#7a1f1f', fontWeight: '600' }}>
+                    Delete
+                  </Text>
                 </Pressable>
               </View>
             );
@@ -300,7 +261,14 @@ export default function HomePage() {
         />
       </ScrollView>
 
-      <DeleteSessionModal visible={Boolean(selectedPost)} post={selectedPost} deleting={deletingPost} deleteError={deleteError} onCancel={closeDeleteModal} onDelete={deletePost} />
+      <DeleteSessionModal
+        visible={Boolean(selectedPost)}
+        post={selectedPost}
+        deleting={deletingPost}
+        deleteError={deleteError}
+        onCancel={closeDeleteModal}
+        onDelete={deletePost}
+      />
     </SafeAreaView>
   );
 }

@@ -1,19 +1,19 @@
-import { API_BASE } from "@/constants/constants";
-import { getAuthToken } from "@/lib/auth";
-import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import Login from "../Auth/Login";
-import Register from "../Auth/Register";
+import { API_BASE } from '@/constants/constants';
+import { getAuthToken } from '@/lib/auth';
+import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Login from '../Auth/Login';
+import Register from '../Auth/Register';
 
-type Mode = "login" | "register";
+type Mode = 'login' | 'register';
 
 /**
  * Render the auth screen and redirect if already logged in.
  */
 export default function AuthPage() {
-  const [mode, setMode] = useState<Mode>("register"); // only register for now
+  const [mode, setMode] = useState<Mode>('register'); // only register for now
   const router = useRouter();
 
   /**
@@ -24,7 +24,7 @@ export default function AuthPage() {
 
     getAuthToken().then((token) => {
       if (token && isMounted) {
-        router.replace("/(tabs)");
+        router.replace('/(tabs)');
       }
     });
 
@@ -34,23 +34,23 @@ export default function AuthPage() {
   }, [router]);
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 20, justifyContent: "center" }}>
+    <SafeAreaView style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
       <View style={{ gap: 16 }}>
-        <Text style={{ fontSize: 28, fontWeight: "700" }}>
-          {mode === "login" ? "Login" : "Register"}
+        <Text style={{ fontSize: 28, fontWeight: '700' }}>
+          {mode === 'login' ? 'Login' : 'Register'}
         </Text>
 
-        {mode === "login" ? (
+        {mode === 'login' ? (
           <Login
             apiBase={API_BASE}
-            onSuccess={() => router.replace("/(tabs)")}
-            onGoToRegister={() => setMode("register")}
+            onSuccess={() => router.replace('/(tabs)')}
+            onGoToRegister={() => setMode('register')}
           />
         ) : (
           <Register
             apiBase={API_BASE}
-            onSuccess={() => setMode("login")}
-            onGoToLogin={() => setMode("login")}
+            onSuccess={() => setMode('login')}
+            onGoToLogin={() => setMode('login')}
           />
         )}
       </View>

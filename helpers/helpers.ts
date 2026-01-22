@@ -1,7 +1,7 @@
 import { API_BASE } from '@/constants/constants';
 import * as Location from 'expo-location';
-import { useCallback, useState } from 'react';
-import { authFetch } from '../lib/auth';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { authFetch, getAuthUser, setAuthUser } from '../lib/auth';
 
 const FRIENDS_BASE = `${API_BASE}/friends`;
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
@@ -11,6 +11,14 @@ export type UserResult = {
   id: string;
   name: string;
   email: string;
+};
+
+export type MeProfile = {
+  id?: string;
+  email?: string;
+  name?: string;
+  bio?: string | null;
+  avatarUrl?: string | null;
 };
 
 export type SessionPost = {
@@ -46,6 +54,9 @@ export type GeoCoords = {
   longitude: number;
 };
 
+/**
+ * Build a search endpoint with a URL-encoded query.
+ */
 function buildSearchUrl(query: string) {
   return `${FRIENDS_BASE}/search-users?q=${encodeURIComponent(query)}`;
 }
@@ -83,6 +94,97 @@ export async function requestJson(
   return data;
 }
 
+/**
+ * Load the current user's profile data from cache and the API.
+ * Keeps AsyncStorage in sync and returns loading/error state.
+ */
+export function useMeProfile() {
+  const [profile, setProfile] = useState<MeProfile | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Use cached data first so UI feels instant.
+      const stored = await getAuthUser();
+
+      if (stored && mountedRef.current) {
+        setProfile({
+          id: stored.id,
+          email: stored.email,
+          name: stored.name,
+          bio: stored.bio ?? null,
+          avatarUrl: stored.avatarUrl ?? null,
+        });
+      }
+
+      const data = await requestJson(
+        `${API_BASE}/auth/me`,
+        {},
+        'Fetch profile failed'
+      );
+
+      const nextProfile: MeProfile = {
+        id: stored?.id,
+        email: stored?.email,
+        name:
+          typeof data?.name === 'string'
+            ? data.name
+            : (stored?.name ?? undefined),
+        bio:
+          typeof data?.bio === 'string'
+            ? data.bio
+            : (data?.bio ?? stored?.bio ?? null),
+        avatarUrl:
+          typeof data?.avatarUrl === 'string'
+            ? data.avatarUrl
+            : (data?.avatarUrl ?? stored?.avatarUrl ?? null),
+      };
+
+      if (mountedRef.current) {
+        setProfile(nextProfile);
+      }
+
+      // Keep the cached user in sync for other screens.
+      if (stored?.id) {
+        await setAuthUser({
+          ...stored,
+          name: nextProfile.name ?? stored.name,
+          bio: nextProfile.bio ?? null,
+          avatarUrl: nextProfile.avatarUrl ?? null,
+        });
+      }
+    } catch (err: any) {
+      if (mountedRef.current) {
+        setError(err?.message ?? 'Fetch profile failed');
+      }
+    } finally {
+      if (mountedRef.current) {
+        setLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { profile, loading, error, refresh };
+}
+
+/**
+ * Search users by name/email with debounce-friendly helpers.
+ */
 export function useUserSearch() {
   const [results, setResults] = useState<UserResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -128,6 +230,9 @@ export function useUserSearch() {
   return { results, searching, searchError, search, clearResults };
 }
 
+/**
+ * Fetch posts for the authenticated user or a provided user id.
+ */
 export function useListPosts(defaultUserId?: string) {
   const [posts, setPosts] = useState<SessionPost[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
@@ -170,6 +275,9 @@ export function useListPosts(defaultUserId?: string) {
   return { posts, loadingPosts, postsError, listPosts };
 }
 
+/**
+ * Normalize raw post shapes into a consistent card format.
+ */
 export function normalizePostCard(
   raw: any,
   index: number,

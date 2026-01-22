@@ -1,6 +1,6 @@
-import { API_BASE } from "@/constants/constants";
-import * as WebBrowser from "expo-web-browser";
-import React, { useState } from "react";
+import { API_BASE } from '@/constants/constants';
+import * as WebBrowser from 'expo-web-browser';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -8,8 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-
+} from 'react-native';
 
 type LatestActivity = {
   id: string | number;
@@ -28,12 +27,12 @@ type LatestActivity = {
  * Type guard for validating the Strava activity payload shape.
  */
 const isLatestActivity = (value: unknown): value is LatestActivity => {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== 'object') return false;
   return (
-    "title" in value &&
-    "distanceKm" in value &&
-    "startDate" in value &&
-    "movingTimeMin" in value
+    'title' in value &&
+    'distanceKm' in value &&
+    'startDate' in value &&
+    'movingTimeMin' in value
   );
 };
 
@@ -67,8 +66,8 @@ export default function SessionSummary() {
    * Open the Strava OAuth flow and mark the user as connected.
    */
   const connectStrava = async () => {
-   await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
-   setIsConnected(true);
+    await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
+    setIsConnected(true);
   };
 
   /**
@@ -84,7 +83,7 @@ export default function SessionSummary() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        const msg = data?.message ?? data?.error ?? "Failed to import sessions";
+        const msg = data?.message ?? data?.error ?? 'Failed to import sessions';
         throw new Error(msg);
       }
 
@@ -92,12 +91,12 @@ export default function SessionSummary() {
       const items = rawItems.filter(isLatestActivity);
 
       if (items.length === 0 && rawItems.length > 0) {
-        throw new Error("Unexpected response from server");
+        throw new Error('Unexpected response from server');
       }
 
       setSessions(items);
     } catch (err: any) {
-      setError(err?.message ?? "Could not import sessions.");
+      setError(err?.message ?? 'Could not import sessions.');
       setSessions([]);
     } finally {
       setLoading(false);
@@ -109,12 +108,14 @@ export default function SessionSummary() {
       <View style={styles.actions}>
         <Button title="Connect Strava" onPress={connectStrava} />
         <Button
-          title={loading ? "Importing..." : "Import sessions"}
+          title={loading ? 'Importing...' : 'Import sessions'}
           onPress={importSessions}
           disabled={!isConnected || loading}
         />
         {!isConnected && (
-          <Text style={styles.muted}>Connect to Strava to import sessions.</Text>
+          <Text style={styles.muted}>
+            Connect to Strava to import sessions.
+          </Text>
         )}
       </View>
 
@@ -140,16 +141,20 @@ export default function SessionSummary() {
               📍 <Text style={styles.bold}>Location:</Text> {session.city}
             </Text>
             <Text style={styles.text}>
-              📏 <Text style={styles.bold}>Distance:</Text> {session.distanceKm} km
+              📏 <Text style={styles.bold}>Distance:</Text> {session.distanceKm}{' '}
+              km
             </Text>
             <Text style={styles.text}>
-              ⏱️ <Text style={styles.bold}>Duration:</Text> {session.durationMinutes} min
+              ⏱️ <Text style={styles.bold}>Duration:</Text>{' '}
+              {session.durationMinutes} min
             </Text>
             <Text style={styles.text}>
-              💨 <Text style={styles.bold}>Avg Speed:</Text> {session.avgSpeedKmh} km/h
+              💨 <Text style={styles.bold}>Avg Speed:</Text>{' '}
+              {session.avgSpeedKmh} km/h
             </Text>
             <Text style={styles.text}>
-              🚀 <Text style={styles.bold}>Max Speed:</Text> {session.maxSpeedKmh} km/h
+              🚀 <Text style={styles.bold}>Max Speed:</Text>{' '}
+              {session.maxSpeedKmh} km/h
             </Text>
           </View>
         );
@@ -161,7 +166,7 @@ export default function SessionSummary() {
 const styles = StyleSheet.create({
   scroll: {
     flex: 1,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: '#f9f9f9',
   },
   content: {
     paddingBottom: 24,
@@ -179,15 +184,15 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: "#fff",
-    shadowColor: "#000",
+    backgroundColor: '#fff',
+    shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
   },
   title: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: '700',
     marginBottom: 10,
   },
   text: {
@@ -195,14 +200,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bold: {
-    fontWeight: "600",
+    fontWeight: '600',
   },
   muted: {
-    color: "#666",
+    color: '#666',
   },
   error: {
     marginTop: 8,
-    color: "#b91c1c",
+    color: '#b91c1c',
     paddingHorizontal: 16,
   },
 });

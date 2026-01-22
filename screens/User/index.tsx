@@ -173,7 +173,9 @@ export default function UserPage() {
                   justifyContent: 'center',
                 }}
               >
-                <Text style={{ fontSize: 24, fontWeight: '700', color: '#555' }}>
+                <Text
+                  style={{ fontSize: 24, fontWeight: '700', color: '#555' }}
+                >
                   {displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>

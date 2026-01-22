@@ -1,6 +1,10 @@
 import PostList from '@/components/PostList';
 import { API_BASE } from '@/constants/constants';
-import { normalizePostCard, requestJson, type PostCardData } from '@/helpers/helpers';
+import {
+  normalizePostCard,
+  requestJson,
+  type PostCardData,
+} from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
@@ -26,11 +30,17 @@ export default function Home() {
     setError(null);
 
     try {
-      const data = await requestJson(`${API_BASE}/feed/posts`, {}, 'Fetch feed failed');
+      const data = await requestJson(
+        `${API_BASE}/feed/posts`,
+        {},
+        'Fetch feed failed'
+      );
 
       const posts = Array.isArray(data?.posts) ? data.posts : [];
 
-      const normalized = posts.map((post: any, index: number) => normalizePostCard(post, index));
+      const normalized = posts.map((post: any, index: number) =>
+        normalizePostCard(post, index)
+      );
 
       setFeedPosts(normalized);
     } catch (err: any) {
@@ -60,7 +70,9 @@ export default function Home() {
             borderRadius: 8,
           }}
         >
-          <Text style={{ color: 'white', fontWeight: '600' }}>Find Sessions Nearby</Text>
+          <Text style={{ color: 'white', fontWeight: '600' }}>
+            Find Sessions Nearby
+          </Text>
         </Pressable>
 
         <PostList

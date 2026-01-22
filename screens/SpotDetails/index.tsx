@@ -108,7 +108,9 @@ export default function SpotDetails() {
 
         {/* Upcoming posts list */}
         <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700' }}>Upcoming posts</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700' }}>
+            Upcoming posts
+          </Text>
 
           <PostList
             posts={posts}

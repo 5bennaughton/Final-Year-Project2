@@ -14,8 +14,16 @@
     "average_heartrate": 145,
     "max_heartrate": 176,
     "calories": 720,
-    "map": { "id": "a1234567890", "summary_polyline": "abcdEfghIjklMnopQrstUvwxYz" },
-    "athlete": { "id": 191445644, "firstname": "Ben", "lastname": "Naughton", "city": "Galway" },
+    "map": {
+      "id": "a1234567890",
+      "summary_polyline": "abcdEfghIjklMnopQrstUvwxYz"
+    },
+    "athlete": {
+      "id": 191445644,
+      "firstname": "Ben",
+      "lastname": "Naughton",
+      "city": "Galway"
+    },
     "description": "Kitesurfing session with strong westerly winds."
   },
   {
@@ -33,8 +41,16 @@
     "average_heartrate": 138,
     "max_heartrate": 170,
     "calories": 580,
-    "map": { "id": "a9876543210", "summary_polyline": "zyxwVutsRqpoNmlkJihgFe" },
-    "athlete": { "id": 191445644, "firstname": "Ben", "lastname": "Naughton", "city": "Galway" },
+    "map": {
+      "id": "a9876543210",
+      "summary_polyline": "zyxwVutsRqpoNmlkJihgFe"
+    },
+    "athlete": {
+      "id": 191445644,
+      "firstname": "Ben",
+      "lastname": "Naughton",
+      "city": "Galway"
+    },
     "description": "Evening session with steady 20 knots. Smooth riding!"
   }
 ]

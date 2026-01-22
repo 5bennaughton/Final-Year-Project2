@@ -1,8 +1,8 @@
-import { Button, ButtonText } from "@/components/ui/button";
-import { Input, InputField } from "@/components/ui/input";
-import { API_BASE } from "@/constants/constants";
-import React, { useState } from "react";
-import { ActivityIndicator, Alert, Text, View } from "react-native";
+import { Button, ButtonText } from '@/components/ui/button';
+import { Input, InputField } from '@/components/ui/input';
+import { API_BASE } from '@/constants/constants';
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Text, View } from 'react-native';
 
 type RegisterBody = {
   name: string;
@@ -22,9 +22,9 @@ type Props = {
  */
 export default function Register({ onSuccess, onGoToLogin }: Props) {
   const [form, setForm] = useState<RegisterBody>({
-    name: "",
-    email: "",
-    password: "",
+    name: '',
+    email: '',
+    password: '',
   });
 
   const [loading, setLoading] = useState(false);
@@ -42,29 +42,29 @@ export default function Register({ onSuccess, onGoToLogin }: Props) {
 
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
 
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        const msg = data?.message ?? "Registration failed";
+        const msg = data?.message ?? 'Registration failed';
         setError(msg);
-        Alert.alert("Register failed", msg);
+        Alert.alert('Register failed', msg);
         return;
       }
 
-      setSuccess("Account created! You can log in now.");
-      setForm({ name: "", email: "", password: "" });
+      setSuccess('Account created! You can log in now.');
+      setForm({ name: '', email: '', password: '' });
 
       onSuccess?.(data);
       // optionally switch view
       // onGoToLogin?.();
     } catch {
-      setError("Could not connect to server");
-      Alert.alert("Error", "Could not connect to server");
+      setError('Could not connect to server');
+      Alert.alert('Error', 'Could not connect to server');
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export default function Register({ onSuccess, onGoToLogin }: Props) {
 
   return (
     <View style={{ gap: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: "700" }}>Register</Text>
+      <Text style={{ fontSize: 24, fontWeight: '700' }}>Register</Text>
 
       <Input variant="outline" size="md">
         <InputField
@@ -80,7 +80,7 @@ export default function Register({ onSuccess, onGoToLogin }: Props) {
           value={form.name}
           onChangeText={(name) => setForm((p) => ({ ...p, name }))}
           autoCapitalize="words"
-          style={{ color: "black" }}
+          style={{ color: 'black' }}
           placeholderTextColor="gray"
         />
       </Input>
@@ -92,7 +92,7 @@ export default function Register({ onSuccess, onGoToLogin }: Props) {
           onChangeText={(email) => setForm((p) => ({ ...p, email }))}
           autoCapitalize="none"
           keyboardType="email-address"
-          style={{ color: "black" }}
+          style={{ color: 'black' }}
           placeholderTextColor="gray"
         />
       </Input>
@@ -103,17 +103,21 @@ export default function Register({ onSuccess, onGoToLogin }: Props) {
           value={form.password}
           onChangeText={(password) => setForm((p) => ({ ...p, password }))}
           secureTextEntry
-          style={{ color: "black" }}
+          style={{ color: 'black' }}
           placeholderTextColor="gray"
         />
       </Input>
 
       <Button onPress={onSubmit} disabled={loading}>
-        {loading ? <ActivityIndicator color="white" /> : <ButtonText>Create account</ButtonText>}
+        {loading ? (
+          <ActivityIndicator color="white" />
+        ) : (
+          <ButtonText>Create account</ButtonText>
+        )}
       </Button>
 
-      {error && <Text style={{ color: "red" }}>{error}</Text>}
-      {success && <Text style={{ color: "green" }}>{success}</Text>}
+      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+      {success && <Text style={{ color: 'green' }}>{success}</Text>}
 
       {onGoToLogin && (
         <Button variant="outline" onPress={onGoToLogin} disabled={loading}>

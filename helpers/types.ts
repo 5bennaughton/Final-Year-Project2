@@ -3,7 +3,7 @@
  * Includes properties for session ID, duration(In seconds), distance(In Kms), date, and optional route data.
  */
 export interface SessionInterface {
-  id?: string; 
+  id?: string;
   user_id?: string;
   duration: number;
   distance: number;

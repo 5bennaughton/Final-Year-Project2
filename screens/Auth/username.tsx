@@ -6,9 +6,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default () => {
   return (
     <SafeAreaView>
-      <HStack className='justify-betweens '>
-        <Text className='text-md font-bold'>Username</Text>
+      <HStack className="justify-betweens ">
+        <Text className="text-md font-bold">Username</Text>
       </HStack>
     </SafeAreaView>
   );
-}
+};
