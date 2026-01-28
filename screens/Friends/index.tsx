@@ -42,7 +42,6 @@ export default function Friends() {
   const { results, searching, searchError, search, clearResults } =
     useUserSearch();
 
-  const [requestingId, setRequestingId] = useState<string | null>(null);
   const [requestError, setRequestError] = useState<string | null>(null);
   const [requestMessage, setRequestMessage] = useState<string | null>(null);
 
@@ -89,33 +88,6 @@ export default function Friends() {
     setRequestMessage(null);
     setRequestError(null);
     await search(trimmed);
-  };
-
-  /**
-   * Send a friend request to another user.
-   * Tracks per-request loading and error state.
-   */
-  const sendFriendRequest = async (addresseeId: string) => {
-    setRequestingId(addresseeId);
-    setRequestError(null);
-    setRequestMessage(null);
-
-    try {
-      await requestJson(
-        `${FRIENDS_BASE}/requests`,
-        {
-          method: 'POST',
-          headers: JSON_HEADERS,
-          body: JSON.stringify({ addresseeId }),
-        },
-        'Request failed'
-      );
-      setRequestMessage('Friend request sent.');
-    } catch (err: any) {
-      setRequestError(err?.message ?? 'Request failed');
-    } finally {
-      setRequestingId(null);
-    }
   };
 
   /**

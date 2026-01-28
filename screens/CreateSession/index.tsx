@@ -206,7 +206,7 @@ export default function CreateSessionScreen() {
     }, 350);
 
     return () => clearTimeout(handle);
-  }, [fetchLocationSuggestions, location, selectedLocationLabel]);
+  }, [allSpots, fetchLocationSuggestions, location, selectedLocationLabel]);
 
   // Keep the suggestions visible by scrolling when they appear.
   useEffect(() => {
@@ -399,16 +399,10 @@ export default function CreateSessionScreen() {
                     onPress={() => setSport(option)}
                     variant="solid"
                     size="sm"
-                    className={`rounded-full border ${
-                      isSelected
-                        ? 'border-[#F5C542] bg-[#F5C542]'
-                        : 'border-[#ddd] bg-white'
-                    }`}
+                    className={`rounded-full border ${isSelected ? 'border-[#F5C542] bg-[#F5C542]' : 'border-[#ddd] bg-white'}`}
                   >
                     <ButtonText
-                      className={`text-xs capitalize ${
-                        isSelected ? 'text-[#1A1A1A]' : 'text-[#333]'
-                      }`}
+                      className={`text-xs capitalize ${isSelected ? 'text-[#1A1A1A]' : 'text-[#333]'}`}
                     >
                       {option}
                     </ButtonText>

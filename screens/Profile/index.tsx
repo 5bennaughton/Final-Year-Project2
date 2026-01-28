@@ -27,16 +27,17 @@ const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 
 /**
  * Render the profile screen with user info and future posts.
- * Handles logout, navigation, and post deletion flow.
  */
 export default function HomePage() {
   const router = useRouter();
+
   const {
     profile,
     loading: loadingUser,
     error: profileError,
     refresh,
   } = useMeProfile();
+
   const [selectedPost, setSelectedPost] = useState<SessionPost | null>(null);
   const [deletingPost, setDeletingPost] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
