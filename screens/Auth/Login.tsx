@@ -65,6 +65,7 @@ export default function Login({ onSuccess, onGoToRegister }: Props) {
           name: data.user.name,
           bio: data.user.bio ?? null,
           avatarUrl: data.user.avatarUrl ?? null,
+          profileVisibility: data.user.profileVisibility ?? 'public',
         });
       }
       onSuccess?.(data);

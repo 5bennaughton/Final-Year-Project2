@@ -19,6 +19,7 @@ export type MeProfile = {
   name?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  profileVisibility?: string;
 };
 
 export type SessionPost = {
@@ -125,6 +126,7 @@ export function useMeProfile() {
           name: stored.name,
           bio: stored.bio ?? null,
           avatarUrl: stored.avatarUrl ?? null,
+          profileVisibility: stored.profileVisibility ?? 'public',
         });
       }
 
@@ -149,6 +151,10 @@ export function useMeProfile() {
           typeof data?.avatarUrl === 'string'
             ? data.avatarUrl
             : (data?.avatarUrl ?? stored?.avatarUrl ?? null),
+        profileVisibility:
+          typeof data?.profileVisibility === 'string'
+            ? data.profileVisibility
+            : (stored?.profileVisibility ?? 'public'),
       };
 
       if (mountedRef.current) {
@@ -162,6 +168,7 @@ export function useMeProfile() {
           name: nextProfile.name ?? stored.name,
           bio: nextProfile.bio ?? null,
           avatarUrl: nextProfile.avatarUrl ?? null,
+          profileVisibility: nextProfile.profileVisibility ?? 'public',
         });
       }
     } catch (err: any) {

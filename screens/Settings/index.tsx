@@ -12,14 +12,25 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { router, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type MeResponse = {
   name?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  profileVisibility?: string;
 };
+
+const VISIBILITY_OPTIONS = ['public', 'friends', 'private'] as const;
+type ProfileVisibility = (typeof VISIBILITY_OPTIONS)[number];
 
 /**
  * Log out the user and clear local auth data.
@@ -49,8 +60,11 @@ export default function SettingsScreen() {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [profileVisibility, setProfileVisibility] =
+    useState<ProfileVisibility>('public');
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [hasHydrated, setHasHydrated] = useState(false);
@@ -65,6 +79,9 @@ export default function SettingsScreen() {
     setName(profile.name ?? '');
     setBio(profile.bio ?? '');
     setAvatarUrl(profile.avatarUrl ?? null);
+    setProfileVisibility(
+      (profile.profileVisibility as ProfileVisibility) ?? 'public'
+    );
     setHasHydrated(true);
   }, [profile, hasHydrated]);
 
@@ -87,6 +104,7 @@ export default function SettingsScreen() {
         name: trimmedName,
         bio: bio.trim(),
         avatarUrl: avatarUrl ?? null,
+        profileVisibility,
       };
 
       const data = (await requestJson(
@@ -106,10 +124,15 @@ export default function SettingsScreen() {
         typeof data?.avatarUrl === 'string'
           ? data.avatarUrl
           : (data?.avatarUrl ?? avatarUrl ?? null);
+      const nextVisibility =
+        typeof data?.profileVisibility === 'string'
+          ? (data.profileVisibility as ProfileVisibility)
+          : profileVisibility;
 
       setName(nextName);
       setBio(nextBio || '');
       setAvatarUrl(nextAvatar);
+      setProfileVisibility(nextVisibility);
       setSuccess('Profile updated.');
       refresh();
 
@@ -121,6 +144,7 @@ export default function SettingsScreen() {
           name: nextName,
           bio: nextBio || null,
           avatarUrl: nextAvatar,
+          profileVisibility: nextVisibility,
         });
       }
     } catch (err: any) {
@@ -214,6 +238,47 @@ export default function SettingsScreen() {
     } finally {
       setUploadingAvatar(false);
     }
+  };
+
+  /**
+   * Delete the authenticated user's account and data.
+   * Clears local auth state and returns to the auth flow.
+   */
+  const deleteAccount = async () => {
+    setDeletingAccount(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await authFetch(`${API_BASE}/auth/me`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data?.message ?? 'Delete account failed');
+      }
+
+      await clearAuthToken();
+      await clearAuthUser();
+      router.replace('/(auth)');
+    } catch (err: any) {
+      setError(err?.message ?? 'Delete account failed');
+    } finally {
+      setDeletingAccount(false);
+    }
+  };
+
+  /**
+   * Ask for confirmation before deleting the account.
+   */
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Delete account',
+      'This will delete your profile, posts, and comments.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: deleteAccount },
+      ]
+    );
   };
 
   return (
@@ -315,12 +380,26 @@ export default function SettingsScreen() {
           {success && <Text style={{ color: '#1f6f5f' }}>{success}</Text>}
         </View>
 
-        {/* Simple placeholders for future sections */}
+        {/* Privacy settings */}
         <View style={{ gap: 10 }}>
           <Text style={{ fontWeight: '700' }}>Privacy</Text>
-          <Text style={{ color: '#666' }}>
-            Profile visibility, post visibility
-          </Text>
+          <Text style={{ color: '#666' }}>Profile visibility</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {VISIBILITY_OPTIONS.map((option) => {
+              const isSelected = profileVisibility === option;
+              return (
+                <Button
+                  key={option}
+                  onPress={() => setProfileVisibility(option)}
+                  variant={isSelected ? 'solid' : 'outline'}
+                  action={isSelected ? 'primary' : 'secondary'}
+                  size="sm"
+                >
+                  <ButtonText>{option}</ButtonText>
+                </Button>
+              );
+            })}
+          </View>
         </View>
 
         <View style={{ gap: 10 }}>
@@ -328,6 +407,18 @@ export default function SettingsScreen() {
           <Text style={{ color: '#666' }}>
             Future session reminders, comments
           </Text>
+        </View>
+
+        {/* Account deletion */}
+        <View style={{ gap: 10 }}>
+          <Text style={{ fontWeight: '700' }}>Account</Text>
+          <Button onPress={confirmDeleteAccount} disabled={deletingAccount}>
+            {deletingAccount ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <ButtonText>Delete Account</ButtonText>
+            )}
+          </Button>
         </View>
 
         <View>

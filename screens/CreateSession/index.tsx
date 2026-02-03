@@ -21,6 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SPORT_OPTIONS = ['kitesurfing', 'wingfoiling', 'windsurfing', 'surfing'];
 type Sport = (typeof SPORT_OPTIONS)[number];
+const VISIBILITY_OPTIONS = ['public', 'friends', 'private', 'custom'] as const;
+type PostVisibility = (typeof VISIBILITY_OPTIONS)[number];
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
@@ -33,6 +35,8 @@ type SessionPayload = {
   latitude?: number | null;
   longitude?: number | null;
   spotId?: string | null;
+  visibility?: PostVisibility;
+  allowedViewerIds?: string[];
 };
 
 type LocationCoords = {
@@ -47,6 +51,12 @@ type SpotSuggestion = {
   latitude: number;
   longitude: number;
   description?: string | null;
+};
+
+type FriendResult = {
+  id: string;
+  name: string;
+  email: string;
 };
 
 /**
@@ -104,9 +114,19 @@ export default function CreateSessionScreen() {
   const [draftDateTime, setDraftDateTime] = useState<Date>(new Date());
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  // Post visibility controls (public/friends/private/custom).
+  const [postVisibility, setPostVisibility] =
+    useState<PostVisibility>('public');
+  // Friend list + selection for custom visibility.
+  const [friends, setFriends] = useState<FriendResult[]>([]);
+  const [selectedViewerIds, setSelectedViewerIds] = useState<string[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
+  const [friendsError, setFriendsError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView | null>(null);
 
-  const canSubmit = Boolean(sport && dateTime && location.trim());
+  const canSubmit =
+    Boolean(sport && dateTime && location.trim()) &&
+    (postVisibility !== 'custom' || selectedViewerIds.length > 0);
   const formattedDateTime = dateTime ? formatDateTime(dateTime) : '';
 
   /**
@@ -216,6 +236,53 @@ export default function CreateSessionScreen() {
   }, [spotSuggestions.length, locationSuggestions.length]);
 
   /**
+   * Load friends only when the user picks custom visibility.
+   */
+  useEffect(() => {
+    if (postVisibility !== 'custom') {
+      setSelectedViewerIds([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadFriends = async () => {
+      setLoadingFriends(true);
+      setFriendsError(null);
+
+      try {
+        const data = await requestJson(
+          `${API_BASE}/friends/list`,
+          {},
+          'Fetch friends failed'
+        );
+        const items = Array.isArray(data?.friends) ? data.friends : [];
+        if (isMounted) {
+          setFriends(items);
+          if (items.length === 0) {
+            setFriendsError('No friends available for custom visibility.');
+          }
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setFriends([]);
+          setFriendsError(err?.message ?? 'Fetch friends failed');
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingFriends(false);
+        }
+      }
+    };
+
+    loadFriends();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [postVisibility]);
+
+  /**
    * Update the location input and reset any selected coordinates.
    */
   function handleChangeLocation(value: string) {
@@ -251,6 +318,18 @@ export default function CreateSessionScreen() {
     setSpotSuggestions([]);
     setLocationSearching(false);
     setLocationError(null);
+  }
+
+  /**
+   * Toggle a friend in the custom visibility list.
+   */
+  function toggleViewer(userId: string) {
+    setSelectedViewerIds((prev) => {
+      if (prev.includes(userId)) {
+        return prev.filter((id) => id !== userId);
+      }
+      return [...prev, userId];
+    });
   }
 
   /**
@@ -314,6 +393,10 @@ export default function CreateSessionScreen() {
       return null;
     }
 
+    if (postVisibility === 'custom' && selectedViewerIds.length === 0) {
+      return null;
+    }
+
     return {
       sport,
       time: dateTime.toISOString(),
@@ -322,6 +405,9 @@ export default function CreateSessionScreen() {
       longitude: locationCoords?.longitude ?? null,
       // Include the spotId when the user chose a known spot.
       spotId: selectedSpotId ?? null,
+      visibility: postVisibility,
+      allowedViewerIds:
+        postVisibility === 'custom' ? selectedViewerIds : undefined,
     };
   }
 
@@ -332,7 +418,9 @@ export default function CreateSessionScreen() {
   async function createPost() {
     const payload = buildPayload();
     if (!payload) {
-      setCreateError('Please fill out sport, date/time, and location.');
+      setCreateError(
+        'Please fill out sport, date/time, location, and visibility.'
+      );
       return;
     }
 
@@ -533,6 +621,63 @@ export default function CreateSessionScreen() {
                 </MapView>
               </View>
             ) : null}
+          </View>
+
+          {/* Post visibility controls */}
+          <View className="rounded-3xl border border-[#ddd] bg-white p-4 gap-3">
+            <Text className="text-xs font-semibold uppercase tracking-wider text-[#777]">
+              Visibility
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {VISIBILITY_OPTIONS.map((option) => {
+                const isSelected = postVisibility === option;
+                return (
+                  <Pressable
+                    key={option}
+                    onPress={() => setPostVisibility(option)}
+                    className={`rounded-full border px-3 py-1.5 ${isSelected ? 'border-[#1f6f5f] bg-[#1f6f5f]' : 'border-[#ddd] bg-white'}`}
+                  >
+                    <Text
+                      className={`text-xs capitalize ${isSelected ? 'text-white' : 'text-[#333]'}`}
+                    >
+                      {option}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Only show the friend picker for custom visibility */}
+            {postVisibility === 'custom' && (
+              <View className="gap-2">
+                <Text className="text-xs text-[#666]">
+                  Choose friends who can see this post
+                </Text>
+                {loadingFriends && (
+                  <ActivityIndicator size="small" color="#1f6f5f" />
+                )}
+                {friendsError && (
+                  <Text className="text-[#F26A5B]">{friendsError}</Text>
+                )}
+                {friends.map((friend) => {
+                  const isSelected = selectedViewerIds.includes(friend.id);
+                  return (
+                    <Pressable
+                      key={friend.id}
+                      onPress={() => toggleViewer(friend.id)}
+                      className={`rounded-2xl border px-3 py-2 ${isSelected ? 'border-[#1f6f5f] bg-[#f0fbf8]' : 'border-[#ddd] bg-white'}`}
+                    >
+                      <Text className="text-sm font-semibold text-[#1A1A1A]">
+                        {friend.name}
+                      </Text>
+                      <Text className="text-xs text-[#666]">
+                        {isSelected ? 'Selected' : 'Tap to select'}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )}
           </View>
 
           {createError && <Text className="text-[#F26A5B]">{createError}</Text>}
