@@ -1,11 +1,7 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { API_BASE } from '@/constants/constants';
-import {
-  normalizePostCard,
-  requestJson,
-  type PostCardData,
-} from '@/helpers/helpers';
+import { requestJson } from '@/helpers/helpers';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
@@ -13,7 +9,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 /**
  * Spot details screen with a simple "upcoming posts" list.
- * Uses the shared PostList + PostCard data shape.
  */
 export default function SpotDetails() {
   const router = useRouter();
@@ -27,7 +22,7 @@ export default function SpotDetails() {
   }>();
 
   // Basic list state for posts tied to this spot.
-  const [posts, setPosts] = useState<PostCardData[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
 
@@ -57,14 +52,10 @@ export default function SpotDetails() {
           'Fetch spot posts failed'
         );
 
-        // Normalize to the shared PostCard shape.
         const items = Array.isArray(data?.posts) ? data.posts : [];
-        const cleaned = items.map((item: any, index: number) =>
-          normalizePostCard(item, index)
-        );
 
         if (isMounted) {
-          setPosts(cleaned);
+          setPosts(items);
         }
       } catch (err: any) {
         if (isMounted) {

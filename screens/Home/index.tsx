@@ -1,16 +1,10 @@
 import PostList from '@/components/PostList';
 import { API_BASE } from '@/constants/constants';
-import {
-  normalizePostCard,
-  requestJson,
-  type PostCardData,
-} from '@/helpers/helpers';
+import { requestJson } from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type FeedPost = PostCardData;
 
 /**
  * Home screen showing the friends feed with map pins and comments.
@@ -18,12 +12,12 @@ type FeedPost = PostCardData;
  */
 export default function Home() {
   const router = useRouter();
-  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
+  const [feedPosts, setFeedPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetch the friends feed and normalize the post shape.
+   * Fetch the friends feed once on mount.
    */
   const loadFeed = async () => {
     setLoading(true);
@@ -37,12 +31,7 @@ export default function Home() {
       );
 
       const posts = Array.isArray(data?.posts) ? data.posts : [];
-
-      const normalized = posts.map((post: any, index: number) =>
-        normalizePostCard(post, index)
-      );
-
-      setFeedPosts(normalized);
+      setFeedPosts(posts);
     } catch (err: any) {
       setFeedPosts([]);
       setError(err?.message ?? 'Fetch feed failed');

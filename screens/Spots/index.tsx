@@ -1,10 +1,11 @@
 import { API_BASE } from '@/constants/constants';
 import { getCurrentLocation, requestJson } from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Input, InputField } from '@/components/ui/input';
 
 type Pin = {
   latitude: number;
@@ -22,12 +23,18 @@ type Spot = {
 
 export default function SpotsScreen() {
   const router = useRouter();
+  // Map ref so we can center the view when a user picks a suggestion.
+  const mapRef = useRef<MapView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialRegion, setInitialRegion] = useState<Region | null>(null);
   const [pendingSpot, setPendingSpot] = useState<Pin | null>(null);
   const [allSpots, setAllSpots] = useState<Spot[]>([]);
   const [visibleSpots, setVisibleSpots] = useState<Spot[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Spot[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -82,6 +89,71 @@ export default function SpotsScreen() {
     };
   }, []);
 
+  // Run a basic search, and as the user types it will autosuggestß
+  useEffect(() => {
+    let isMounted = true;
+    const query = searchQuery.trim();
+
+    if (!query) {
+      setSearchResults([]);
+      setSearching(false);
+      setSearchError(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    const runSearch = async () => {
+      setSearching(true);
+      setSearchError(null);
+
+      try {
+        const data = await requestJson(
+          `${API_BASE}/global-spots/search?q=${encodeURIComponent(query)}`,
+          {},
+          'Search spots failed'
+        );
+
+        const items = Array.isArray(data?.spots) ? data.spots : [];
+
+        if (isMounted) {
+          setSearchResults(items);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setSearchResults([]);
+          setSearchError(err?.message ?? 'Search spots failed');
+        }
+      } finally {
+        if (isMounted) {
+          setSearching(false);
+        }
+      }
+    };
+
+    runSearch();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [searchQuery]);
+
+  // Center the map on a selected spot and hide suggestions.
+  const handleSelectSpot = (spot: Spot) => {
+    setSearchQuery(spot.name);
+    setSearchResults([]);
+    setSearchError(null);
+    mapRef.current?.animateToRegion(
+      {
+        latitude: spot.latitude,
+        longitude: spot.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      },
+      350
+    );
+  };
+
   // Filter the full list to only show pins inside the current map view.
   const updateVisibleSpots = (region: Region) => {
     const minLat = region.latitude - region.latitudeDelta / 2;
@@ -121,7 +193,73 @@ export default function SpotsScreen() {
         </View>
       ) : initialRegion ? (
         <View style={{ flex: 1 }}>
+          {/* Search bar + suggestions overlay */}
+          <View
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              right: 12,
+              zIndex: 2,
+              gap: 6,
+            }}
+          >
+            <Input
+              variant="outline"
+              size="md"
+              style={{ backgroundColor: '#fff', borderColor: '#ddd' }}
+            >
+              <InputField
+                placeholder="Search spots by name"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="words"
+                selectionColor="#1f6f5f"
+                style={{ color: '#1A1A1A' }}
+                placeholderTextColor="#777"
+              />
+            </Input>
+
+            {searching && (
+              <Text style={{ color: '#666', fontSize: 12 }}>Searching...</Text>
+            )}
+            {searchError && (
+              <Text style={{ color: 'red', fontSize: 12 }}>{searchError}</Text>
+            )}
+
+            {searchResults.length > 0 && (
+              <View
+                style={{
+                  backgroundColor: '#fff',
+                  borderColor: '#ddd',
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  maxHeight: 200,
+                }}
+              >
+                {searchResults.map((spot) => (
+                  <Pressable
+                    key={spot.id}
+                    onPress={() => handleSelectSpot(spot)}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      borderBottomWidth: 1,
+                      borderBottomColor: '#eee',
+                    }}
+                  >
+                    <Text style={{ fontWeight: '600' }}>{spot.name}</Text>
+                    <Text style={{ color: '#666', fontSize: 12 }}>
+                      {spot.type}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+
           <MapView
+            ref={mapRef}
             style={{ flex: 1 }}
             mapType="satellite"
             initialRegion={initialRegion}
@@ -132,6 +270,8 @@ export default function SpotsScreen() {
               if (pendingSpot) {
                 setPendingSpot(null);
               }
+              // Tap away to hide any search suggestions.
+              setSearchResults([]);
             }}
             onLongPress={(event) => {
               // Drop a temporary pin where the user long-presses.

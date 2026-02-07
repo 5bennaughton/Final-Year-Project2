@@ -3,9 +3,7 @@ import { API_BASE } from '@/constants/constants';
 import {
   GeoCoords,
   getCurrentLocation,
-  normalizePostCard,
   requestJson,
-  type PostCardData,
 } from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -30,7 +28,7 @@ function parseRadiusKm(value: string): number | null {
 export default function NearbySessionsScreen() {
   const router = useRouter();
   const [radiusKm, setRadiusKm] = useState('10');
-  const [posts, setPosts] = useState<PostCardData[]>([]);
+  const [posts, setPosts] = useState<any[]>([]);
   const [coords, setCoords] = useState<GeoCoords | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,12 +57,7 @@ export default function NearbySessionsScreen() {
       )}`;
       const data = await requestJson(url, {}, 'Fetch nearby sessions failed');
       const items = Array.isArray(data?.posts) ? data.posts : [];
-
-      const normalized = items.map((item: any, index: number) =>
-        normalizePostCard(item, index)
-      );
-
-      setPosts(normalized);
+      setPosts(items);
     } catch (err: any) {
       setPosts([]);
       setError(err?.message ?? 'Fetch nearby sessions failed');

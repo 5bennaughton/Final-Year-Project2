@@ -3,16 +3,14 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
 import { API_BASE } from '@/constants/constants';
 import {
-  normalizePostCard,
   requestJson,
   useListPosts,
   useMeProfile,
-  type PostCardData,
   type SessionPost,
 } from '@/helpers/helpers';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -42,7 +40,6 @@ export default function HomePage() {
   const [deletingPost, setDeletingPost] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const { posts, postsError, loadingPosts, listPosts } = useListPosts();
-  const [profilePosts, setProfilePosts] = useState<PostCardData[]>([]);
 
   /**
    * Refresh the user's posts and profile data when the screen gains focus.
@@ -54,15 +51,12 @@ export default function HomePage() {
     }, [listPosts, refresh])
   );
 
-  useEffect(() => {
-    setProfilePosts(
-      [...posts]
-        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .map((post, index) =>
-          normalizePostCard(post, index, { userName: profile?.name ?? 'You' })
-        )
+  // Only re-renders when posts change, sorts posts by time desending
+  const sortedPosts = useMemo(() => {
+    return [...posts].sort(
+      (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
     );
-  }, [posts, profile?.name]);
+  }, [posts]);
 
   /**
    * Navigate to the Create Session screen.
@@ -232,10 +226,11 @@ export default function HomePage() {
         <Text style={{ fontSize: 18, fontWeight: '700' }}>Your Posts</Text>
 
         <PostList
-          posts={profilePosts}
+          posts={sortedPosts}
           loading={loadingPosts}
           error={postsError}
           emptyMessage="No posts yet."
+          fallbackUserName={profile?.name ?? 'You'}
           renderActions={(post) => {
             const target = posts.find((item) => item.id === post.id);
 

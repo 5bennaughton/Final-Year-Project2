@@ -38,18 +38,6 @@ export type LocationSuggestion = {
   lon: number;
 };
 
-export type PostCardData = {
-  id: string;
-  userId?: string;
-  userName?: string;
-  sport?: string;
-  time?: string;
-  location?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  notes?: string | null;
-};
-
 export type GeoCoords = {
   latitude: number;
   longitude: number;
@@ -280,43 +268,6 @@ export function useListPosts(defaultUserId?: string) {
   );
 
   return { posts, loadingPosts, postsError, listPosts };
-}
-
-/**
- * Normalize raw post shapes into a consistent card format.
- */
-export function normalizePostCard(
-  raw: any,
-  index: number,
-  overrides: Partial<PostCardData> = {}
-): PostCardData {
-  const base = raw?.futureSessions ?? raw ?? {};
-
-  const toNumber = (value: unknown): number | null => {
-    if (value === null || value === undefined || value === '') return null;
-    const parsed =
-      typeof value === 'number' ? value : Number.parseFloat(String(value));
-    return Number.isFinite(parsed) ? parsed : null;
-  };
-
-  const normalized: PostCardData = {
-    id: typeof base.id === 'string' ? base.id : `post-${index}`,
-    userId:
-      typeof raw?.userId === 'string'
-        ? raw.userId
-        : typeof base.userId === 'string'
-          ? base.userId
-          : undefined,
-    userName: typeof raw?.userName === 'string' ? raw.userName : 'User',
-    sport: typeof base.sport === 'string' ? base.sport : undefined,
-    time: typeof base.time === 'string' ? base.time : undefined,
-    location: typeof base.location === 'string' ? base.location : undefined,
-    latitude: toNumber(base.latitude),
-    longitude: toNumber(base.longitude),
-    notes: typeof base.notes === 'string' ? base.notes : null,
-  };
-
-  return { ...normalized, ...overrides };
 }
 
 /**

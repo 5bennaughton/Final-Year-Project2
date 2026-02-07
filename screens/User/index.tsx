@@ -2,10 +2,8 @@ import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { API_BASE } from '@/constants/constants';
 import {
-  normalizePostCard,
   requestJson,
   useListPosts,
-  type PostCardData,
 } from '@/helpers/helpers';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -40,7 +38,6 @@ export default function UserPage() {
   const { posts, postsError, loadingPosts, listPosts } = useListPosts(
     userId || undefined
   );
-  const [userPosts, setUserPosts] = useState<PostCardData[]>([]);
 
   /**
    * Fetch the user profile and friend status.
@@ -109,14 +106,6 @@ export default function UserPage() {
       isMounted = false;
     };
   }, [listPosts, userId]);
-
-  useEffect(() => {
-    setUserPosts(
-      posts.map((post, index) =>
-        normalizePostCard(post, index, { userName: profile?.name ?? 'User' })
-      )
-    );
-  }, [posts, profile?.name]);
 
   /**
    * Send a friend request when not already friends.
@@ -221,10 +210,11 @@ export default function UserPage() {
         <View style={{ gap: 12 }}>
           <Text style={{ fontSize: 18, fontWeight: '700' }}>Posts</Text>
           <PostList
-            posts={userPosts}
+            posts={posts}
             loading={loadingPosts}
             error={postsError}
             emptyMessage="No posts yet."
+            fallbackUserName={profile?.name ?? 'User'}
           />
         </View>
       </ScrollView>

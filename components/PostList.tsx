@@ -1,6 +1,5 @@
-import PostCard from '@/components/PostCard';
 import { API_BASE } from '@/constants/constants';
-import { requestJson, type PostCardData } from '@/helpers/helpers';
+import { requestJson } from '@/helpers/helpers';
 import { getAuthUser } from '@/lib/auth';
 import React, { useEffect, useState } from 'react';
 import {
@@ -13,8 +12,26 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import MapView, { Marker, UrlTile } from 'react-native-maps';
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
+
+// This is the raw post shape coming from multiple endpoints.
+// Can keep it loose because the backend returns different shapes depending on the route
+type RawPost = any;
+
+// All the data needed to render the postList
+type NormalizedPost = {
+  id: string;
+  userId?: string;
+  userName?: string;
+  sport?: string;
+  time?: string;
+  location?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  notes?: string | null;
+};
 
 type CommentItem = {
   id: string;
@@ -26,19 +43,76 @@ type CommentItem = {
 };
 
 type PostListProps = {
-  posts: PostCardData[];
+  // Posts can be raw API items, data is normalized
+  posts: RawPost[];
   loading?: boolean;
   error?: string | null;
   emptyMessage?: string;
   showComments?: boolean;
   onPressUser?: (userId: string, userName?: string) => void;
-  renderActions?: (post: PostCardData) => React.ReactNode;
+  renderActions?: (post: NormalizedPost) => React.ReactNode;
   containerStyle?: StyleProp<ViewStyle>;
+  // Used when the backend doesn't send a userName
+  fallbackUserName?: string;
 };
 
 /**
- * Shared posts list with optional comment UI.
- * Keeps fetching logic and rendering consistent across screens.
+ * Convert a time string into something readable for the UI.
+ * If parsing fails, just show the raw string.
+ */
+function formatPostTime(time?: string) {
+  if (!time) return 'Unknown time';
+  const parsed = Date.parse(time);
+  if (Number.isNaN(parsed)) return time;
+  return new Date(parsed).toLocaleString();
+}
+
+/**
+ * Turn any raw post shape into the post fields
+ * keeps the rest of the component simple and consistent.
+ */
+function normalizePost(
+  raw: RawPost,
+  index: number,
+  fallbackUserName?: string
+): NormalizedPost {
+  const base = raw?.futureSessions ?? raw ?? {};
+
+  const toNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === '') return null;
+    const parsed =
+      typeof value === 'number' ? value : Number.parseFloat(String(value));
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const userName =
+    typeof raw?.userName === 'string'
+      ? raw.userName
+      : (fallbackUserName ?? 'User');
+
+  return {
+    id: typeof base.id === 'string' ? base.id : `post-${index}`,
+    userId:
+      typeof raw?.userId === 'string'
+        ? raw.userId
+        : typeof base.userId === 'string'
+          ? base.userId
+          : undefined,
+    userName,
+    sport: typeof base.sport === 'string' ? base.sport : undefined,
+    time: typeof base.time === 'string' ? base.time : undefined,
+    location: typeof base.location === 'string' ? base.location : undefined,
+    latitude: toNumber(base.latitude),
+    longitude: toNumber(base.longitude),
+    notes: typeof base.notes === 'string' ? base.notes : null,
+  };
+}
+
+/**
+ * A single, self-contained component that renders:
+ * - the post cards
+ * - optional comment UI
+ * - optional custom actions
  */
 export default function PostList({
   posts,
@@ -49,7 +123,9 @@ export default function PostList({
   onPressUser,
   renderActions,
   containerStyle,
+  fallbackUserName,
 }: PostListProps) {
+  // Comments are stored per post id so each card can render its own list.
   const [commentsByPost, setCommentsByPost] = useState<
     Record<string, CommentItem[]>
   >({});
@@ -59,6 +135,14 @@ export default function PostList({
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
+  // Normalize posts
+  const normalizedPosts = posts.map((post, index) =>
+    normalizePost(post, index, fallbackUserName)
+  );
+
+  /**
+   * Load the current user so we can show "Delete" on their own comments.
+   */
   useEffect(() => {
     let isMounted = true;
 
@@ -77,7 +161,7 @@ export default function PostList({
   }, []);
 
   /**
-   * Fetch comments for one post and store them by post id.
+   * Fetch comments for a single post id.
    */
   const fetchComments = async (postId: string) => {
     try {
@@ -95,22 +179,31 @@ export default function PostList({
   };
 
   /**
-   * Fetch comments for each post in the list.
+   * Refresh comments whenever the post list changes.
    */
-  const fetchCommentsForPosts = async (items: PostCardData[]) => {
+  useEffect(() => {
+    if (!showComments) return;
+    if (posts.length === 0) return;
+
+    const items = posts.map((post, index) =>
+      normalizePost(post, index, fallbackUserName)
+    );
+
+    setCommentsByPost({});
     setCommentsError(null);
-    await Promise.all(items.map((post) => fetchComments(post.id)));
-  };
+
+    void Promise.all(items.map((post) => fetchComments(post.id)));
+  }, [posts, showComments, fallbackUserName]);
 
   /**
-   * Update the draft comment text for a specific post.
+   * Keep the draft comment text for each post.
    */
   const updateCommentInput = (postId: string, value: string) => {
     setCommentInputs((prev) => ({ ...prev, [postId]: value }));
   };
 
   /**
-   * Submit a comment for a post and refresh its comment list.
+   * Submit a comment and refresh that post's comments.
    */
   const addComment = async (postId: string) => {
     const body = commentInputs[postId]?.trim() ?? '';
@@ -139,7 +232,7 @@ export default function PostList({
   };
 
   /**
-   * Delete a comment for a post and refresh its comment list.
+   * Delete a comment then refresh.
    */
   const deleteComment = async (postId: string, commentId: string) => {
     setCommentsError(null);
@@ -158,6 +251,9 @@ export default function PostList({
     }
   };
 
+  /**
+   * Simple confirmation prompt before delete.
+   */
   const confirmDeleteComment = (postId: string, commentId: string) => {
     Alert.alert(
       'Delete comment?',
@@ -173,27 +269,19 @@ export default function PostList({
     );
   };
 
-  /**
-   * Refresh comments whenever the posts list changes.
-   */
-  useEffect(() => {
-    if (!showComments) return;
-    if (posts.length === 0) return;
-
-    setCommentsByPost({});
-    fetchCommentsForPosts(posts);
-  }, [posts, showComments]);
-
   return (
     <View style={[{ gap: 16 }, containerStyle]}>
+      {/* Basic loading + error states */}
       {loading && <ActivityIndicator />}
       {error && <Text style={{ color: 'red' }}>{error}</Text>}
 
-      {!loading && !error && posts.length === 0 && (
+      {/* Empty state */}
+      {!loading && !error && normalizedPosts.length === 0 && (
         <Text style={{ color: '#666' }}>{emptyMessage}</Text>
       )}
 
-      {posts.map((post) => {
+      {/* Render each post card */}
+      {normalizedPosts.map((post) => {
         const comments = commentsByPost[post.id] ?? [];
         const actions = renderActions ? renderActions(post) : null;
 
@@ -248,10 +336,7 @@ export default function PostList({
                             </Text>
                           )}
 
-                          {/**
-                           * This here is checking is the current user logged in
-                           * If the user is logged in it will display a delete button to delete comments
-                           */}
+                          {/* Only show delete to the comment owner */}
                           {canDelete ? (
                             <Pressable
                               onPress={() =>
@@ -330,13 +415,93 @@ export default function PostList({
             </View>
           ) : null;
 
+        const hasCoords =
+          typeof post.latitude === 'number' &&
+          typeof post.longitude === 'number';
+        const sportLabel = post.sport?.trim() || 'Session';
+        const locationLabel = post.location?.trim() || 'Unknown location';
+        const timeLabel = formatPostTime(post.time);
+        const nameLabel = post.userName?.trim();
+
         return (
-          <PostCard
+          <View
             key={post.id}
-            post={post}
-            onPressUser={onPressUser}
-            footer={footer}
-          />
+            style={{
+              backgroundColor: 'white',
+              borderRadius: 12,
+              padding: 14,
+              borderWidth: 1,
+              borderColor: '#ececec',
+            }}
+          >
+            {nameLabel ? (
+              onPressUser && post.userId ? (
+                <Pressable onPress={() => onPressUser(post.userId!, nameLabel)}>
+                  <Text style={{ fontSize: 16, fontWeight: '700' }}>
+                    {nameLabel}
+                  </Text>
+                </Pressable>
+              ) : (
+                <Text style={{ fontSize: 16, fontWeight: '700' }}>
+                  {nameLabel}
+                </Text>
+              )
+            ) : null}
+
+            <Text style={{ color: '#777', marginTop: nameLabel ? 2 : 0 }}>
+              {timeLabel}
+            </Text>
+
+            <Text style={{ marginTop: 8, fontWeight: '600' }}>
+              {sportLabel}
+            </Text>
+
+            <Text style={{ marginTop: 4 }}>{locationLabel}</Text>
+
+            {hasCoords ? (
+              <View
+                style={{
+                  marginTop: 10,
+                  height: 160,
+                  borderRadius: 12,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: '#e3e3e3',
+                }}
+              >
+                <MapView
+                  style={{ flex: 1 }}
+                  initialRegion={{
+                    latitude: post.latitude as number,
+                    longitude: post.longitude as number,
+                    latitudeDelta: 0.02,
+                    longitudeDelta: 0.02,
+                  }}
+                  scrollEnabled={false}
+                  zoomEnabled={false}
+                  pitchEnabled={false}
+                  rotateEnabled={false}
+                >
+                  <UrlTile
+                    urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    maximumZ={19}
+                  />
+                  <Marker
+                    coordinate={{
+                      latitude: post.latitude as number,
+                      longitude: post.longitude as number,
+                    }}
+                  />
+                </MapView>
+              </View>
+            ) : null}
+
+            {post.notes ? (
+              <Text style={{ marginTop: 6, color: '#666' }}>{post.notes}</Text>
+            ) : null}
+
+            {footer ? <View style={{ marginTop: 12 }}>{footer}</View> : null}
+          </View>
         );
       })}
     </View>
