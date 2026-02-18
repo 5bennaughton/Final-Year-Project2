@@ -6,6 +6,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
@@ -19,6 +20,9 @@ type SpotPayload = {
   latitude: number;
   longitude: number;
   description?: string | null;
+  windDirStart?: number | null;
+  windDirEnd?: number | null;
+  isTidal?: boolean;
 };
 
 export default function AddSpot() {
@@ -39,8 +43,25 @@ export default function AddSpot() {
   const [name, setName] = useState('');
   const [type, setType] = useState('');
   const [description, setDescription] = useState('');
+  // Optional wind direction rules (stored as strings so the inputs stay controlled).
+  const [windDirStartInput, setWindDirStartInput] = useState('');
+  const [windDirEndInput, setWindDirEndInput] = useState('');
+  // Basic tidal flag. Default is false (non-tidal).
+  const [isTidal, setIsTidal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Convert a text input into a number or null.
+   * - Empty string => null (means "not set")
+   * - Non-number => undefined (means "invalid")
+   */
+  const parseOptionalNumber = (value: string): number | null | undefined => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number.parseFloat(trimmed);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
 
   /**
    * Creates a spot on the global map
@@ -62,6 +83,42 @@ export default function AddSpot() {
     }
 
     /**
+     * Parse optional wind direction range (0-359).
+     * We allow wrap-around ranges in the backend, but both values are required
+     * if the user sets one of them.
+     */
+    const windDirStart = parseOptionalNumber(windDirStartInput);
+    if (windDirStart === undefined) {
+      setError('Wind direction start must be a number.');
+      return;
+    }
+
+    const windDirEnd = parseOptionalNumber(windDirEndInput);
+    if (windDirEnd === undefined) {
+      setError('Wind direction end must be a number.');
+      return;
+    }
+
+    // If one is provided, require the other.
+    if (
+      (windDirStart !== null && windDirEnd === null) ||
+      (windDirStart === null && windDirEnd !== null)
+    ) {
+      setError('Please set both wind direction start and end.');
+      return;
+    }
+
+    // If provided, make sure it is in a 0-359 range.
+    if (windDirStart !== null && (windDirStart < 0 || windDirStart > 359)) {
+      setError('Wind direction start must be between 0 and 359.');
+      return;
+    }
+    if (windDirEnd !== null && (windDirEnd < 0 || windDirEnd > 359)) {
+      setError('Wind direction end must be between 0 and 359.');
+      return;
+    }
+
+    /**
      * Details object of each spot
      */
     const payload: SpotPayload = {
@@ -70,6 +127,9 @@ export default function AddSpot() {
       latitude: coords.latitude,
       longitude: coords.longitude,
       description: description.trim() ? description.trim() : null,
+      windDirStart,
+      windDirEnd,
+      isTidal,
     };
 
     setSaving(true);
@@ -145,6 +205,67 @@ export default function AddSpot() {
               color: 'black',
             }}
           />
+        </View>
+
+        {/* Optional wind direction range in degrees */}
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontWeight: '600' }}>Wind direction (optional)</Text>
+          <Text style={{ color: '#666' }}>
+            Put a range of degrees 0-359. Example: North (0) to SW (225)
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TextInput
+              placeholder="Start (0-359)"
+              placeholderTextColor="#888"
+              value={windDirStartInput}
+              onChangeText={setWindDirStartInput}
+              keyboardType="numeric"
+              style={{
+                flex: 1,
+                borderWidth: 1,
+                borderColor: '#ddd',
+                borderRadius: 8,
+                padding: 10,
+                backgroundColor: 'white',
+                color: 'black',
+              }}
+            />
+            <TextInput
+              placeholder="End (0-359)"
+              placeholderTextColor="#888"
+              value={windDirEndInput}
+              onChangeText={setWindDirEndInput}
+              keyboardType="numeric"
+              style={{
+                flex: 1,
+                borderWidth: 1,
+                borderColor: '#ddd',
+                borderRadius: 8,
+                padding: 10,
+                backgroundColor: 'white',
+                color: 'black',
+              }}
+            />
+          </View>
+        </View>
+
+        {/* Tidal toggle */}
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontWeight: '600' }}>Tidal spot?</Text>
+          <Pressable
+            onPress={() => setIsTidal((prev) => !prev)}
+            style={{
+              alignSelf: 'flex-start',
+              backgroundColor: isTidal ? '#1f6f5f' : '#e6e6e6',
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ color: isTidal ? 'white' : '#333' }}>
+              {isTidal ? 'Yes (Tidal)' : 'No (Not tidal)'}
+            </Text>
+          </Pressable>
         </View>
 
         {/*Displays the cords in lat/long, that is if it is not null*/}

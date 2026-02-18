@@ -19,6 +19,10 @@ type Spot = {
   latitude: number;
   longitude: number;
   description?: string | null;
+  createdBy?: string | null;
+  ownerId?: string | null;
+  userId?: string | null;
+  createdById?: string | null;
 };
 
 export default function SpotsScreen() {
@@ -48,8 +52,8 @@ export default function SpotsScreen() {
         setInitialRegion({
           latitude: position.latitude,
           longitude: position.longitude,
-          latitudeDelta: 0.08,
-          longitudeDelta: 0.08,
+          latitudeDelta: 0.064,
+          longitudeDelta: 0.064,
         });
       } catch (err: any) {
         if (isMounted) {
@@ -147,8 +151,8 @@ export default function SpotsScreen() {
       {
         latitude: spot.latitude,
         longitude: spot.longitude,
-        latitudeDelta: 0.02,
-        longitudeDelta: 0.02,
+        latitudeDelta: 0.016,
+        longitudeDelta: 0.016,
       },
       350
     );
@@ -289,7 +293,7 @@ export default function SpotsScreen() {
                 title={spot.name}
                 description={spot.type}
               >
-                {/* Simple callout that links to the details screen, params are listd*/}
+                {/* Callout that links to the details screen*/}
                 <Callout
                   onPress={() =>
                     router.push({
@@ -299,6 +303,12 @@ export default function SpotsScreen() {
                         name: spot.name,
                         type: spot.type,
                         description: spot.description ?? '',
+                        ownerId:
+                          spot.createdBy ??
+                          spot.ownerId ??
+                          spot.userId ??
+                          spot.createdById ??
+                          '',
                         lat: String(spot.latitude),
                         lng: String(spot.longitude),
                       },
