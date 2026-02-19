@@ -23,6 +23,8 @@ type SpotPayload = {
   windDirStart?: number | null;
   windDirEnd?: number | null;
   isTidal?: boolean;
+  tidePreference?: 'high' | 'low' | null;
+  tideWindowHours?: number | null;
 };
 
 export default function AddSpot() {
@@ -48,13 +50,17 @@ export default function AddSpot() {
   const [windDirEndInput, setWindDirEndInput] = useState('');
   // Basic tidal flag. Default is false (non-tidal).
   const [isTidal, setIsTidal] = useState(false);
+  // choose whether high or low tide is preferred.
+  const [tidePreference, setTidePreference] = useState<'high' | 'low'>('high');
+  // Optional "near high/low tide" window (hours).
+  const [tideWindowHoursInput, setTideWindowHoursInput] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   /**
    * Convert a text input into a number or null.
-   * - Empty string => null (means "not set")
-   * - Non-number => undefined (means "invalid")
+   * - Empty string -> null (means "not set")
+   * - Non-number -> undefined (means "invalid")
    */
   const parseOptionalNumber = (value: string): number | null | undefined => {
     const trimmed = value.trim();
@@ -88,14 +94,10 @@ export default function AddSpot() {
      * if the user sets one of them.
      */
     const windDirStart = parseOptionalNumber(windDirStartInput);
-    if (windDirStart === undefined) {
-      setError('Wind direction start must be a number.');
-      return;
-    }
-
     const windDirEnd = parseOptionalNumber(windDirEndInput);
-    if (windDirEnd === undefined) {
-      setError('Wind direction end must be a number.');
+
+    if (windDirStart === undefined || windDirEnd === undefined) {
+      setError('Wind direction start/end must be a number.');
       return;
     }
 
@@ -118,6 +120,24 @@ export default function AddSpot() {
       return;
     }
 
+    // Tide window only matters when the spot is tidal.
+    let tideWindowHours: number | null = null;
+
+    if (isTidal) {
+      const parsedTideWindow = parseOptionalNumber(tideWindowHoursInput);
+
+      if (parsedTideWindow === undefined) {
+        setError('Tide window must be a number.');
+        return;
+      }
+
+      if (parsedTideWindow !== null && parsedTideWindow < 0) {
+        setError('Tide window must be 0 or greater.');
+        return;
+      }
+      tideWindowHours = parsedTideWindow;
+    }
+
     /**
      * Details object of each spot
      */
@@ -130,6 +150,8 @@ export default function AddSpot() {
       windDirStart,
       windDirEnd,
       isTidal,
+      tidePreference: isTidal ? tidePreference : null,
+      tideWindowHours,
     };
 
     setSaving(true);
@@ -267,6 +289,67 @@ export default function AddSpot() {
             </Text>
           </Pressable>
         </View>
+
+        {isTidal ? (
+          <View style={{ gap: 8 }}>
+            <Text style={{ fontWeight: '600' }}>Tide preference</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <Pressable
+                onPress={() => setTidePreference('high')}
+                style={{
+                  backgroundColor:
+                    tidePreference === 'high' ? '#1f6f5f' : '#e6e6e6',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{
+                    color: tidePreference === 'high' ? 'white' : '#333',
+                  }}
+                >
+                  High tide
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setTidePreference('low')}
+                style={{
+                  backgroundColor:
+                    tidePreference === 'low' ? '#1f6f5f' : '#e6e6e6',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                }}
+              >
+                <Text
+                  style={{ color: tidePreference === 'low' ? 'white' : '#333' }}
+                >
+                  Low tide
+                </Text>
+              </Pressable>
+            </View>
+
+            <Text style={{ fontWeight: '600' }}>
+              Tide window hours (optional)
+            </Text>
+            <TextInput
+              placeholder="Example: 2"
+              placeholderTextColor="#888"
+              value={tideWindowHoursInput}
+              onChangeText={setTideWindowHoursInput}
+              keyboardType="numeric"
+              style={{
+                borderWidth: 1,
+                borderColor: '#ddd',
+                borderRadius: 8,
+                padding: 10,
+                backgroundColor: 'white',
+                color: 'black',
+              }}
+            />
+          </View>
+        ) : null}
 
         {/*Displays the cords in lat/long, that is if it is not null*/}
         {coords ? (
