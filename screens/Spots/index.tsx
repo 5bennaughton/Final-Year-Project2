@@ -1,7 +1,8 @@
 import { API_BASE } from '@/constants/constants';
 import { getCurrentLocation, requestJson } from '@/helpers/helpers';
+import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -40,6 +41,23 @@ export default function SpotsScreen() {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
+  const loadSpots = useCallback(async () => {
+    try {
+      const data = await requestJson(
+        `${API_BASE}/global-spots/display-spots`,
+        {},
+        'Fetch spots failed'
+      );
+      const items = Array.isArray(data?.spots) ? data.spots : [];
+      setAllSpots(items);
+      // Show all markers right after a refresh. Region filtering still applies on map move.
+      setVisibleSpots(items);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.message ?? 'Fetch spots failed');
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -66,32 +84,21 @@ export default function SpotsScreen() {
       }
     };
 
-    // Fetch all spots once. We will filter them client-side.
-    const loadSpots = async () => {
-      try {
-        const data = await requestJson(
-          `${API_BASE}/global-spots/display-spots`,
-          {},
-          'Fetch spots failed'
-        );
-        const items = Array.isArray(data?.spots) ? data.spots : [];
-        if (isMounted) {
-          setAllSpots(items);
-        }
-      } catch (err: any) {
-        if (isMounted) {
-          setError(err?.message ?? 'Fetch spots failed');
-        }
-      }
-    };
-
     loadLocation();
     loadSpots();
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadSpots]);
+
+  // Refresh spots when screen becomes active again
+  useFocusEffect(
+    useCallback(() => {
+      loadSpots();
+      return () => {};
+    }, [loadSpots])
+  );
 
   // Run a basic search, and as the user types it will autosuggestß
   useEffect(() => {
@@ -223,6 +230,25 @@ export default function SpotsScreen() {
                 placeholderTextColor="#777"
               />
             </Input>
+
+            <Pressable
+              onPress={loadSpots}
+              style={{
+                alignSelf: 'flex-end',
+                backgroundColor: '#fff',
+                borderWidth: 1,
+                borderColor: '#ddd',
+                borderRadius: 8,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+              }}
+            >
+              <Text
+                style={{ color: '#1f6f5f', fontWeight: '600', fontSize: 12 }}
+              >
+                Refresh spots
+              </Text>
+            </Pressable>
 
             {searching && (
               <Text style={{ color: '#666', fontSize: 12 }}>Searching...</Text>
