@@ -1,5 +1,3 @@
-import { API_BASE } from '@/constants/constants';
-import { requestJson } from '@/helpers/helpers';
 import { getAuthUser } from '@/lib/auth';
 import type {
   CommentItem,
@@ -17,8 +15,11 @@ import {
   View,
 } from 'react-native';
 import MapView, { Marker, UrlTile } from 'react-native-maps';
-
-const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
+import {
+  createPostComment,
+  fetchPostComments,
+  removePostComment,
+} from './PostList.api';
 
 /**
  * Convert a time string into something readable for the UI.
@@ -93,9 +94,11 @@ export default function PostList({
   const [commentsByPost, setCommentsByPost] = useState<
     Record<string, CommentItem[]>
   >({});
+
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>(
     {}
   );
+
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
@@ -129,11 +132,7 @@ export default function PostList({
    */
   const fetchComments = async (postId: string) => {
     try {
-      const data = await requestJson(
-        `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(postId)}/display-comments`,
-        {},
-        'Fetch comments failed'
-      );
+      const data = await fetchPostComments(postId);
 
       const comments = Array.isArray(data?.comments) ? data.comments : [];
       setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
@@ -179,15 +178,7 @@ export default function PostList({
     setCommentsError(null);
 
     try {
-      await requestJson(
-        `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(postId)}/add-comment`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ body }),
-        },
-        'Add comment failed'
-      );
+      await createPostComment(postId, body);
       updateCommentInput(postId, '');
       await fetchComments(postId);
     } catch (err: any) {
@@ -202,13 +193,7 @@ export default function PostList({
     setCommentsError(null);
 
     try {
-      await requestJson(
-        `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(
-          postId
-        )}/delete-comment/${encodeURIComponent(commentId)}`,
-        { method: 'DELETE' },
-        'Delete comment failed'
-      );
+      await removePostComment(postId, commentId);
       await fetchComments(postId);
     } catch (err: any) {
       setCommentsError(err?.message ?? 'Delete comment failed');
