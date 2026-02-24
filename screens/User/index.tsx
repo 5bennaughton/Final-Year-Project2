@@ -1,23 +1,12 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { API_BASE } from '@/constants/constants';
-import {
-  requestJson,
-  useListPosts,
-} from '@/helpers/helpers';
+import { requestJson, useListPosts } from '@/helpers/helpers';
+import type { FriendStatus, ProfileResponse } from '@/helpers/types';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type ProfileResponse = {
-  id?: string;
-  name?: string;
-  bio?: string | null;
-  avatarUrl?: string | null;
-};
-
-type FriendStatus = 'self' | 'friends' | 'outgoing' | 'incoming' | 'none';
 
 /**
  * Render another user's profile with posts and friend status.

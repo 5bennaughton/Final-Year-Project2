@@ -2,12 +2,8 @@ import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
 import { API_BASE } from '@/constants/constants';
-import {
-  requestJson,
-  useListPosts,
-  useMeProfile,
-  type SessionPost,
-} from '@/helpers/helpers';
+import { requestJson, useListPosts, useMeProfile } from '@/helpers/helpers';
+import type { SessionPost } from '@/helpers/types';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';

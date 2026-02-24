@@ -1,4 +1,5 @@
 import { API_BASE } from '@/constants/constants';
+import type { LatestActivity } from '@/helpers/types';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import {
@@ -9,19 +10,6 @@ import {
   Text,
   View,
 } from 'react-native';
-
-type LatestActivity = {
-  id: string | number;
-  sport: string;
-  title: string;
-  distanceKm: string;
-  movingTimeMin: number;
-  avgSpeedKmh: string;
-  maxSpeedKmh: string;
-  startDate: string;
-  location: string;
-  mapPolyline?: string | null;
-};
 
 /**
  * Type guard for validating the Strava activity payload shape.

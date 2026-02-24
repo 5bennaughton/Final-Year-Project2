@@ -2,6 +2,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { API_BASE } from '@/constants/constants';
 import { requestJson } from '@/helpers/helpers';
+import type { AddSpotParams, SpotPayload, TidePreference } from '@/helpers/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -14,22 +15,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-type SpotPayload = {
-  name: string;
-  type: string;
-  latitude: number;
-  longitude: number;
-  description?: string | null;
-  windDirStart?: number | null;
-  windDirEnd?: number | null;
-  isTidal?: boolean;
-  tidePreference?: 'high' | 'low' | null;
-  tideWindowHours?: number | null;
-};
-
 export default function AddSpot() {
   const router = useRouter();
-  const { lat, lng } = useLocalSearchParams<{ lat?: string; lng?: string }>();
+  const { lat, lng } = useLocalSearchParams<AddSpotParams>();
 
   // Parse the map coordinates passed from the long-press screen.
   const coords = useMemo(() => {
@@ -51,7 +39,7 @@ export default function AddSpot() {
   // Basic tidal flag. Default is false (non-tidal).
   const [isTidal, setIsTidal] = useState(false);
   // choose whether high or low tide is preferred.
-  const [tidePreference, setTidePreference] = useState<'high' | 'low'>('high');
+  const [tidePreference, setTidePreference] = useState<TidePreference>('high');
   // Optional "near high/low tide" window (hours).
   const [tideWindowHoursInput, setTideWindowHoursInput] = useState('');
   const [saving, setSaving] = useState(false);

@@ -1,26 +1,15 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { API_BASE } from '@/constants/constants';
+import type { RegisterBody, RegisterProps } from '@/helpers/types';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
-
-type RegisterBody = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-type Props = {
-  apiBase?: string;
-  onSuccess?: (data: any) => void;
-  onGoToLogin?: () => void;
-};
 
 /**
  * Render the registration form and handle account creation.
  * Tracks status messages and clears the form on success.
  */
-export default function Register({ onSuccess, onGoToLogin }: Props) {
+export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
   const [form, setForm] = useState<RegisterBody>({
     name: '',
     email: '',

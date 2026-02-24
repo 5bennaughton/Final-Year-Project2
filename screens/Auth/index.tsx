@@ -1,5 +1,6 @@
 import { API_BASE } from '@/constants/constants';
 import { getAuthToken } from '@/lib/auth';
+import type { AuthMode } from '@/helpers/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
@@ -7,13 +8,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Login from '../Auth/Login';
 import Register from '../Auth/Register';
 
-type Mode = 'login' | 'register';
-
 /**
  * Render the auth screen and redirect if already logged in.
  */
 export default function AuthPage() {
-  const [mode, setMode] = useState<Mode>('register'); // only register for now
+  const [mode, setMode] = useState<AuthMode>('register'); // only register for now
   const router = useRouter();
 
   /**

@@ -2,16 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Modal, Text, View } from 'react-native';
 
 import { Button, ButtonText } from '@/components/ui/button';
-import type { SessionPost } from '@/helpers/helpers';
-
-type DeleteSessionModalProps = {
-  visible: boolean;
-  post: SessionPost | null;
-  deleting: boolean;
-  deleteError: string | null;
-  onCancel: () => void;
-  onDelete: () => void;
-};
+import type { DeleteSessionModalProps } from '@/helpers/types';
 
 export default function DeleteSessionModal({
   visible,

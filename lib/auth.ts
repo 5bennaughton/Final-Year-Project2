@@ -1,16 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { AuthUser } from '@/helpers/types';
 
 const TOKEN_KEY = 'auth.jwt';
 const USER_KEY = 'auth.user';
-
-export type AuthUser = {
-  id: string;
-  email?: string;
-  name?: string;
-  bio?: string | null;
-  avatarUrl?: string | null;
-  profileVisibility?: string;
-};
 
 /*
 Stores the JWT in AsyncStorage.

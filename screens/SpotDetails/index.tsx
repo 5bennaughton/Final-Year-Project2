@@ -3,10 +3,30 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { API_BASE } from '@/constants/constants';
 import { requestJson } from '@/helpers/helpers';
 import { getAuthUser } from '@/lib/auth';
+import type {
+  DirectionMode,
+  KiteableForecastResult,
+  SpotDetailsParams,
+} from '@/helpers/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const sectionCardStyle = {
+  gap: 10,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  borderRadius: 12,
+  backgroundColor: 'white',
+  padding: 12,
+} as const;
+
+function getStatusChipColors(active: boolean) {
+  return active
+    ? { backgroundColor: '#e4f6ee', borderColor: '#b9e7d2', textColor: '#1f6f5f' }
+    : { backgroundColor: '#fdeaea', borderColor: '#f4caca', textColor: '#a33b3b' };
+}
 
 /**
  * Spot details screen with a simple "upcoming posts" list.
@@ -23,17 +43,7 @@ export default function SpotDetails() {
     ownerId,
     userId,
     createdById,
-  } = useLocalSearchParams<{
-    id?: string;
-    name?: string;
-    type?: string;
-    description?: string;
-    lat?: string;
-    lng?: string;
-    ownerId?: string;
-    userId?: string;
-    createdById?: string;
-  }>();
+  } = useLocalSearchParams<SpotDetailsParams>();
 
   // List state for posts tied to this spot.
   const [posts, setPosts] = useState<any[]>([]);
@@ -45,6 +55,14 @@ export default function SpotDetails() {
   const [posterName, setPosterName] = useState<string | null>(null);
   const [posterLoading, setPosterLoading] = useState(false);
   const [posterError, setPosterError] = useState<string | null>(null);
+  const [kiteableForecast, setKiteableForecast] =
+    useState<KiteableForecastResult | null>(null);
+  const [kiteableForecastLoading, setKiteableForecastLoading] = useState(false);
+  const [kiteableForecastError, setKiteableForecastError] = useState<string | null>(
+    null
+  );
+  const [directionMode, setDirectionMode] =
+    useState<DirectionMode>('anticlockwise');
 
   // Owner id is passed via route params from the map screen (spot.createdBy, etc).
   const spotOwnerId = (ownerId ?? userId ?? createdById ?? '').toString();
@@ -123,6 +141,48 @@ export default function SpotDetails() {
       isMounted = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadKiteableForecast = async () => {
+      if (!id) {
+        setKiteableForecast(null);
+        setKiteableForecastError(null);
+        return;
+      }
+
+      setKiteableForecastLoading(true);
+      setKiteableForecastError(null);
+
+      try {
+        const data = await requestJson(
+          `${API_BASE}/global-spots/${encodeURIComponent(id)}/kiteable-forecast?hours=42&directionMode=${directionMode}`,
+          {},
+          'Fetch kiteable forecast failed'
+        );
+
+        if (isMounted) {
+          setKiteableForecast((data ?? null) as KiteableForecastResult);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setKiteableForecast(null);
+          setKiteableForecastError(err?.message ?? 'Fetch kiteable forecast failed');
+        }
+      } finally {
+        if (isMounted) {
+          setKiteableForecastLoading(false);
+        }
+      }
+    };
+
+    loadKiteableForecast();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, directionMode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -211,11 +271,17 @@ export default function SpotDetails() {
     }
   };
 
+  // The first forecast row is treated as "now" for this version.
+  const kiteableNow = kiteableForecast?.forecast?.[0] ?? null;
+  const kiteableNowChipColors = getStatusChipColors(Boolean(kiteableNow?.kiteable));
+  const directionChipColors = getStatusChipColors(Boolean(kiteableNow?.directionOk));
+  const speedChipColors = getStatusChipColors(Boolean(kiteableNow?.speedOk));
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
         {/* Spot metadata */}
-        <View style={{ gap: 12 }}>
+        <View style={sectionCardStyle}>
           <Text style={{ fontSize: 22, fontWeight: '700' }}>
             {name ?? 'Spot Details'}
           </Text>
@@ -242,6 +308,152 @@ export default function SpotDetails() {
               Coordinates: {Number(lat).toFixed(5)}, {Number(lng).toFixed(5)}
             </Text>
           ) : null}
+        </View>
+
+        <View style={sectionCardStyle}>
+          <Text style={{ fontSize: 18, fontWeight: '700' }}>Direction mode</Text>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Button
+              variant={directionMode === 'clockwise' ? 'solid' : 'outline'}
+              onPress={() => setDirectionMode('clockwise')}
+            >
+              <ButtonText>Clockwise</ButtonText>
+            </Button>
+            <Button
+              variant={directionMode === 'anticlockwise' ? 'solid' : 'outline'}
+              onPress={() => setDirectionMode('anticlockwise')}
+            >
+              <ButtonText>Anti-clockwise</ButtonText>
+            </Button>
+          </View>
+        </View>
+
+        <View style={sectionCardStyle}>
+          <Text style={{ fontSize: 18, fontWeight: '700' }}>Kiteable now</Text>
+
+          {kiteableForecastLoading ? (
+            <Text style={{ color: '#666' }}>Checking current wind...</Text>
+          ) : kiteableForecastError ? (
+            <Text style={{ color: 'red' }}>{kiteableForecastError}</Text>
+          ) : kiteableNow ? (
+            <View style={{ gap: 4 }}>
+              <View
+                style={{
+                  alignSelf: 'flex-start',
+                  backgroundColor: kiteableNowChipColors.backgroundColor,
+                  borderColor: kiteableNowChipColors.borderColor,
+                  borderWidth: 1,
+                  borderRadius: 999,
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                }}
+              >
+                <Text
+                  style={{
+                    fontWeight: '700',
+                    color: kiteableNowChipColors.textColor,
+                  }}
+                >
+                  {kiteableNow.kiteable ? 'Kiteable: Yes' : 'Kiteable: No'}
+                </Text>
+              </View>
+
+              <Text style={{ color: '#555' }}>
+                Wind: {kiteableNow.speedKn ?? '-'} kn at{' '}
+                {kiteableNow.directionDeg ?? '-'}°
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View
+                  style={{
+                    backgroundColor: directionChipColors.backgroundColor,
+                    borderColor: directionChipColors.borderColor,
+                    borderWidth: 1,
+                    borderRadius: 999,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                  }}
+                >
+                  <Text style={{ color: directionChipColors.textColor, fontSize: 12 }}>
+                    Direction {kiteableNow.directionOk ? 'Pass' : 'Fail'}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    backgroundColor: speedChipColors.backgroundColor,
+                    borderColor: speedChipColors.borderColor,
+                    borderWidth: 1,
+                    borderRadius: 999,
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                  }}
+                >
+                  <Text style={{ color: speedChipColors.textColor, fontSize: 12 }}>
+                    Speed {kiteableNow.speedOk ? 'Pass' : 'Fail'}
+                  </Text>
+                </View>
+              </View>
+
+              <Text style={{ color: '#555' }}>
+                Wind range: {kiteableForecast?.thresholds?.minWindKn ?? '-'} to{' '}
+                {kiteableForecast?.thresholds?.maxWindKn ?? '-'} kn
+              </Text>
+              <Text style={{ color: '#555' }}>
+                Direction range: {kiteableForecast?.thresholds?.windDirStart ?? '-'} to{' '}
+                {kiteableForecast?.thresholds?.windDirEnd ?? '-'}°
+              </Text>
+              <Text style={{ color: '#555' }}>
+                Mode: {kiteableForecast?.thresholds?.directionMode ?? '-'}
+              </Text>
+              {kiteableForecast?.note ? (
+                <Text style={{ color: '#777' }}>{kiteableForecast.note}</Text>
+              ) : null}
+            </View>
+          ) : (
+            <Text style={{ color: '#666' }}>No kiteable data yet.</Text>
+          )}
+        </View>
+
+        <View style={sectionCardStyle}>
+          <Text style={{ fontSize: 18, fontWeight: '700' }}>Next 42 hours</Text>
+
+          {kiteableForecastLoading ? (
+            <Text style={{ color: '#666' }}>Loading forecast...</Text>
+          ) : kiteableForecastError ? (
+            <Text style={{ color: 'red' }}>{kiteableForecastError}</Text>
+          ) : kiteableForecast?.forecast?.length ? (
+            <View style={{ gap: 4 }}>
+              <Text style={{ color: '#555' }}>
+                Kiteable hours: {kiteableForecast.kiteableHours ?? 0}/
+                {kiteableForecast.requestedHours ?? 42}
+              </Text>
+
+              {/* Keep the forecast section compact while still exposing all 42 rows. */}
+              <ScrollView
+                style={{ maxHeight: 220, borderWidth: 1, borderColor: '#eee', borderRadius: 8 }}
+                contentContainerStyle={{ padding: 8, gap: 6 }}
+                nestedScrollEnabled
+              >
+                {kiteableForecast.forecast.map((hour, index) => (
+                  <View
+                    key={hour.time}
+                    style={{
+                      paddingVertical: 6,
+                      paddingHorizontal: 8,
+                      borderRadius: 6,
+                      backgroundColor: index % 2 === 0 ? '#fafafa' : '#fff',
+                    }}
+                  >
+                    <Text style={{ color: '#444', fontSize: 12 }}>
+                      {hour.time} - {hour.kiteable ? 'Yes' : 'No'} - {hour.speedKn} kn -{' '}
+                      {hour.directionDeg}°
+                    </Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          ) : (
+            <Text style={{ color: '#666' }}>No forecast data yet.</Text>
+          )}
         </View>
 
         {/* Upcoming posts list */}

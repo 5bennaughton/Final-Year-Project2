@@ -1,7 +1,16 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { API_BASE } from '@/constants/constants';
-import { requestJson, type LocationSuggestion } from '@/helpers/helpers';
+import { requestJson } from '@/helpers/helpers';
+import type {
+  FriendResult,
+  LocationCoords,
+  LocationSuggestion,
+  PostVisibility,
+  SessionPayload,
+  Sport,
+  SpotSuggestion,
+} from '@/helpers/types';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -19,45 +28,22 @@ import {
 import MapView, { Marker, UrlTile } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const SPORT_OPTIONS = ['kitesurfing', 'wingfoiling', 'windsurfing', 'surfing'];
-type Sport = (typeof SPORT_OPTIONS)[number];
-const VISIBILITY_OPTIONS = ['public', 'friends', 'private', 'custom'] as const;
-type PostVisibility = (typeof VISIBILITY_OPTIONS)[number];
+const SPORT_OPTIONS: readonly Sport[] = [
+  'kitesurfing',
+  'wingfoiling',
+  'windsurfing',
+  'surfing',
+];
+const VISIBILITY_OPTIONS: readonly PostVisibility[] = [
+  'public',
+  'friends',
+  'private',
+  'custom',
+];
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 const GEO_AUTOCOMPLETE_URL = `${API_BASE}/geo/autocomplete`;
-
-type SessionPayload = {
-  sport: Sport;
-  time: string;
-  location: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  spotId?: string | null;
-  visibility?: PostVisibility;
-  allowedViewerIds?: string[];
-};
-
-type LocationCoords = {
-  latitude: number;
-  longitude: number;
-};
-
-type SpotSuggestion = {
-  id: string;
-  name: string;
-  type: string;
-  latitude: number;
-  longitude: number;
-  description?: string | null;
-};
-
-type FriendResult = {
-  id: string;
-  name: string;
-  email: string;
-};
 
 /**
  * Format a date into a short month/day label.

@@ -1,26 +1,11 @@
 import * as WebBrowser from 'expo-web-browser';
+import type { StravaAthleteData } from '@/helpers/types';
 
 const REDIRECT_URI = 'exp://localhost:8081';
 const STRAVA_CLIENT_ID = '182126';
 const STRAVA_CLIENT_SECRET = 'de2a59a3d9026bbba09dec5043c515d93618dc54';
 const STRAVA_AUTH_URL = `http://www.strava.com/oauth/authorize?client_id=${STRAVA_CLIENT_ID}&response_type=code&redirect_uri=${REDIRECT_URI}&approval_prompt=force&scope=activity:read_all`;
 const STRAVA_TOKEN_URL = `https://www.strava.com/oauth/token`;
-
-export interface StravaAthleteData {
-  access_token: string;
-  refresh_token: string;
-  expires_at: number;
-  expires_in: number;
-  token_type: string;
-  athlete?: {
-    id: number;
-    username?: string;
-    firstname?: string;
-    lastname?: string;
-    profile?: string;
-    [key: string]: any;
-  };
-}
 
 export async function stravaAuth() {
   try {

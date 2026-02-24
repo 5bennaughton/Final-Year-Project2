@@ -1,7 +1,8 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { API_BASE } from '@/constants/constants';
-import { requestJson, useUserSearch, type UserResult } from '@/helpers/helpers';
+import { requestJson, useUserSearch } from '@/helpers/helpers';
+import type { FriendRequest, UserResult } from '@/helpers/types';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -15,15 +16,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 const FRIENDS_BASE = `${API_BASE}/friends`;
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-
-type FriendRequest = {
-  id: string;
-  requesterId: string;
-  addresseeId: string;
-  status: string;
-  requesterName?: string;
-  requesterEmail?: string;
-};
 
 /**
  * Prefer a human-readable label if the API provides it.

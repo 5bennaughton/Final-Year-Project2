@@ -1,5 +1,6 @@
 import { API_BASE } from '@/constants/constants';
 import { getCurrentLocation, requestJson } from '@/helpers/helpers';
+import type { Pin, Spot } from '@/helpers/types';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -7,24 +8,6 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input, InputField } from '@/components/ui/input';
-
-type Pin = {
-  latitude: number;
-  longitude: number;
-};
-
-type Spot = {
-  id: string;
-  name: string;
-  type: string;
-  latitude: number;
-  longitude: number;
-  description?: string | null;
-  createdBy?: string | null;
-  ownerId?: string | null;
-  userId?: string | null;
-  createdById?: string | null;
-};
 
 export default function SpotsScreen() {
   const router = useRouter();

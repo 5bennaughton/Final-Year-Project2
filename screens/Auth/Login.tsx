@@ -2,25 +2,15 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { API_BASE } from '@/constants/constants';
 import { setAuthToken, setAuthUser } from '@/lib/auth';
+import type { LoginBody, LoginProps } from '@/helpers/types';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
-
-type LoginBody = {
-  email: string;
-  password: string;
-};
-
-type Props = {
-  apiBase?: string;
-  onSuccess?: (data: any) => void;
-  onGoToRegister?: () => void;
-};
 
 /**
  * Render the login form and handle authentication flow.
  * Updates local state and persists the auth token on success.
  */
-export default function Login({ onSuccess, onGoToRegister }: Props) {
+export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
   const [form, setForm] = useState<LoginBody>({ email: '', password: '' });
 
   const [loading, setLoading] = useState(false);

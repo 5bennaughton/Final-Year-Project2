@@ -1,10 +1,7 @@
 import PostList from '@/components/PostList';
 import { API_BASE } from '@/constants/constants';
-import {
-  GeoCoords,
-  getCurrentLocation,
-  requestJson,
-} from '@/helpers/helpers';
+import { getCurrentLocation, requestJson } from '@/helpers/helpers';
+import type { GeoCoords } from '@/helpers/types';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';

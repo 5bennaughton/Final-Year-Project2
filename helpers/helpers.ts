@@ -1,4 +1,5 @@
 import { API_BASE } from '@/constants/constants';
+import type { GeoCoords, MeProfile, SessionPost, UserResult } from '@/helpers/types';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { authFetch, getAuthUser, setAuthUser } from '../lib/auth';
@@ -6,42 +7,6 @@ import { authFetch, getAuthUser, setAuthUser } from '../lib/auth';
 const FRIENDS_BASE = `${API_BASE}/friends`;
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
-
-export type UserResult = {
-  id: string;
-  name: string;
-  email: string;
-};
-
-export type MeProfile = {
-  id?: string;
-  email?: string;
-  name?: string;
-  bio?: string | null;
-  avatarUrl?: string | null;
-  profileVisibility?: string;
-};
-
-export type SessionPost = {
-  id: string;
-  sport: string;
-  time: string;
-  location: string;
-  notes?: string | null;
-  latitude?: number | null;
-  longitude?: number | null;
-};
-
-export type LocationSuggestion = {
-  label: string;
-  lat: number;
-  lon: number;
-};
-
-export type GeoCoords = {
-  latitude: number;
-  longitude: number;
-};
 
 /**
  * Build a search endpoint with a URL-encoded query.

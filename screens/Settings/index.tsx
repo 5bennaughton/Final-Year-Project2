@@ -9,6 +9,7 @@ import {
   getAuthUser,
   setAuthUser,
 } from '@/lib/auth';
+import type { MeResponse, ProfileVisibility } from '@/helpers/types';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -21,16 +22,11 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-type MeResponse = {
-  name?: string;
-  bio?: string | null;
-  avatarUrl?: string | null;
-  profileVisibility?: string;
-};
-
-const VISIBILITY_OPTIONS = ['public', 'friends', 'private'] as const;
-type ProfileVisibility = (typeof VISIBILITY_OPTIONS)[number];
+const VISIBILITY_OPTIONS: readonly ProfileVisibility[] = [
+  'public',
+  'friends',
+  'private',
+];
 
 /**
  * Log out the user and clear local auth data.

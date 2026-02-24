@@ -1,6 +1,12 @@
 import { API_BASE } from '@/constants/constants';
 import { requestJson } from '@/helpers/helpers';
 import { getAuthUser } from '@/lib/auth';
+import type {
+  CommentItem,
+  NormalizedPost,
+  PostListProps,
+  RawPost,
+} from '@/helpers/types';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -9,52 +15,10 @@ import {
   Text,
   TextInput,
   View,
-  type StyleProp,
-  type ViewStyle,
 } from 'react-native';
 import MapView, { Marker, UrlTile } from 'react-native-maps';
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
-
-// This is the raw post shape coming from multiple endpoints.
-// Can keep it loose because the backend returns different shapes depending on the route
-type RawPost = any;
-
-// All the data needed to render the postList
-type NormalizedPost = {
-  id: string;
-  userId?: string;
-  userName?: string;
-  sport?: string;
-  time?: string;
-  location?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  notes?: string | null;
-};
-
-type CommentItem = {
-  id: string;
-  postId: string;
-  userId: string;
-  body: string;
-  createdAt?: string;
-  userName?: string;
-};
-
-type PostListProps = {
-  // Posts can be raw API items, data is normalized
-  posts: RawPost[];
-  loading?: boolean;
-  error?: string | null;
-  emptyMessage?: string;
-  showComments?: boolean;
-  onPressUser?: (userId: string, userName?: string) => void;
-  renderActions?: (post: NormalizedPost) => React.ReactNode;
-  containerStyle?: StyleProp<ViewStyle>;
-  // Used when the backend doesn't send a userName
-  fallbackUserName?: string;
-};
 
 /**
  * Convert a time string into something readable for the UI.
