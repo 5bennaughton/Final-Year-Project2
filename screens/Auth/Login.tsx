@@ -1,10 +1,10 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { API_BASE } from '@/constants/constants';
 import { setAuthToken, setAuthUser } from '@/lib/auth';
-import type { LoginBody, LoginProps } from '@/helpers/types';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { loginWithEmail } from './auth.api';
+import type { LoginBody, LoginProps } from './auth.types';
 
 /**
  * Render the login form and handle authentication flow.
@@ -25,27 +25,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        const msg = data?.message ?? 'Login failed';
-        setError(msg);
-        Alert.alert('Login failed', msg);
-        return;
-      }
-
-      if (!data?.token) {
-        const msg = 'Missing token in response';
-        setError(msg);
-        Alert.alert('Login failed', msg);
-        return;
-      }
+      const data = await loginWithEmail(form);
 
       await setAuthToken(data.token);
       if (data?.user?.id) {
@@ -59,9 +39,10 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
         });
       }
       onSuccess?.(data);
-    } catch {
-      setError('Could not connect to server');
-      Alert.alert('Error', 'Could not connect to server');
+    } catch (err: any) {
+      const message = err?.message ?? 'Could not connect to server';
+      setError(message);
+      Alert.alert('Error', message);
     } finally {
       setLoading(false);
     }
@@ -71,7 +52,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
     <View style={{ gap: 16 }}>
       <Text style={{ fontSize: 24, fontWeight: '700' }}>Login</Text>
 
-      <Input variant="outline" size="md">
+      <Input size="md">
         <InputField
           placeholder="Email"
           value={form.email}
@@ -83,7 +64,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
         />
       </Input>
 
-      <Input variant="outline" size="md">
+      <Input size="md">
         <InputField
           placeholder="Password"
           value={form.password}
@@ -105,7 +86,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
       {error && <Text style={{ color: 'red' }}>{error}</Text>}
 
       {onGoToRegister && (
-        <Button variant="outline" onPress={onGoToRegister} disabled={loading}>
+        <Button onPress={onGoToRegister} disabled={loading}>
           <ButtonText>Need an account? Register</ButtonText>
         </Button>
       )}

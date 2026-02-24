@@ -1,16 +1,5 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { API_BASE } from '@/constants/constants';
-import { requestJson } from '@/helpers/helpers';
-import type {
-  FriendResult,
-  LocationCoords,
-  LocationSuggestion,
-  PostVisibility,
-  SessionPayload,
-  Sport,
-  SpotSuggestion,
-} from '@/helpers/types';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -27,6 +16,21 @@ import {
 } from 'react-native';
 import MapView, { Marker, UrlTile } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  createFutureSession,
+  fetchAllSpots,
+  fetchFriendsList,
+  fetchLocationSuggestions as fetchLocationSuggestionResults,
+} from './createSession.api';
+import type {
+  FriendResult,
+  LocationCoords,
+  LocationSuggestion,
+  PostVisibility,
+  SessionPayload,
+  Sport,
+  SpotSuggestion,
+} from './createSession.types';
 
 const SPORT_OPTIONS: readonly Sport[] = [
   'kitesurfing',
@@ -40,10 +44,6 @@ const VISIBILITY_OPTIONS: readonly PostVisibility[] = [
   'private',
   'custom',
 ];
-
-const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
-const GEO_AUTOCOMPLETE_URL = `${API_BASE}/geo/autocomplete`;
 
 /**
  * Format a date into a short month/day label.
@@ -124,11 +124,7 @@ export default function CreateSessionScreen() {
 
     const loadSpots = async () => {
       try {
-        const data = await requestJson(
-          `${API_BASE}/global-spots/display-spots`,
-          {},
-          'Fetch spots failed'
-        );
+        const data = await fetchAllSpots();
         const items = Array.isArray(data?.spots) ? data.spots : [];
         if (isMounted) {
           setAllSpots(items);
@@ -156,11 +152,7 @@ export default function CreateSessionScreen() {
     setLocationError(null);
 
     try {
-      const data = await requestJson(
-        `${GEO_AUTOCOMPLETE_URL}?q=${encodeURIComponent(query)}`,
-        {},
-        'Location search failed'
-      );
+      const data = await fetchLocationSuggestionResults(query);
       const results = Array.isArray(data?.results) ? data.results : [];
       const parsed = results.filter(
         (item: any): item is LocationSuggestion =>
@@ -237,11 +229,7 @@ export default function CreateSessionScreen() {
       setFriendsError(null);
 
       try {
-        const data = await requestJson(
-          `${API_BASE}/friends/list`,
-          {},
-          'Fetch friends failed'
-        );
+        const data = await fetchFriendsList();
         const items = Array.isArray(data?.friends) ? data.friends : [];
         if (isMounted) {
           setFriends(items);
@@ -414,15 +402,7 @@ export default function CreateSessionScreen() {
     setCreateError(null);
 
     try {
-      await requestJson(
-        `${FUTURE_SESSIONS_BASE}/post-session`,
-        {
-          method: 'POST',
-          headers: JSON_HEADERS,
-          body: JSON.stringify(payload),
-        },
-        'Create session failed'
-      );
+      await createFutureSession(payload);
       router.back();
     } catch (e: any) {
       setCreateError(e?.message ?? 'Create session failed');

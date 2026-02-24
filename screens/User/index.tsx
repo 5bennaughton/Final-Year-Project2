@@ -1,12 +1,16 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
-import { API_BASE } from '@/constants/constants';
-import { requestJson, useListPosts } from '@/helpers/helpers';
-import type { FriendStatus, ProfileResponse } from '@/helpers/types';
+import { useListPosts } from '@/helpers/helpers';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  createFriendRequest,
+  fetchFriendStatus,
+  fetchUserProfile,
+} from './user.api';
+import type { FriendStatus, ProfileResponse } from './user.types';
 
 /**
  * Render another user's profile with posts and friend status.
@@ -40,11 +44,7 @@ export default function UserPage() {
       setProfileError(null);
 
       try {
-        const data = (await requestJson(
-          `${API_BASE}/users/${encodeURIComponent(userId)}`,
-          {},
-          'Fetch profile failed'
-        )) as ProfileResponse | null;
+        const data = (await fetchUserProfile(userId)) as ProfileResponse | null;
 
         if (isMounted) {
           setProfile(data ?? null);
@@ -67,11 +67,7 @@ export default function UserPage() {
       setRequestError(null);
 
       try {
-        const data = await requestJson(
-          `${API_BASE}/friends/status/${encodeURIComponent(userId)}`,
-          {},
-          'Fetch friend status failed'
-        );
+        const data = await fetchFriendStatus(userId);
         const status = data?.status as FriendStatus;
         if (isMounted && status) {
           setFriendStatus(status);
@@ -105,15 +101,7 @@ export default function UserPage() {
     setRequestError(null);
 
     try {
-      await requestJson(
-        `${API_BASE}/friends/requests`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ addresseeId: userId }),
-        },
-        'Request failed'
-      );
+      await createFriendRequest(userId);
       setFriendStatus('outgoing');
     } catch (err: any) {
       setRequestError(err?.message ?? 'Request failed');

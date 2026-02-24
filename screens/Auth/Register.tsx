@@ -1,9 +1,9 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { API_BASE } from '@/constants/constants';
-import type { RegisterBody, RegisterProps } from '@/helpers/types';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { registerWithEmail } from './auth.api';
+import type { RegisterBody, RegisterProps } from './auth.types';
 
 /**
  * Render the registration form and handle account creation.
@@ -30,20 +30,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        const msg = data?.message ?? 'Registration failed';
-        setError(msg);
-        Alert.alert('Register failed', msg);
-        return;
-      }
+      const data = await registerWithEmail(form);
 
       setSuccess('Account created! You can log in now.');
       setForm({ name: '', email: '', password: '' });
@@ -51,9 +38,10 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
       onSuccess?.(data);
       // optionally switch view
       // onGoToLogin?.();
-    } catch {
-      setError('Could not connect to server');
-      Alert.alert('Error', 'Could not connect to server');
+    } catch (err: any) {
+      const message = err?.message ?? 'Could not connect to server';
+      setError(message);
+      Alert.alert('Error', message);
     } finally {
       setLoading(false);
     }
@@ -63,7 +51,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
     <View style={{ gap: 16 }}>
       <Text style={{ fontSize: 24, fontWeight: '700' }}>Register</Text>
 
-      <Input variant="outline" size="md">
+      <Input size="md">
         <InputField
           placeholder="Name"
           value={form.name}
@@ -74,7 +62,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
         />
       </Input>
 
-      <Input variant="outline" size="md">
+      <Input size="md">
         <InputField
           placeholder="Email"
           value={form.email}
@@ -86,7 +74,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
         />
       </Input>
 
-      <Input variant="outline" size="md">
+      <Input size="md">
         <InputField
           placeholder="Password"
           value={form.password}
@@ -109,7 +97,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
       {success && <Text style={{ color: 'green' }}>{success}</Text>}
 
       {onGoToLogin && (
-        <Button variant="outline" onPress={onGoToLogin} disabled={loading}>
+        <Button onPress={onGoToLogin} disabled={loading}>
           <ButtonText>Already have an account? Sign in</ButtonText>
         </Button>
       )}

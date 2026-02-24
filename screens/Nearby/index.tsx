@@ -1,13 +1,11 @@
 import PostList from '@/components/PostList';
-import { API_BASE } from '@/constants/constants';
-import { getCurrentLocation, requestJson } from '@/helpers/helpers';
-import type { GeoCoords } from '@/helpers/types';
+import { getCurrentLocation } from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const NEARBY_BASE = `${API_BASE}/future-sessions/nearby`;
+import { fetchNearbySessions } from './nearby.api';
+import type { GeoCoords } from './nearby.types';
 
 /**
  * Parse a string radius input into a positive number.
@@ -33,7 +31,7 @@ export default function NearbySessionsScreen() {
   /**
    * Fetch nearby sessions from the API using the current location.
    */
-  const fetchNearbySessions = async () => {
+  const runNearbySearch = async () => {
     const radius = parseRadiusKm(radiusKm);
     if (!radius) {
       setError('Enter a valid radius in kilometers.');
@@ -47,12 +45,11 @@ export default function NearbySessionsScreen() {
       const location = await getCurrentLocation();
       setCoords(location);
 
-      const url = `${NEARBY_BASE}?lat=${encodeURIComponent(
-        location.latitude
-      )}&lng=${encodeURIComponent(location.longitude)}&radiusKm=${encodeURIComponent(
+      const data = await fetchNearbySessions(
+        location.latitude,
+        location.longitude,
         radius
-      )}`;
-      const data = await requestJson(url, {}, 'Fetch nearby sessions failed');
+      );
       const items = Array.isArray(data?.posts) ? data.posts : [];
       setPosts(items);
     } catch (err: any) {
@@ -106,7 +103,7 @@ export default function NearbySessionsScreen() {
             }}
           />
           <Pressable
-            onPress={fetchNearbySessions}
+            onPress={runNearbySearch}
             style={{
               backgroundColor: '#1f6f5f',
               paddingHorizontal: 12,

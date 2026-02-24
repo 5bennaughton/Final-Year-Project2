@@ -1,8 +1,5 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { API_BASE } from '@/constants/constants';
-import { requestJson } from '@/helpers/helpers';
-import type { AddSpotParams, SpotPayload, TidePreference } from '@/helpers/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -14,6 +11,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { createGlobalSpot } from './addSpot.api';
+import type {
+  AddSpotParams,
+  SpotPayload,
+  TidePreference,
+} from './addSpot.types';
 
 export default function AddSpot() {
   const router = useRouter();
@@ -144,15 +147,7 @@ export default function AddSpot() {
 
     setSaving(true);
     try {
-      await requestJson(
-        `${API_BASE}/global-spots/add-spot`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        },
-        'Create spot failed'
-      );
+      await createGlobalSpot(payload);
       router.back();
     } catch (err: any) {
       setError(err?.message ?? 'Create spot failed');
@@ -166,13 +161,13 @@ export default function AddSpot() {
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
         <Text style={{ fontSize: 22, fontWeight: '700' }}>Add Spot</Text>
 
-        <Button variant="outline" onPress={() => router.replace('/(tabs)/Map')}>
+        <Button onPress={() => router.replace('/(tabs)/Map')}>
           <ButtonText>Back to Map</ButtonText>
         </Button>
 
         <View style={{ gap: 8 }}>
           <Text style={{ fontWeight: '600' }}>Name</Text>
-          <Input variant="outline" size="md">
+          <Input size="md">
             <InputField
               placeholder="Spot name"
               value={name}
@@ -185,7 +180,7 @@ export default function AddSpot() {
 
         <View style={{ gap: 8 }}>
           <Text style={{ fontWeight: '600' }}>Type</Text>
-          <Input variant="outline" size="md">
+          <Input size="md">
             <InputField
               placeholder="kitesurf, wing, surf..."
               value={type}

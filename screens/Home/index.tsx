@@ -1,10 +1,10 @@
 import PostList from '@/components/PostList';
-import { API_BASE } from '@/constants/constants';
-import { requestJson } from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { fetchFeedPosts } from './home.api';
+import type { FeedPost } from './home.types';
 
 /**
  * Home screen showing the friends feed with map pins and comments.
@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
  */
 export default function Home() {
   const router = useRouter();
-  const [feedPosts, setFeedPosts] = useState<any[]>([]);
+  const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,11 +24,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const data = await requestJson(
-        `${API_BASE}/feed/posts`,
-        {},
-        'Fetch feed failed'
-      );
+      const data = await fetchFeedPosts();
 
       const posts = Array.isArray(data?.posts) ? data.posts : [];
       setFeedPosts(posts);

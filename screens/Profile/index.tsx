@@ -1,9 +1,7 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
-import { API_BASE } from '@/constants/constants';
-import { requestJson, useListPosts, useMeProfile } from '@/helpers/helpers';
-import type { SessionPost } from '@/helpers/types';
+import { useListPosts, useMeProfile } from '@/helpers/helpers';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
@@ -16,8 +14,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
+import { deleteFutureSession } from './profile.api';
+import type { SessionPost } from './profile.types';
 
 /**
  * Render the profile screen with user info and future posts.
@@ -100,11 +98,7 @@ export default function HomePage() {
     setDeleteError(null);
 
     try {
-      await requestJson(
-        `${FUTURE_SESSIONS_BASE}/delete${encodeURIComponent(selectedPost.id)}`,
-        { method: 'DELETE' },
-        'Delete session failed'
-      );
+      await deleteFutureSession(selectedPost.id);
       await listPosts();
       setSelectedPost(null);
     } catch (e: any) {

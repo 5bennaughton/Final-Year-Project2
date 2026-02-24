@@ -1,10 +1,10 @@
 import { API_BASE } from '@/constants/constants';
 import { getAuthToken } from '@/lib/auth';
-import type { AuthMode } from '@/helpers/types';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { AuthMode } from './auth.types';
 import Login from '../Auth/Login';
 import Register from '../Auth/Register';
 

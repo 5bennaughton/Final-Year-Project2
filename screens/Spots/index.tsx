@@ -1,6 +1,3 @@
-import { API_BASE } from '@/constants/constants';
-import { getCurrentLocation, requestJson } from '@/helpers/helpers';
-import type { Pin, Spot } from '@/helpers/types';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -8,6 +5,9 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input, InputField } from '@/components/ui/input';
+import { getCurrentLocation } from '@/helpers/helpers';
+import { fetchGlobalSpots, searchGlobalSpots } from './spots.api';
+import type { Pin, Spot } from './spots.types';
 
 export default function SpotsScreen() {
   const router = useRouter();
@@ -26,11 +26,7 @@ export default function SpotsScreen() {
 
   const loadSpots = useCallback(async () => {
     try {
-      const data = await requestJson(
-        `${API_BASE}/global-spots/display-spots`,
-        {},
-        'Fetch spots failed'
-      );
+      const data = await fetchGlobalSpots();
       const items = Array.isArray(data?.spots) ? data.spots : [];
       setAllSpots(items);
       // Show all markers right after a refresh. Region filtering still applies on map move.
@@ -102,11 +98,7 @@ export default function SpotsScreen() {
       setSearchError(null);
 
       try {
-        const data = await requestJson(
-          `${API_BASE}/global-spots/search?q=${encodeURIComponent(query)}`,
-          {},
-          'Search spots failed'
-        );
+        const data = await searchGlobalSpots(query);
 
         const items = Array.isArray(data?.spots) ? data.spots : [];
 

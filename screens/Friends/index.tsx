@@ -1,8 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { API_BASE } from '@/constants/constants';
-import { requestJson, useUserSearch } from '@/helpers/helpers';
-import type { FriendRequest, UserResult } from '@/helpers/types';
+import { useUserSearch } from '@/helpers/helpers';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -13,9 +11,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const FRIENDS_BASE = `${API_BASE}/friends`;
-const JSON_HEADERS = { 'Content-Type': 'application/json' };
+import {
+  fetchFriendsList,
+  fetchIncomingFriendRequests,
+  respondToFriendRequest,
+} from './friends.api';
+import type { FriendRequest, UserResult } from './friends.types';
 
 /**
  * Prefer a human-readable label if the API provides it.
@@ -92,11 +93,7 @@ export default function Friends() {
     setFriendsMessage(null);
 
     try {
-      const data = await requestJson(
-        `${FRIENDS_BASE}/list`,
-        {},
-        'Fetch friends failed'
-      );
+      const data = await fetchFriendsList();
       if (!data || !Array.isArray(data.friends)) {
         setFriends([]);
         setFriendsError('Unexpected response from server.');
@@ -138,11 +135,7 @@ export default function Friends() {
     setRequestsMessage(null);
 
     try {
-      const data = await requestJson(
-        `${FRIENDS_BASE}/list-requests?type=incoming`,
-        {},
-        'Fetch requests failed'
-      );
+      const data = await fetchIncomingFriendRequests();
       if (!data || !Array.isArray(data.requests)) {
         setRequests([]);
         setRequestsError('Unexpected response from server.');
@@ -185,15 +178,7 @@ export default function Friends() {
     setRequestsMessage(null);
 
     try {
-      await requestJson(
-        `${FRIENDS_BASE}/requests-re/${encodeURIComponent(requestId)}`,
-        {
-          method: 'PATCH',
-          headers: JSON_HEADERS,
-          body: JSON.stringify({ action }),
-        },
-        'Request failed'
-      );
+      await respondToFriendRequest(requestId, action);
       setRequests((prev) => prev.filter((request) => request.id !== requestId));
       setRequestsMessage(
         action === 'accept'
@@ -215,7 +200,7 @@ export default function Friends() {
         {/* Search section */}
         <View style={{ gap: 10 }}>
           <Text style={{ fontSize: 16, fontWeight: '600' }}>Search users</Text>
-          <Input variant="outline" size="md">
+          <Input size="md">
             <InputField
               placeholder="Search by name"
               value={query}

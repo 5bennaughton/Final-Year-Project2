@@ -1,15 +1,12 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { API_BASE } from '@/constants/constants';
-import { requestJson, useMeProfile } from '@/helpers/helpers';
+import { useMeProfile } from '@/helpers/helpers';
 import {
-  authFetch,
   clearAuthToken,
   clearAuthUser,
   getAuthUser,
   setAuthUser,
 } from '@/lib/auth';
-import type { MeResponse, ProfileVisibility } from '@/helpers/types';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -22,6 +19,14 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  requestDeleteAccount,
+  requestLogout,
+  updateAvatarUrl,
+  updateMyProfile,
+  uploadAvatar,
+} from './settings.api';
+import type { MeResponse, ProfileVisibility } from './settings.types';
 const VISIBILITY_OPTIONS: readonly ProfileVisibility[] = [
   'public',
   'friends',
@@ -34,7 +39,7 @@ const VISIBILITY_OPTIONS: readonly ProfileVisibility[] = [
  */
 async function logout() {
   try {
-    await authFetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+    await requestLogout();
   } finally {
     await clearAuthToken();
     await clearAuthUser();
@@ -103,15 +108,7 @@ export default function SettingsScreen() {
         profileVisibility,
       };
 
-      const data = (await requestJson(
-        `${API_BASE}/auth/me`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        },
-        'Update profile failed'
-      )) as MeResponse | null;
+      const data = (await updateMyProfile(payload)) as MeResponse | null;
 
       const nextName = typeof data?.name === 'string' ? data.name : trimmedName;
       const nextBio =
@@ -189,30 +186,14 @@ export default function SettingsScreen() {
         type: mimeType,
       } as any);
 
-      const res = await authFetch(`${API_BASE}/uploads/avatar`, {
-        method: 'POST',
-        body: form,
-      });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data?.message ?? 'Upload failed');
-      }
+      const data = await uploadAvatar(form);
 
       const url = typeof data?.avatarUrl === 'string' ? data.avatarUrl : '';
       if (!url) {
         throw new Error('Missing avatar URL');
       }
 
-      const updated = (await requestJson(
-        `${API_BASE}/auth/me`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ avatarUrl: url }),
-        },
-        'Update avatar failed'
-      )) as MeResponse | null;
+      const updated = (await updateAvatarUrl(url)) as MeResponse | null;
 
       const nextAvatar =
         typeof updated?.avatarUrl === 'string' ? updated.avatarUrl : url;
@@ -246,13 +227,7 @@ export default function SettingsScreen() {
     setSuccess(null);
 
     try {
-      const res = await authFetch(`${API_BASE}/auth/me`, { method: 'DELETE' });
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data?.message ?? 'Delete account failed');
-      }
-
+      await requestDeleteAccount();
       await clearAuthToken();
       await clearAuthUser();
       router.replace('/(auth)');

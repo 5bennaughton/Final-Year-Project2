@@ -1,17 +1,21 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
-import { API_BASE } from '@/constants/constants';
-import { requestJson } from '@/helpers/helpers';
 import { getAuthUser } from '@/lib/auth';
-import type {
-  DirectionMode,
-  KiteableForecastResult,
-  SpotDetailsParams,
-} from '@/helpers/types';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  deleteSpot as deleteGlobalSpot,
+  fetchKiteableForecast,
+  fetchSpotOwner,
+  fetchSpotPosts,
+} from './spotDetails.api';
+import type {
+  DirectionMode,
+  KiteableForecastResult,
+  SpotDetailsParams,
+} from './spotDetails.types';
 
 const sectionCardStyle = {
   gap: 10,
@@ -110,11 +114,7 @@ export default function SpotDetails() {
 
       try {
         // Ask the backend for future posts for this spot.
-        const data = await requestJson(
-          `${API_BASE}/future-sessions/spot/${encodeURIComponent(id)}`,
-          {},
-          'Fetch spot posts failed'
-        );
+        const data = await fetchSpotPosts(id);
 
         const items = Array.isArray(data?.posts) ? data.posts : [];
 
@@ -156,11 +156,7 @@ export default function SpotDetails() {
       setKiteableForecastError(null);
 
       try {
-        const data = await requestJson(
-          `${API_BASE}/global-spots/${encodeURIComponent(id)}/kiteable-forecast?hours=42&directionMode=${directionMode}`,
-          {},
-          'Fetch kiteable forecast failed'
-        );
+        const data = await fetchKiteableForecast(id, directionMode);
 
         if (isMounted) {
           setKiteableForecast((data ?? null) as KiteableForecastResult);
@@ -198,11 +194,7 @@ export default function SpotDetails() {
       setPosterError(null);
 
       try {
-        const data = await requestJson(
-          `${API_BASE}/users/${encodeURIComponent(spotOwnerId)}`,
-          {},
-          'Fetch spot owner failed'
-        );
+        const data = await fetchSpotOwner(spotOwnerId);
 
         const name =
           typeof data?.user?.name === 'string'
@@ -258,11 +250,7 @@ export default function SpotDetails() {
     setDeleteError(null);
 
     try {
-      await requestJson(
-        `${API_BASE}/global-spots/delete-spot/${encodeURIComponent(id)}`,
-        { method: 'DELETE' },
-        'Delete spot failed'
-      );
+      await deleteGlobalSpot(id);
       router.replace('/(tabs)/Map');
     } catch (err: any) {
       setDeleteError(err?.message ?? 'Delete spot failed');

@@ -1,5 +1,3 @@
-import { API_BASE } from '@/constants/constants';
-import type { LatestActivity } from '@/helpers/types';
 import * as WebBrowser from 'expo-web-browser';
 import React, { useState } from 'react';
 import {
@@ -10,6 +8,8 @@ import {
   Text,
   View,
 } from 'react-native';
+import { fetchLatestStravaActivities, getStravaOauthUrl } from './session.api';
+import type { LatestActivity } from './session.types';
 
 /**
  * Type guard for validating the Strava activity payload shape.
@@ -54,7 +54,7 @@ export default function SessionSummary() {
    * Open the Strava OAuth flow and mark the user as connected.
    */
   const connectStrava = async () => {
-    await WebBrowser.openBrowserAsync(`${API_BASE}/oauth/strava`);
+    await WebBrowser.openBrowserAsync(getStravaOauthUrl());
     setIsConnected(true);
   };
 
@@ -67,13 +67,7 @@ export default function SessionSummary() {
     setError(null);
 
     try {
-      const res = await fetch(`${API_BASE}/sessions/strava/latest-activity`);
-      const data = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        const msg = data?.message ?? data?.error ?? 'Failed to import sessions';
-        throw new Error(msg);
-      }
+      const data = await fetchLatestStravaActivities();
 
       const rawItems = Array.isArray(data) ? data : data ? [data] : [];
       const items = rawItems.filter(isLatestActivity);
