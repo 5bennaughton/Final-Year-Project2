@@ -37,3 +37,10 @@ export type KiteableForecastResult = {
 };
 
 export type DirectionMode = 'clockwise' | 'anticlockwise';
+
+export type SpotRatingSummary = {
+  spotId: string;
+  averageRating: number | null;
+  ratingCount: number;
+  myRating: number | null;
+};

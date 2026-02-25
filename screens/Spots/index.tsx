@@ -294,7 +294,8 @@ export default function SpotsScreen() {
                 title={spot.name}
                 description={spot.type}
               >
-                {/* Callout that links to the details screen*/}
+                {/* When user clicks a spot to open up details it will send all
+                    The following params to the next screen 'spot-details'*/}
                 <Callout
                   onPress={() =>
                     router.push({

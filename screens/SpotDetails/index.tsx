@@ -3,17 +3,20 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   deleteSpot as deleteGlobalSpot,
   fetchKiteableForecast,
+  fetchSpotRating,
   fetchSpotOwner,
   fetchSpotPosts,
+  submitSpotRating,
 } from './spotDetails.api';
 import type {
   DirectionMode,
   KiteableForecastResult,
+  SpotRatingSummary,
   SpotDetailsParams,
 } from './spotDetails.types';
 
@@ -24,13 +27,23 @@ const sectionCardStyle = {
   borderRadius: 12,
   backgroundColor: 'white',
   padding: 12,
-} as const;
+};
 
 function getStatusChipColors(active: boolean) {
   return active
-    ? { backgroundColor: '#e4f6ee', borderColor: '#b9e7d2', textColor: '#1f6f5f' }
-    : { backgroundColor: '#fdeaea', borderColor: '#f4caca', textColor: '#a33b3b' };
+    ? {
+        backgroundColor: '#e4f6ee',
+        borderColor: '#b9e7d2',
+        textColor: '#1f6f5f',
+      }
+    : {
+        backgroundColor: '#fdeaea',
+        borderColor: '#f4caca',
+        textColor: '#a33b3b',
+      };
 }
+
+const STAR_VALUES = [1, 2, 3, 4, 5] as const;
 
 /**
  * Spot details screen with a simple "upcoming posts" list.
@@ -62,11 +75,17 @@ export default function SpotDetails() {
   const [kiteableForecast, setKiteableForecast] =
     useState<KiteableForecastResult | null>(null);
   const [kiteableForecastLoading, setKiteableForecastLoading] = useState(false);
-  const [kiteableForecastError, setKiteableForecastError] = useState<string | null>(
-    null
-  );
+  const [kiteableForecastError, setKiteableForecastError] = useState<
+    string | null
+  >(null);
   const [directionMode, setDirectionMode] =
     useState<DirectionMode>('anticlockwise');
+  const [ratingSummary, setRatingSummary] = useState<SpotRatingSummary | null>(
+    null
+  );
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingError, setRatingError] = useState<string | null>(null);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
   // Owner id is passed via route params from the map screen (spot.createdBy, etc).
   const spotOwnerId = (ownerId ?? userId ?? createdById ?? '').toString();
@@ -142,6 +161,48 @@ export default function SpotDetails() {
     };
   }, [id]);
 
+  /**
+   * Load average rating + current user's rating for this spot.
+   */
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRating = async () => {
+      if (!id) {
+        setRatingLoading(false);
+        setRatingSummary(null);
+        setRatingError(null);
+        return;
+      }
+
+      setRatingLoading(true);
+      setRatingError(null);
+
+      try {
+        const data = await fetchSpotRating(id);
+
+        if (isMounted) {
+          setRatingSummary((data ?? null) as SpotRatingSummary);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setRatingSummary(null);
+          setRatingError(err?.message ?? 'Fetch spot rating failed');
+        }
+      } finally {
+        if (isMounted) {
+          setRatingLoading(false);
+        }
+      }
+    };
+
+    loadRating();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -164,7 +225,9 @@ export default function SpotDetails() {
       } catch (err: any) {
         if (isMounted) {
           setKiteableForecast(null);
-          setKiteableForecastError(err?.message ?? 'Fetch kiteable forecast failed');
+          setKiteableForecastError(
+            err?.message ?? 'Fetch kiteable forecast failed'
+          );
         }
       } finally {
         if (isMounted) {
@@ -259,10 +322,37 @@ export default function SpotDetails() {
     }
   };
 
+  /**
+   * Save the selected star value and refresh summary from server response.
+   */
+  const rateSpot = async (rating: number) => {
+    if (!id || ratingSubmitting) return;
+
+    setRatingSubmitting(true);
+    setRatingError(null);
+
+    try {
+      const data = await submitSpotRating(id, rating);
+      setRatingSummary((data ?? null) as SpotRatingSummary);
+    } catch (err: any) {
+      setRatingError(err?.message ?? 'Save spot rating failed');
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
+
   // The first forecast row is treated as "now" for this version.
   const kiteableNow = kiteableForecast?.forecast?.[0] ?? null;
-  const kiteableNowChipColors = getStatusChipColors(Boolean(kiteableNow?.kiteable));
-  const directionChipColors = getStatusChipColors(Boolean(kiteableNow?.directionOk));
+
+  const kiteableNowChipColors = getStatusChipColors(
+    Boolean(kiteableNow?.kiteable)
+  );
+
+  const directionChipColors = getStatusChipColors(
+    Boolean(kiteableNow?.directionOk)
+  );
+
+  //This is just colouring for red and green for boolean
   const speedChipColors = getStatusChipColors(Boolean(kiteableNow?.speedOk));
 
   return (
@@ -299,7 +389,63 @@ export default function SpotDetails() {
         </View>
 
         <View style={sectionCardStyle}>
-          <Text style={{ fontSize: 18, fontWeight: '700' }}>Direction mode</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700' }}>Spot rating</Text>
+
+          {ratingLoading ? (
+            <Text style={{ color: '#666' }}>Loading rating...</Text>
+          ) : (
+            <>
+              <Text style={{ color: '#555' }}>
+                Average: {ratingSummary?.averageRating ?? '-'} (
+                {ratingSummary?.ratingCount ?? 0}{' '}
+                {ratingSummary?.ratingCount === 1 ? 'rating' : 'ratings'})
+              </Text>
+              <Text style={{ color: '#555' }}>
+                Your rating: {ratingSummary?.myRating ?? 'Not rated yet'}
+              </Text>
+
+              {/**Looping through the stars to create 5 pressable stars
+               * Mapping each one from 1-5
+               */}
+              <View style={{ flexDirection: 'row', gap: 4 }}>
+                {STAR_VALUES.map((value) => {
+                  const selected = value <= (ratingSummary?.myRating ?? 0);
+                  return (
+                    <Pressable
+                      key={value}
+                      onPress={() => rateSpot(value)}
+                      disabled={ratingSubmitting}
+                      style={{ paddingVertical: 4, paddingHorizontal: 2 }}
+                    >
+                      {/**This is where the stars are rendered */}
+                      <Text
+                        style={{
+                          fontSize: 28,
+                          color: selected ? '#f2b01e' : '#d0d0d0',
+                        }}
+                      >
+                        ★
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              {ratingSubmitting ? (
+                <Text style={{ color: '#666' }}>Saving your rating...</Text>
+              ) : null}
+            </>
+          )}
+
+          {ratingError ? (
+            <Text style={{ color: 'red' }}>{ratingError}</Text>
+          ) : null}
+        </View>
+
+        <View style={sectionCardStyle}>
+          <Text style={{ fontSize: 18, fontWeight: '700' }}>
+            Direction mode
+          </Text>
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <Button
               variant={directionMode === 'clockwise' ? 'solid' : 'outline'}
@@ -361,7 +507,12 @@ export default function SpotDetails() {
                     paddingVertical: 3,
                   }}
                 >
-                  <Text style={{ color: directionChipColors.textColor, fontSize: 12 }}>
+                  <Text
+                    style={{
+                      color: directionChipColors.textColor,
+                      fontSize: 12,
+                    }}
+                  >
                     Direction {kiteableNow.directionOk ? 'Pass' : 'Fail'}
                   </Text>
                 </View>
@@ -375,7 +526,9 @@ export default function SpotDetails() {
                     paddingVertical: 3,
                   }}
                 >
-                  <Text style={{ color: speedChipColors.textColor, fontSize: 12 }}>
+                  <Text
+                    style={{ color: speedChipColors.textColor, fontSize: 12 }}
+                  >
                     Speed {kiteableNow.speedOk ? 'Pass' : 'Fail'}
                   </Text>
                 </View>
@@ -386,7 +539,8 @@ export default function SpotDetails() {
                 {kiteableForecast?.thresholds?.maxWindKn ?? '-'} kn
               </Text>
               <Text style={{ color: '#555' }}>
-                Direction range: {kiteableForecast?.thresholds?.windDirStart ?? '-'} to{' '}
+                Direction range:{' '}
+                {kiteableForecast?.thresholds?.windDirStart ?? '-'} to{' '}
                 {kiteableForecast?.thresholds?.windDirEnd ?? '-'}°
               </Text>
               <Text style={{ color: '#555' }}>
@@ -415,9 +569,14 @@ export default function SpotDetails() {
                 {kiteableForecast.requestedHours ?? 42}
               </Text>
 
-              {/* Keep the forecast section compact while still exposing all 42 rows. */}
+              {/* Showing all 42 rows but as sscrollable. */}
               <ScrollView
-                style={{ maxHeight: 220, borderWidth: 1, borderColor: '#eee', borderRadius: 8 }}
+                style={{
+                  maxHeight: 220,
+                  borderWidth: 1,
+                  borderColor: '#eee',
+                  borderRadius: 8,
+                }}
                 contentContainerStyle={{ padding: 8, gap: 6 }}
                 nestedScrollEnabled
               >
@@ -432,8 +591,8 @@ export default function SpotDetails() {
                     }}
                   >
                     <Text style={{ color: '#444', fontSize: 12 }}>
-                      {hour.time} - {hour.kiteable ? 'Yes' : 'No'} - {hour.speedKn} kn -{' '}
-                      {hour.directionDeg}°
+                      {hour.time} - {hour.kiteable ? 'Yes' : 'No'} -{' '}
+                      {hour.speedKn} kn - {hour.directionDeg}°
                     </Text>
                   </View>
                 ))}

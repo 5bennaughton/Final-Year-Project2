@@ -36,3 +36,23 @@ export async function deleteSpot(spotId: string) {
     'Delete spot failed'
   );
 }
+
+export async function fetchSpotRating(spotId: string) {
+  return requestJson(
+    `${API_BASE}/global-spots/${encodeURIComponent(spotId)}/rating`,
+    {},
+    'Fetch spot rating failed'
+  );
+}
+
+export async function submitSpotRating(spotId: string, rating: number) {
+  return requestJson(
+    `${API_BASE}/global-spots/${encodeURIComponent(spotId)}/rating`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating }),
+    },
+    'Save spot rating failed'
+  );
+}
