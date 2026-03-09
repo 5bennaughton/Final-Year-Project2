@@ -2,7 +2,7 @@ import { API_BASE } from '@/constants/constants';
 import { getAuthToken } from '@/lib/auth';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { AuthMode } from './auth.types';
 import Login from '../Auth/Login';
@@ -33,9 +33,9 @@ export default function AuthPage() {
   }, [router]);
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
-      <View style={{ gap: 16 }}>
-        <Text style={{ fontSize: 28, fontWeight: '700' }}>
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.content}>
+        <Text style={styles.title}>
           {mode === 'login' ? 'Login' : 'Register'}
         </Text>
 
@@ -56,3 +56,18 @@ export default function AuthPage() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  content: {
+    gap: 16,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+  },
+});

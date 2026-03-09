@@ -2,7 +2,7 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { setAuthToken, setAuthUser } from '@/lib/auth';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { loginWithEmail } from './auth.api';
 import type { LoginBody, LoginProps } from './auth.types';
 
@@ -49,8 +49,8 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
   };
 
   return (
-    <View style={{ gap: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: '700' }}>Login</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Login</Text>
 
       <Input size="md">
         <InputField
@@ -59,7 +59,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
           onChangeText={(email) => setForm((p) => ({ ...p, email }))}
           autoCapitalize="none"
           keyboardType="email-address"
-          style={{ color: 'black' }}
+          style={styles.inputText}
           placeholderTextColor="gray"
         />
       </Input>
@@ -70,7 +70,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
           value={form.password}
           onChangeText={(password) => setForm((p) => ({ ...p, password }))}
           secureTextEntry
-          style={{ color: 'black' }}
+          style={styles.inputText}
           placeholderTextColor="gray"
         />
       </Input>
@@ -83,7 +83,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
         )}
       </Button>
 
-      {error && <Text style={{ color: 'red' }}>{error}</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
       {onGoToRegister && (
         <Button onPress={onGoToRegister} disabled={loading}>
@@ -93,3 +93,19 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  inputText: {
+    color: 'black',
+  },
+  errorText: {
+    color: 'red',
+  },
+});

@@ -11,6 +11,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -412,39 +413,33 @@ export default function CreateSessionScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#f7f6f2]">
-      <View className="flex-1 px-5 pt-3">
-        <View className="mb-6 gap-2">
-          <View className="flex-row items-center justify-between">
+    <SafeAreaView style={styles.screen}>
+      <View style={styles.container}>
+        <View style={styles.headerSection}>
+          <View style={styles.headerRow}>
             <Button
               onPress={() => router.back()}
               action="secondary"
               variant="outline"
               size="sm"
-              className="border border-[#ddd] bg-white"
+              style={styles.backButton}
             >
-              <ButtonText className="text-xs font-semibold text-[#1A1A1A]">
-                Back
-              </ButtonText>
+              <ButtonText style={styles.backButtonText}>Back</ButtonText>
             </Button>
-            <Text className="text-2xl font-bold text-[#1A1A1A]">
-              Create Post
-            </Text>
-            <View className="w-16" />
+            <Text style={styles.title}>Create Post</Text>
+            <View style={styles.headerSpacer} />
           </View>
         </View>
 
         <ScrollView
           ref={scrollRef}
-          contentContainerClassName="gap-5 pb-16"
+          contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View className="rounded-3xl border border-[#ddd] bg-white p-4 gap-3">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-[#777]">
-              Sport
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Sport</Text>
+            <View style={styles.chipRow}>
               {SPORT_OPTIONS.map((option) => {
                 const isSelected = sport === option;
                 return (
@@ -453,10 +448,20 @@ export default function CreateSessionScreen() {
                     onPress={() => setSport(option)}
                     variant="solid"
                     size="sm"
-                    className={`rounded-full border ${isSelected ? 'border-[#F5C542] bg-[#F5C542]' : 'border-[#ddd] bg-white'}`}
+                    style={[
+                      styles.sportChip,
+                      isSelected
+                        ? styles.sportChipSelected
+                        : styles.sportChipUnselected,
+                    ]}
                   >
                     <ButtonText
-                      className={`text-xs capitalize ${isSelected ? 'text-[#1A1A1A]' : 'text-[#333]'}`}
+                      style={[
+                        styles.sportChipText,
+                        isSelected
+                          ? styles.sportChipTextSelected
+                          : styles.sportChipTextUnselected,
+                      ]}
                     >
                       {option}
                     </ButtonText>
@@ -466,10 +471,8 @@ export default function CreateSessionScreen() {
             </View>
           </View>
 
-          <View className="rounded-3xl border border-[#ddd] bg-white p-4 gap-3">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-[#777]">
-              Date and time
-            </Text>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Date and time</Text>
             <Pressable
               onPress={openDateTimePicker}
               accessibilityRole="button"
@@ -479,65 +482,64 @@ export default function CreateSessionScreen() {
                 variant="outline"
                 size="lg"
                 pointerEvents="none"
-                className="rounded-2xl border border-[#ddd] bg-white"
+                style={styles.inputRoot}
               >
                 <InputField
                   placeholder="Select date and time"
                   value={formattedDateTime}
                   editable={false}
-                  className="text-base text-[#1A1A1A]"
+                  style={styles.inputField}
                   placeholderTextColor="#888"
                 />
               </Input>
             </Pressable>
           </View>
 
-          <View className="rounded-3xl border border-[#ddd] bg-white p-4 gap-3">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-[#777]">
-              Location
-            </Text>
-            <Input
-              variant="outline"
-              size="lg"
-              className="rounded-2xl border border-[#ddd] bg-white"
-            >
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Location</Text>
+            <Input variant="outline" size="lg" style={styles.inputRoot}>
               <InputField
                 placeholder="Beach or spot name"
                 value={location}
                 onChangeText={handleChangeLocation}
                 autoCapitalize="words"
-                className="text-base text-[#1A1A1A]"
+                style={styles.inputField}
                 placeholderTextColor="#888"
               />
             </Input>
-            {locationSearching && (
+            {locationSearching ? (
               <ActivityIndicator size="small" color="#F5C542" />
-            )}
-            {locationError && (
-              <Text className="text-[#F26A5B]">{locationError}</Text>
-            )}
+            ) : null}
+            {locationError ? (
+              <Text style={styles.errorText}>{locationError}</Text>
+            ) : null}
 
             {/**
              * If there are more then 0 spot suggestions then render the view below
              */}
             {spotSuggestions.length > 0 && (
-              <View className="overflow-hidden rounded-2xl border border-[#ddd] bg-white">
-                <Text className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[#1f6f5f]">
-                  Spot matches
-                </Text>
+              <View style={styles.suggestionsWrap}>
+                <Text style={styles.suggestionsTitle}>Spot matches</Text>
 
                 {/** Render the array of 'spotSuggestions' */}
                 {spotSuggestions.map((spot, index) => (
                   <Pressable
                     key={`${spot.id}-${index}`}
                     onPress={() => handleSelectSpot(spot)}
-                    className={`px-3 py-2.5 ${index % 2 === 0 ? 'bg-[#f6f6f6]' : 'bg-white'}`}
+                    style={[
+                      styles.suggestionItem,
+                      index % 2 === 0
+                        ? styles.suggestionItemStriped
+                        : styles.suggestionItemPlain,
+                    ]}
                   >
-                    <Text className="text-sm font-semibold text-[#1A1A1A]">
+                    <Text style={styles.suggestionPrimaryText}>
                       {spot.name}
                     </Text>
 
-                    <Text className="text-xs text-[#666]">{spot.type}</Text>
+                    <Text style={styles.suggestionSecondaryText}>
+                      {spot.type}
+                    </Text>
                   </Pressable>
                 ))}
               </View>
@@ -547,15 +549,20 @@ export default function CreateSessionScreen() {
              * If there are more then 0 location suggestions then render the view below
              */}
             {locationSuggestions.length > 0 && (
-              <View className="overflow-hidden rounded-2xl border border-[#ddd] bg-white">
+              <View style={styles.suggestionsWrap}>
                 {/** Render the array of 'locationSuggestions' */}
                 {locationSuggestions.map((suggestion, index) => (
                   <Pressable
                     key={`${suggestion.lat}-${suggestion.lon}-${suggestion.label}-${index}`}
                     onPress={() => handleSelectLocation(suggestion)}
-                    className={`px-3 py-2.5 ${index % 2 === 0 ? 'bg-[#f6f6f6]' : 'bg-white'}`}
+                    style={[
+                      styles.suggestionItem,
+                      index % 2 === 0
+                        ? styles.suggestionItemStriped
+                        : styles.suggestionItemPlain,
+                    ]}
                   >
-                    <Text className="text-sm text-[#1A1A1A]">
+                    <Text style={styles.suggestionLocationText}>
                       {suggestion.label}
                     </Text>
                   </Pressable>
@@ -565,9 +572,9 @@ export default function CreateSessionScreen() {
 
             {/**If there are location coordinates, then render the map with x lat and long */}
             {locationCoords ? (
-              <View className="h-48 overflow-hidden rounded-2xl border border-[#ddd]">
+              <View style={styles.mapPreviewWrap}>
                 <MapView
-                  style={{ flex: 1 }}
+                  style={styles.mapPreview}
                   region={{
                     latitude: locationCoords.latitude,
                     longitude: locationCoords.longitude,
@@ -590,21 +597,29 @@ export default function CreateSessionScreen() {
           </View>
 
           {/* Post visibility controls */}
-          <View className="rounded-3xl border border-[#ddd] bg-white p-4 gap-3">
-            <Text className="text-xs font-semibold uppercase tracking-wider text-[#777]">
-              Visibility
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Visibility</Text>
+            <View style={styles.chipRow}>
               {VISIBILITY_OPTIONS.map((option) => {
                 const isSelected = postVisibility === option;
                 return (
                   <Pressable
                     key={option}
                     onPress={() => setPostVisibility(option)}
-                    className={`rounded-full border px-3 py-1.5 ${isSelected ? 'border-[#1f6f5f] bg-[#1f6f5f]' : 'border-[#ddd] bg-white'}`}
+                    style={[
+                      styles.visibilityChip,
+                      isSelected
+                        ? styles.visibilityChipSelected
+                        : styles.visibilityChipUnselected,
+                    ]}
                   >
                     <Text
-                      className={`text-xs capitalize ${isSelected ? 'text-white' : 'text-[#333]'}`}
+                      style={[
+                        styles.visibilityChipText,
+                        isSelected
+                          ? styles.visibilityChipTextSelected
+                          : styles.visibilityChipTextUnselected,
+                      ]}
                     >
                       {option}
                     </Text>
@@ -615,28 +630,31 @@ export default function CreateSessionScreen() {
 
             {/* Only show the friend picker for custom visibility */}
             {postVisibility === 'custom' && (
-              <View className="gap-2">
-                <Text className="text-xs text-[#666]">
+              <View style={styles.customVisibilityWrap}>
+                <Text style={styles.helperText}>
                   Choose friends who can see this post
                 </Text>
-                {loadingFriends && (
+                {loadingFriends ? (
                   <ActivityIndicator size="small" color="#1f6f5f" />
-                )}
-                {friendsError && (
-                  <Text className="text-[#F26A5B]">{friendsError}</Text>
-                )}
+                ) : null}
+                {friendsError ? (
+                  <Text style={styles.errorText}>{friendsError}</Text>
+                ) : null}
                 {friends.map((friend) => {
                   const isSelected = selectedViewerIds.includes(friend.id);
                   return (
                     <Pressable
                       key={friend.id}
                       onPress={() => toggleViewer(friend.id)}
-                      className={`rounded-2xl border px-3 py-2 ${isSelected ? 'border-[#1f6f5f] bg-[#f0fbf8]' : 'border-[#ddd] bg-white'}`}
+                      style={[
+                        styles.friendItem,
+                        isSelected
+                          ? styles.friendItemSelected
+                          : styles.friendItemUnselected,
+                      ]}
                     >
-                      <Text className="text-sm font-semibold text-[#1A1A1A]">
-                        {friend.name}
-                      </Text>
-                      <Text className="text-xs text-[#666]">
+                      <Text style={styles.friendName}>{friend.name}</Text>
+                      <Text style={styles.friendHint}>
                         {isSelected ? 'Selected' : 'Tap to select'}
                       </Text>
                     </Pressable>
@@ -646,73 +664,53 @@ export default function CreateSessionScreen() {
             )}
           </View>
 
-          {createError && <Text className="text-[#F26A5B]">{createError}</Text>}
+          {createError ? (
+            <Text style={styles.errorText}>{createError}</Text>
+          ) : null}
 
           <Button
             onPress={createPost}
             disabled={!canSubmit || creating}
             size="lg"
-            className="rounded-2xl border border-[#1f6f5f] bg-[#1f6f5f]"
+            style={styles.submitButton}
           >
             {creating ? (
               <ActivityIndicator color="white" />
             ) : (
-              <ButtonText className="text-base font-semibold text-white">
-                Post
-              </ButtonText>
+              <ButtonText style={styles.submitButtonText}>Post</ButtonText>
             )}
           </Button>
         </ScrollView>
       </View>
       <Modal visible={pickerVisible} transparent animationType="fade">
-        <View className="flex-1 justify-end bg-black/40">
-          <View className="rounded-t-3xl border border-[#ddd] bg-white px-5 pb-6 pt-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-semibold text-[#1A1A1A]">
-                Pick date and time
-              </Text>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Pick date and time</Text>
               <Pressable
                 onPress={closeDateTimePicker}
-                className="h-8 w-8 items-center justify-center rounded-full bg-[#eee]"
+                style={styles.closeButton}
               >
-                <Text className="text-xs font-semibold text-[#333]">X</Text>
+                <Text style={styles.closeButtonText}>X</Text>
               </Pressable>
             </View>
-            <Text className="mt-1 text-sm text-[#666]">
+            <Text style={styles.modalPreviewText}>
               {formatDateTime(draftDateTime)}
             </Text>
-            <View className="mt-4 gap-3 rounded-2xl border border-[#ddd] bg-[#f7f7f7] p-3">
-              <View className="h-40 justify-center">
-                <View
-                  pointerEvents="none"
-                  className="absolute left-4 right-4 h-9 rounded-xl border"
-                  style={{
-                    top: '50%',
-                    transform: [{ translateY: -18 }],
-                    borderColor: '#F5C542',
-                    backgroundColor: 'rgba(245, 197, 66, 0.12)',
-                  }}
-                />
+            <View style={styles.pickerPanel}>
+              <View style={styles.pickerDateWrap}>
+                <View pointerEvents="none" style={styles.pickerHighlight} />
                 <DateTimePicker
                   value={draftDateTime}
                   mode="date"
                   display="spinner"
                   textColor={Platform.OS === 'ios' ? '#1A1A1A' : undefined}
                   onChange={handleDraftDateChange}
-                  style={{ height: 160 }}
+                  style={styles.datePicker}
                 />
               </View>
-              <View className="h-36 justify-center">
-                <View
-                  pointerEvents="none"
-                  className="absolute left-4 right-4 h-9 rounded-xl border"
-                  style={{
-                    top: '50%',
-                    transform: [{ translateY: -18 }],
-                    borderColor: '#F5C542',
-                    backgroundColor: 'rgba(245, 197, 66, 0.12)',
-                  }}
-                />
+              <View style={styles.pickerTimeWrap}>
+                <View pointerEvents="none" style={styles.pickerHighlight} />
                 <DateTimePicker
                   value={draftDateTime}
                   mode="time"
@@ -720,30 +718,28 @@ export default function CreateSessionScreen() {
                   is24Hour={false}
                   textColor={Platform.OS === 'ios' ? '#1A1A1A' : undefined}
                   onChange={handleDraftTimeChange}
-                  style={{ height: 140 }}
+                  style={styles.timePicker}
                 />
               </View>
             </View>
-            <View className="mt-4 flex-row gap-3">
+            <View style={styles.modalActionsRow}>
               <Button
                 onPress={closeDateTimePicker}
                 action="secondary"
                 variant="outline"
                 size="lg"
-                className="flex-1 rounded-2xl border border-[#ddd] bg-white"
+                style={styles.modalCancelButton}
               >
-                <ButtonText className="text-sm font-semibold text-[#333]">
+                <ButtonText style={styles.modalCancelButtonText}>
                   Cancel
                 </ButtonText>
               </Button>
               <Button
                 onPress={confirmDateTimePicker}
                 size="lg"
-                className="flex-1 rounded-2xl border border-[#1f6f5f] bg-[#1f6f5f]"
+                style={styles.modalDoneButton}
               >
-                <ButtonText className="text-sm font-semibold text-white">
-                  Done
-                </ButtonText>
+                <ButtonText style={styles.modalDoneButtonText}>Done</ButtonText>
               </Button>
             </View>
           </View>
@@ -752,3 +748,322 @@ export default function CreateSessionScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f6f2',
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+  },
+  headerSection: {
+    marginBottom: 24,
+    gap: 8,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  backButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  headerSpacer: {
+    width: 64,
+  },
+  scrollContent: {
+    gap: 20,
+    paddingBottom: 64,
+  },
+  card: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 24,
+    backgroundColor: 'white',
+    padding: 16,
+    gap: 12,
+  },
+  cardLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: '#777',
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  sportChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  sportChipSelected: {
+    borderColor: '#F5C542',
+    backgroundColor: '#F5C542',
+  },
+  sportChipUnselected: {
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  sportChipText: {
+    fontSize: 12,
+    textTransform: 'capitalize',
+  },
+  sportChipTextSelected: {
+    color: '#1A1A1A',
+  },
+  sportChipTextUnselected: {
+    color: '#333',
+  },
+  inputRoot: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 16,
+    backgroundColor: 'white',
+  },
+  inputField: {
+    fontSize: 16,
+    color: '#1A1A1A',
+  },
+  errorText: {
+    color: '#F26A5B',
+  },
+  suggestionsWrap: {
+    overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  suggestionsTitle: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    color: '#1f6f5f',
+  },
+  suggestionItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  suggestionItemStriped: {
+    backgroundColor: '#f6f6f6',
+  },
+  suggestionItemPlain: {
+    backgroundColor: 'white',
+  },
+  suggestionPrimaryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  suggestionSecondaryText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  suggestionLocationText: {
+    fontSize: 14,
+    color: '#1A1A1A',
+  },
+  mapPreviewWrap: {
+    height: 192,
+    overflow: 'hidden',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  mapPreview: {
+    flex: 1,
+  },
+  visibilityChip: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  visibilityChipSelected: {
+    borderColor: '#1f6f5f',
+    backgroundColor: '#1f6f5f',
+  },
+  visibilityChipUnselected: {
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  visibilityChipText: {
+    fontSize: 12,
+    textTransform: 'capitalize',
+  },
+  visibilityChipTextSelected: {
+    color: 'white',
+  },
+  visibilityChipTextUnselected: {
+    color: '#333',
+  },
+  customVisibilityWrap: {
+    gap: 8,
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  friendItem: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  friendItemSelected: {
+    borderColor: '#1f6f5f',
+    backgroundColor: '#f0fbf8',
+  },
+  friendItemUnselected: {
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  friendName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  friendHint: {
+    fontSize: 12,
+    color: '#666',
+  },
+  submitButton: {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1f6f5f',
+    backgroundColor: '#1f6f5f',
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+    paddingTop: 16,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  closeButton: {
+    height: 32,
+    width: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    backgroundColor: '#eee',
+  },
+  closeButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalPreviewText: {
+    marginTop: 4,
+    fontSize: 14,
+    color: '#666',
+  },
+  pickerPanel: {
+    marginTop: 16,
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#f7f7f7',
+    padding: 12,
+  },
+  pickerDateWrap: {
+    height: 160,
+    justifyContent: 'center',
+  },
+  pickerTimeWrap: {
+    height: 144,
+    justifyContent: 'center',
+  },
+  pickerHighlight: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    height: 36,
+    borderRadius: 12,
+    borderWidth: 1,
+    top: '50%',
+    transform: [{ translateY: -18 }],
+    borderColor: '#F5C542',
+    backgroundColor: 'rgba(245, 197, 66, 0.12)',
+  },
+  datePicker: {
+    height: 160,
+  },
+  timePicker: {
+    height: 140,
+  },
+  modalActionsRow: {
+    marginTop: 16,
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: 'white',
+  },
+  modalCancelButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  modalDoneButton: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#1f6f5f',
+    backgroundColor: '#1f6f5f',
+  },
+  modalDoneButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'white',
+  },
+});

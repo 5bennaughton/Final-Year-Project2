@@ -3,7 +3,14 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { useListPosts } from '@/helpers/helpers';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   createFriendRequest,
@@ -114,60 +121,40 @@ export default function UserPage() {
   const bioText = profile?.bio ?? 'No bio yet.';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-        <View style={{ gap: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.profileSection}>
+          <View style={styles.headerRow}>
             {profile?.avatarUrl ? (
               <Image
                 source={{ uri: profile.avatarUrl }}
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: '#e6e6e6',
-                }}
+                style={styles.avatar}
               />
             ) : (
-              <View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: '#e6e6e6',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  style={{ fontSize: 24, fontWeight: '700', color: '#555' }}
-                >
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>
                   {displayName.charAt(0).toUpperCase()}
                 </Text>
               </View>
             )}
 
-            <View style={{ gap: 2 }}>
-              <Text style={{ fontSize: 20, fontWeight: '700' }}>
-                {displayName}
-              </Text>
+            <View style={styles.nameWrap}>
+              <Text style={styles.name}>{displayName}</Text>
               {loadingProfile && <ActivityIndicator />}
             </View>
           </View>
 
-          <Text style={{ color: '#555' }}>{bioText}</Text>
+          <Text style={styles.bioText}>{bioText}</Text>
 
           {/* Friend status / request button */}
           {loadingStatus ? (
             <ActivityIndicator />
           ) : friendStatus === 'friends' ? (
-            <Text style={{ color: '#1f6f5f', fontWeight: '700' }}>Friends</Text>
+            <Text style={styles.friendStatusText}>Friends</Text>
           ) : friendStatus === 'outgoing' ? (
-            <Text style={{ color: '#666', fontWeight: '600' }}>
-              Request sent
-            </Text>
+            <Text style={styles.pendingStatusText}>Request sent</Text>
           ) : friendStatus === 'incoming' ? (
-            <Text style={{ color: '#666', fontWeight: '600' }}>
+            <Text style={styles.pendingStatusText}>
               Request pending (check your requests)
             </Text>
           ) : friendStatus === 'self' ? null : (
@@ -180,12 +167,12 @@ export default function UserPage() {
             </Button>
           )}
 
-          {profileError && <Text style={{ color: 'red' }}>{profileError}</Text>}
-          {requestError && <Text style={{ color: 'red' }}>{requestError}</Text>}
+          {profileError && <Text style={styles.errorText}>{profileError}</Text>}
+          {requestError && <Text style={styles.errorText}>{requestError}</Text>}
         </View>
 
-        <View style={{ gap: 12 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700' }}>Posts</Text>
+        <View style={styles.postsSection}>
+          <Text style={styles.postsHeading}>Posts</Text>
           <PostList
             posts={posts}
             loading={loadingPosts}
@@ -198,3 +185,69 @@ export default function UserPage() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f6f2',
+  },
+  content: {
+    padding: 20,
+    gap: 16,
+  },
+  profileSection: {
+    gap: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#e6e6e6',
+  },
+  avatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#e6e6e6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#555',
+  },
+  nameWrap: {
+    gap: 2,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  bioText: {
+    color: '#555',
+  },
+  friendStatusText: {
+    color: '#1f6f5f',
+    fontWeight: '700',
+  },
+  pendingStatusText: {
+    color: '#666',
+    fontWeight: '600',
+  },
+  errorText: {
+    color: 'red',
+  },
+  postsSection: {
+    gap: 12,
+  },
+  postsHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});

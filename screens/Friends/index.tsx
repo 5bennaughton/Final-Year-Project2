@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -193,13 +194,13 @@ export default function Friends() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, padding: 20 }}>
-      <ScrollView contentContainerStyle={{ gap: 16, paddingBottom: 24 }}>
-        <Text style={{ fontSize: 20, fontWeight: '700' }}>Friends</Text>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Friends</Text>
 
         {/* Search section */}
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>Search users</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Search users</Text>
           <Input size="md">
             <InputField
               placeholder="Search by name"
@@ -208,14 +209,14 @@ export default function Friends() {
               onSubmitEditing={() => searchUsers(query)}
               returnKeyType="search"
               autoCapitalize="words"
-              style={{ color: 'black' }}
+              style={styles.inputText}
               placeholderTextColor="gray"
             />
           </Input>
           {searching && <ActivityIndicator />}
-          {searchError && <Text style={{ color: 'red' }}>{searchError}</Text>}
+          {searchError && <Text style={styles.errorText}>{searchError}</Text>}
           {results.length === 0 && !searching && !searchError && (
-            <Text style={{ color: '#666' }}>No results yet.</Text>
+            <Text style={styles.subtleText}>No results yet.</Text>
           )}
           {results.map((user) => (
             <Pressable
@@ -226,27 +227,21 @@ export default function Friends() {
                   params: { id: user.id },
                 })
               }
-              style={{
-                padding: 12,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: '#ddd',
-                gap: 6,
-              }}
+              style={styles.listCard}
             >
-              <Text style={{ fontWeight: '600' }}>{user.name}</Text>
-              <Text style={{ color: '#666' }}>{user.email}</Text>
+              <Text style={styles.listCardTitle}>{user.name}</Text>
+              <Text style={styles.listCardSubtle}>{user.email}</Text>
             </Pressable>
           ))}
           {requestMessage && (
-            <Text style={{ color: 'green' }}>{requestMessage}</Text>
+            <Text style={styles.successText}>{requestMessage}</Text>
           )}
-          {requestError && <Text style={{ color: 'red' }}>{requestError}</Text>}
+          {requestError && <Text style={styles.errorText}>{requestError}</Text>}
         </View>
 
         {/* Friends section */}
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>Your friends</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your friends</Text>
           <Button onPress={toggleFriends}>
             <ButtonText>
               {showFriends ? 'Hide friends' : 'Show friends'}
@@ -254,7 +249,7 @@ export default function Friends() {
           </Button>
 
           {showFriends && (
-            <View style={{ gap: 10 }}>
+            <View style={styles.section}>
               <Button onPress={loadFriends} disabled={loadingFriends}>
                 {loadingFriends ? (
                   <ActivityIndicator color="white" />
@@ -264,40 +259,29 @@ export default function Friends() {
               </Button>
 
               {friends.length === 0 && !loadingFriends && !friendsError && (
-                <Text style={{ color: '#666' }}>No friends yet.</Text>
+                <Text style={styles.subtleText}>No friends yet.</Text>
               )}
 
               {friends.map((friend) => (
-                <View
-                  key={friend.id}
-                  style={{
-                    padding: 12,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#ddd',
-                    gap: 6,
-                  }}
-                >
-                  <Text style={{ fontWeight: '600' }}>{friend.name}</Text>
-                  <Text style={{ color: '#666' }}>{friend.email}</Text>
+                <View key={friend.id} style={styles.listCard}>
+                  <Text style={styles.listCardTitle}>{friend.name}</Text>
+                  <Text style={styles.listCardSubtle}>{friend.email}</Text>
                 </View>
               ))}
 
               {friendsMessage && (
-                <Text style={{ color: 'green' }}>{friendsMessage}</Text>
+                <Text style={styles.successText}>{friendsMessage}</Text>
               )}
               {friendsError && (
-                <Text style={{ color: 'red' }}>{friendsError}</Text>
+                <Text style={styles.errorText}>{friendsError}</Text>
               )}
             </View>
           )}
         </View>
 
         {/* Friend requests section */}
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>
-            Friend requests
-          </Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Friend requests</Text>
           <Button onPress={toggleRequests}>
             <ButtonText>
               {showRequests ? 'Hide requests' : 'Show requests'}
@@ -305,7 +289,7 @@ export default function Friends() {
           </Button>
 
           {showRequests && (
-            <View style={{ gap: 10 }}>
+            <View style={styles.section}>
               <Button onPress={loadFriendRequests} disabled={loadingRequests}>
                 {loadingRequests ? (
                   <ActivityIndicator color="white" />
@@ -315,29 +299,20 @@ export default function Friends() {
               </Button>
 
               {requests.length === 0 && !loadingRequests && !requestsError && (
-                <Text style={{ color: '#666' }}>No pending requests.</Text>
+                <Text style={styles.subtleText}>No pending requests.</Text>
               )}
 
               {requests.map((request) => {
                 const isActing = actingRequestId === request.id;
                 return (
-                  <View
-                    key={request.id}
-                    style={{
-                      padding: 12,
-                      borderRadius: 10,
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      gap: 8,
-                    }}
-                  >
-                    <Text style={{ fontWeight: '600' }}>
+                  <View key={request.id} style={styles.requestCard}>
+                    <Text style={styles.listCardTitle}>
                       {getRequesterLabel(request)}
                     </Text>
-                    <Text style={{ color: '#666' }}>
+                    <Text style={styles.listCardSubtle}>
                       Request id: {request.id}
                     </Text>
-                    <View style={{ gap: 10 }}>
+                    <View style={styles.section}>
                       <Button
                         onPress={() => respondToRequest(request.id, 'accept')}
                         disabled={isActing}
@@ -364,10 +339,10 @@ export default function Friends() {
               })}
 
               {requestsMessage && (
-                <Text style={{ color: 'green' }}>{requestsMessage}</Text>
+                <Text style={styles.successText}>{requestsMessage}</Text>
               )}
               {requestsError && (
-                <Text style={{ color: 'red' }}>{requestsError}</Text>
+                <Text style={styles.errorText}>{requestsError}</Text>
               )}
             </View>
           )}
@@ -376,3 +351,57 @@ export default function Friends() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    padding: 20,
+  },
+  content: {
+    gap: 16,
+    paddingBottom: 24,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  section: {
+    gap: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputText: {
+    color: 'black',
+  },
+  errorText: {
+    color: 'red',
+  },
+  successText: {
+    color: 'green',
+  },
+  subtleText: {
+    color: '#666',
+  },
+  listCard: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    gap: 6,
+  },
+  requestCard: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    gap: 8,
+  },
+  listCardTitle: {
+    fontWeight: '600',
+  },
+  listCardSubtle: {
+    color: '#666',
+  },
+});

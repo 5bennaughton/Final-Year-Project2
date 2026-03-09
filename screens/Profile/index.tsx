@@ -10,6 +10,7 @@ import {
   Image,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -115,105 +116,58 @@ export default function HomePage() {
     'Add a short bio about your riding style or favorite spots.';
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content}>
         {/* Profile header: avatar, name, and quick actions */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 12,
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
             {/* Avatar image if set, otherwise a simple placeholder */}
             {profile?.avatarUrl ? (
               <Image
                 source={{ uri: profile.avatarUrl }}
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: '#e6e6e6',
-                }}
+                style={styles.avatar}
               />
             ) : (
-              <View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: '#e6e6e6',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  style={{ fontSize: 24, fontWeight: '700', color: '#555' }}
-                >
-                  {displayInitial}
-                </Text>
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>{displayInitial}</Text>
               </View>
             )}
 
-            <View style={{ gap: 2 }}>
-              <Text style={{ fontSize: 20, fontWeight: '700' }}>
-                {displayName}
-              </Text>
+            <View style={styles.nameWrap}>
+              <Text style={styles.name}>{displayName}</Text>
               {loadingUser && !profile?.name && (
-                <ActivityIndicator style={{ marginTop: 6 }} />
+                <ActivityIndicator style={styles.nameLoader} />
               )}
             </View>
           </View>
 
           {/* Small buttons for map + settings */}
-          <View style={{ gap: 8 }}>
-            <Pressable
-              onPress={goToSessions}
-              style={{
-                borderWidth: 1,
-                borderColor: '#ddd',
-                backgroundColor: '#fff',
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 8,
-              }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '600' }}>Sessions</Text>
+          <View style={styles.quickActions}>
+            <Pressable onPress={goToSessions} style={styles.quickActionButton}>
+              <Text style={styles.quickActionButtonText}>Sessions</Text>
             </Pressable>
 
-            <Pressable
-              onPress={goToSettings}
-              style={{
-                borderWidth: 1,
-                borderColor: '#ddd',
-                backgroundColor: '#fff',
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-                borderRadius: 8,
-              }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '600' }}>Settings</Text>
+            <Pressable onPress={goToSettings} style={styles.quickActionButton}>
+              <Text style={styles.quickActionButtonText}>Settings</Text>
             </Pressable>
           </View>
         </View>
 
         {/* Bio section */}
         <View>
-          <Text style={{ color: '#555' }}>{bioText}</Text>
-          {profileError && <Text style={{ color: 'red' }}>{profileError}</Text>}
+          <Text style={styles.bioText}>{bioText}</Text>
+          {profileError && <Text style={styles.errorText}>{profileError}</Text>}
         </View>
 
         {/* Primary actions */}
-        <View style={{ gap: 10 }}>
+        <View style={styles.primaryActions}>
           <Button onPress={goToCreatePost}>
             <ButtonText>Create Post</ButtonText>
           </Button>
         </View>
 
         {/* Posts list */}
-        <Text style={{ fontSize: 18, fontWeight: '700' }}>Your Posts</Text>
+        <Text style={styles.postsHeading}>Your Posts</Text>
 
         <PostList
           posts={sortedPosts}
@@ -227,19 +181,12 @@ export default function HomePage() {
             if (!target) return null;
 
             return (
-              <View style={{ alignItems: 'flex-end' }}>
+              <View style={styles.deleteActionWrap}>
                 <Pressable
                   onPress={() => openDeleteModal(target)}
-                  style={{
-                    backgroundColor: '#f5d5d5',
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    borderRadius: 6,
-                  }}
+                  style={styles.deleteActionButton}
                 >
-                  <Text style={{ color: '#7a1f1f', fontWeight: '600' }}>
-                    Delete
-                  </Text>
+                  <Text style={styles.deleteActionText}>Delete</Text>
                 </Pressable>
               </View>
             );
@@ -258,3 +205,95 @@ export default function HomePage() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f6f2',
+  },
+  content: {
+    padding: 20,
+    gap: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#e6e6e6',
+  },
+  avatarPlaceholder: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#e6e6e6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#555',
+  },
+  nameWrap: {
+    gap: 2,
+  },
+  name: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  nameLoader: {
+    marginTop: 6,
+  },
+  quickActions: {
+    gap: 8,
+  },
+  quickActionButton: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  quickActionButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  bioText: {
+    color: '#555',
+  },
+  errorText: {
+    color: 'red',
+  },
+  primaryActions: {
+    gap: 10,
+  },
+  postsHeading: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  deleteActionWrap: {
+    alignItems: 'flex-end',
+  },
+  deleteActionButton: {
+    backgroundColor: '#f5d5d5',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  deleteActionText: {
+    color: '#7a1f1f',
+    fontWeight: '600',
+  },
+});

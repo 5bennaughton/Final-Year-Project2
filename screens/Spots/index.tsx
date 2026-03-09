@@ -1,7 +1,13 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input, InputField } from '@/components/ui/input';
@@ -159,104 +165,54 @@ export default function SpotsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={styles.screen}>
       {loading ? (
-        <View
-          style={{
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
-          }}
-        >
+        <View style={styles.centeredState}>
           <ActivityIndicator />
-          <Text style={{ color: '#666' }}>Loading your location...</Text>
+          <Text style={styles.stateText}>Loading your location...</Text>
         </View>
       ) : error ? (
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700' }}>Spots Map</Text>
-          <Text style={{ marginTop: 8, color: 'red' }}>{error}</Text>
+        <View style={styles.fallbackWrap}>
+          <Text style={styles.fallbackTitle}>Spots Map</Text>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
       ) : initialRegion ? (
-        <View style={{ flex: 1 }}>
+        <View style={styles.mapWrap}>
           {/* Search bar + suggestions overlay */}
-          <View
-            style={{
-              position: 'absolute',
-              top: 12,
-              left: 12,
-              right: 12,
-              zIndex: 2,
-              gap: 6,
-            }}
-          >
-            <Input
-              variant="outline"
-              size="md"
-              style={{ backgroundColor: '#fff', borderColor: '#ddd' }}
-            >
+          <View style={styles.searchOverlay}>
+            <Input variant="outline" size="md" style={styles.searchInput}>
               <InputField
                 placeholder="Search spots by name"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoCapitalize="words"
                 selectionColor="#1f6f5f"
-                style={{ color: '#1A1A1A' }}
+                style={styles.searchInputText}
                 placeholderTextColor="#777"
               />
             </Input>
 
-            <Pressable
-              onPress={loadSpots}
-              style={{
-                alignSelf: 'flex-end',
-                backgroundColor: '#fff',
-                borderWidth: 1,
-                borderColor: '#ddd',
-                borderRadius: 8,
-                paddingHorizontal: 10,
-                paddingVertical: 6,
-              }}
-            >
-              <Text
-                style={{ color: '#1f6f5f', fontWeight: '600', fontSize: 12 }}
-              >
-                Refresh spots
-              </Text>
+            <Pressable onPress={loadSpots} style={styles.refreshButton}>
+              <Text style={styles.refreshButtonText}>Refresh spots</Text>
             </Pressable>
 
             {searching && (
-              <Text style={{ color: '#666', fontSize: 12 }}>Searching...</Text>
+              <Text style={styles.searchStateText}>Searching...</Text>
             )}
             {searchError && (
-              <Text style={{ color: 'red', fontSize: 12 }}>{searchError}</Text>
+              <Text style={styles.searchErrorText}>{searchError}</Text>
             )}
 
             {searchResults.length > 0 && (
-              <View
-                style={{
-                  backgroundColor: '#fff',
-                  borderColor: '#ddd',
-                  borderWidth: 1,
-                  borderRadius: 10,
-                  maxHeight: 200,
-                }}
-              >
+              <View style={styles.suggestionsList}>
                 {searchResults.map((spot) => (
                   <Pressable
                     key={spot.id}
                     onPress={() => handleSelectSpot(spot)}
-                    style={{
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                      borderBottomWidth: 1,
-                      borderBottomColor: '#eee',
-                    }}
+                    style={styles.suggestionItem}
                   >
-                    <Text style={{ fontWeight: '600' }}>{spot.name}</Text>
-                    <Text style={{ color: '#666', fontSize: 12 }}>
-                      {spot.type}
-                    </Text>
+                    <Text style={styles.suggestionName}>{spot.name}</Text>
+                    <Text style={styles.suggestionType}>{spot.type}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -265,7 +221,7 @@ export default function SpotsScreen() {
 
           <MapView
             ref={mapRef}
-            style={{ flex: 1 }}
+            style={styles.map}
             mapType="satellite"
             initialRegion={initialRegion}
             showsUserLocation
@@ -317,12 +273,10 @@ export default function SpotsScreen() {
                     })
                   }
                 >
-                  <View style={{ maxWidth: 180, gap: 6 }}>
-                    <Text style={{ fontWeight: '700' }}>{spot.name}</Text>
-                    <Text style={{ color: '#666' }}>{spot.type}</Text>
-                    <Text style={{ color: '#1f6f5f', fontWeight: '600' }}>
-                      View details
-                    </Text>
+                  <View style={styles.calloutContent}>
+                    <Text style={styles.calloutTitle}>{spot.name}</Text>
+                    <Text style={styles.calloutType}>{spot.type}</Text>
+                    <Text style={styles.calloutAction}>View details</Text>
                   </View>
                 </Callout>
               </Marker>
@@ -342,30 +296,138 @@ export default function SpotsScreen() {
                   },
                 })
               }
-              style={{
-                position: 'absolute',
-                bottom: 20,
-                alignSelf: 'center',
-                backgroundColor: '#1f6f5f',
-                paddingHorizontal: 16,
-                paddingVertical: 12,
-                borderRadius: 10,
-              }}
+              style={styles.addSpotButton}
             >
-              <Text style={{ color: 'white', fontWeight: '600' }}>
-                Add Spot
-              </Text>
+              <Text style={styles.addSpotButtonText}>Add Spot</Text>
             </Pressable>
           ) : null}
         </View>
       ) : (
-        <View style={{ padding: 20 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700' }}>Spots Map</Text>
-          <Text style={{ marginTop: 8, color: '#666' }}>
-            Location unavailable.
-          </Text>
+        <View style={styles.fallbackWrap}>
+          <Text style={styles.fallbackTitle}>Spots Map</Text>
+          <Text style={styles.fallbackSubtitle}>Location unavailable.</Text>
         </View>
       )}
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+  },
+  centeredState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  stateText: {
+    color: '#666',
+  },
+  fallbackWrap: {
+    padding: 20,
+  },
+  fallbackTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  fallbackSubtitle: {
+    marginTop: 8,
+    color: '#666',
+  },
+  errorText: {
+    marginTop: 8,
+    color: 'red',
+  },
+  mapWrap: {
+    flex: 1,
+  },
+  searchOverlay: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    right: 12,
+    zIndex: 2,
+    gap: 6,
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+  },
+  searchInputText: {
+    color: '#1A1A1A',
+  },
+  refreshButton: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  refreshButtonText: {
+    color: '#1f6f5f',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  searchStateText: {
+    color: '#666',
+    fontSize: 12,
+  },
+  searchErrorText: {
+    color: 'red',
+    fontSize: 12,
+  },
+  suggestionsList: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    maxHeight: 200,
+  },
+  suggestionItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  suggestionName: {
+    fontWeight: '600',
+  },
+  suggestionType: {
+    color: '#666',
+    fontSize: 12,
+  },
+  map: {
+    flex: 1,
+  },
+  calloutContent: {
+    maxWidth: 180,
+    gap: 6,
+  },
+  calloutTitle: {
+    fontWeight: '700',
+  },
+  calloutType: {
+    color: '#666',
+  },
+  calloutAction: {
+    color: '#1f6f5f',
+    fontWeight: '600',
+  },
+  addSpotButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    backgroundColor: '#1f6f5f',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  addSpotButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+});

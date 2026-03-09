@@ -5,11 +5,12 @@ import type {
   PostListProps,
   RawPost,
 } from '@/helpers/types';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Pressable,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -21,20 +22,28 @@ import {
   removePostComment,
 } from './PostList.api';
 
+const LOADING_CARD_COUNT = [0, 1] as const;
+
 /**
- * Convert a time string into something readable for the UI.
- * If parsing fails, just show the raw string.
+ * Convert a time string into a readable label.
  */
 function formatPostTime(time?: string) {
   if (!time) return 'Unknown time';
   const parsed = Date.parse(time);
   if (Number.isNaN(parsed)) return time;
-  return new Date(parsed).toLocaleString();
+
+  const value = new Date(parsed);
+  const sameDay = new Date().toDateString() === value.toDateString();
+  const dayLabel = sameDay ? 'Today' : value.toLocaleDateString();
+
+  return `${dayLabel}, ${value.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`;
 }
 
 /**
- * Turn any raw post shape into the post fields
- * keeps the rest of the component simple and consistent.
+ * Turn any raw post shape into one normalized shape.
  */
 function normalizePost(
   raw: RawPost,
@@ -73,12 +82,12 @@ function normalizePost(
   };
 }
 
-/**
- * A single, self-contained component that renders:
- * - the post cards
- * - optional comment UI
- * - optional custom actions
- */
+function getInitials(name?: string) {
+  if (!name?.trim()) return 'U';
+  const parts = name.trim().split(/\s+/).slice(0, 2);
+  return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'U';
+}
+
 export default function PostList({
   posts,
   loading = false,
@@ -90,84 +99,74 @@ export default function PostList({
   containerStyle,
   fallbackUserName,
 }: PostListProps) {
-  // Comments are stored per post id so each card can render its own list.
   const [commentsByPost, setCommentsByPost] = useState<
     Record<string, CommentItem[]>
   >({});
-
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>(
     {}
   );
-
   const [commentsError, setCommentsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-
-  // Normalize posts
-  const normalizedPosts = posts.map((post, index) =>
-    normalizePost(post, index, fallbackUserName)
+  const [postingByPost, setPostingByPost] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null
   );
 
-  /**
-   * Load the current user so we can show "Delete" on their own comments.
-   */
+  const normalizedPosts = useMemo(
+    () =>
+      posts.map((post, index) => normalizePost(post, index, fallbackUserName)),
+    [posts, fallbackUserName]
+  );
+
   useEffect(() => {
     let isMounted = true;
 
     const loadUser = async () => {
-      const user = await getAuthUser();
-      if (isMounted) {
-        setCurrentUserId(user?.id ?? null);
+      try {
+        const user = await getAuthUser();
+
+        if (isMounted) {
+          setCurrentUserId(user?.id ?? null);
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUserId(null);
+        }
       }
     };
 
-    loadUser();
+    void loadUser();
 
     return () => {
       isMounted = false;
     };
   }, []);
 
-  /**
-   * Fetch comments for a single post id.
-   */
-  const fetchComments = async (postId: string) => {
+  const fetchComments = useCallback(async (postId: string) => {
     try {
       const data = await fetchPostComments(postId);
-
       const comments = Array.isArray(data?.comments) ? data.comments : [];
       setCommentsByPost((prev) => ({ ...prev, [postId]: comments }));
     } catch (err: any) {
       setCommentsError(err?.message ?? 'Fetch comments failed');
     }
-  };
+  }, []);
 
-  /**
-   * Refresh comments whenever the post list changes.
-   */
   useEffect(() => {
-    if (!showComments) return;
-    if (posts.length === 0) return;
-
-    const items = posts.map((post, index) =>
-      normalizePost(post, index, fallbackUserName)
-    );
+    if (!showComments || normalizedPosts.length === 0) return;
 
     setCommentsByPost({});
     setCommentsError(null);
 
-    void Promise.all(items.map((post) => fetchComments(post.id)));
-  }, [posts, showComments, fallbackUserName]);
+    void Promise.all(normalizedPosts.map((post) => fetchComments(post.id)));
+  }, [normalizedPosts, showComments, fetchComments]);
 
-  /**
-   * Keep the draft comment text for each post.
-   */
-  const updateCommentInput = (postId: string, value: string) => {
+  const updateCommentInput = useCallback((postId: string, value: string) => {
     setCommentInputs((prev) => ({ ...prev, [postId]: value }));
-  };
+  }, []);
 
-  /**
-   * Submit a comment and refresh that post's comments.
-   */
   const addComment = async (postId: string) => {
     const body = commentInputs[postId]?.trim() ?? '';
     if (!body) {
@@ -176,6 +175,7 @@ export default function PostList({
     }
 
     setCommentsError(null);
+    setPostingByPost((prev) => ({ ...prev, [postId]: true }));
 
     try {
       await createPostComment(postId, body);
@@ -183,26 +183,25 @@ export default function PostList({
       await fetchComments(postId);
     } catch (err: any) {
       setCommentsError(err?.message ?? 'Add comment failed');
+    } finally {
+      setPostingByPost((prev) => ({ ...prev, [postId]: false }));
     }
   };
 
-  /**
-   * Delete a comment then refresh.
-   */
   const deleteComment = async (postId: string, commentId: string) => {
     setCommentsError(null);
+    setDeletingCommentId(commentId);
 
     try {
       await removePostComment(postId, commentId);
       await fetchComments(postId);
     } catch (err: any) {
       setCommentsError(err?.message ?? 'Delete comment failed');
+    } finally {
+      setDeletingCommentId(null);
     }
   };
 
-  /**
-   * Simple confirmation prompt before delete.
-   */
   const confirmDeleteComment = (postId: string, commentId: string) => {
     Alert.alert(
       'Delete comment?',
@@ -212,247 +211,553 @@ export default function PostList({
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteComment(postId, commentId),
+          onPress: () => {
+            void deleteComment(postId, commentId);
+          },
         },
       ]
     );
   };
 
+  const showLoadingCards = loading && normalizedPosts.length === 0;
+
   return (
-    <View style={[{ gap: 16 }, containerStyle]}>
-      {/* Basic loading + error states */}
-      {loading && <ActivityIndicator />}
-      {error && <Text style={{ color: 'red' }}>{error}</Text>}
-
-      {/* Empty state */}
-      {!loading && !error && normalizedPosts.length === 0 && (
-        <Text style={{ color: '#666' }}>{emptyMessage}</Text>
-      )}
-
-      {/* Render each post card */}
-      {normalizedPosts.map((post) => {
-        const comments = commentsByPost[post.id] ?? [];
-        const actions = renderActions ? renderActions(post) : null;
-
-        const footer =
-          showComments || actions ? (
-            <View style={{ gap: 8 }}>
-              {actions ? <View>{actions}</View> : null}
-
-              {showComments ? (
-                <>
-                  <Text style={{ fontWeight: '600' }}>Comments</Text>
-
-                  {commentsError && (
-                    <Text style={{ color: 'red' }}>{commentsError}</Text>
-                  )}
-
-                  {comments.length === 0 && !commentsError && (
-                    <Text style={{ color: '#666' }}>No comments yet.</Text>
-                  )}
-
-                  {comments.map((comment) => {
-                    const createdAt = comment.createdAt
-                      ? new Date(comment.createdAt).toLocaleString()
-                      : '';
-
-                    const displayName = comment.userName ?? 'User';
-                    const canDelete = currentUserId === comment.userId;
-
-                    return (
-                      <View
-                        key={comment.id}
-                        style={{
-                          backgroundColor: '#f2f2f2',
-                          borderRadius: 8,
-                          padding: 8,
-                        }}
-                      >
-                        <View style={{ alignItems: 'flex-end' }}>
-                          {onPressUser && comment.userId ? (
-                            <Pressable
-                              onPress={() =>
-                                onPressUser(comment.userId, displayName)
-                              }
-                            >
-                              <Text style={{ color: '#777', fontSize: 12 }}>
-                                {displayName}
-                              </Text>
-                            </Pressable>
-                          ) : (
-                            <Text style={{ color: '#777', fontSize: 12 }}>
-                              {displayName}
-                            </Text>
-                          )}
-
-                          {/* Only show delete to the comment owner */}
-                          {canDelete ? (
-                            <Pressable
-                              onPress={() =>
-                                confirmDeleteComment(post.id, comment.id)
-                              }
-                              style={{
-                                backgroundColor: '#f5d5d5',
-                                paddingHorizontal: 6,
-                                paddingVertical: 2,
-                                borderRadius: 6,
-                              }}
-                            >
-                              <Text style={{ color: '#7a1f1f', fontSize: 12 }}>
-                                Delete
-                              </Text>
-                            </Pressable>
-                          ) : null}
-                        </View>
-
-                        <Text>{comment.body}</Text>
-
-                        {createdAt ? (
-                          <Text
-                            style={{
-                              marginTop: 4,
-                              color: '#777',
-                              fontSize: 12,
-                            }}
-                          >
-                            {createdAt}
-                          </Text>
-                        ) : null}
-                      </View>
-                    );
-                  })}
-
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 8,
-                    }}
-                  >
-                    <TextInput
-                      value={commentInputs[post.id] ?? ''}
-                      onChangeText={(text) => updateCommentInput(post.id, text)}
-                      placeholder="Add a comment"
-                      placeholderTextColor="#888"
-                      style={{
-                        flex: 1,
-                        backgroundColor: '#fff',
-                        borderWidth: 1,
-                        borderColor: '#ddd',
-                        borderRadius: 8,
-                        paddingHorizontal: 10,
-                        paddingVertical: 8,
-                      }}
-                    />
-
-                    <Pressable
-                      onPress={() => addComment(post.id)}
-                      style={{
-                        backgroundColor: '#1f6f5f',
-                        paddingHorizontal: 12,
-                        paddingVertical: 10,
-                        borderRadius: 8,
-                      }}
-                    >
-                      <Text style={{ color: 'white', fontWeight: '600' }}>
-                        Post
-                      </Text>
-                    </Pressable>
-                  </View>
-                </>
-              ) : null}
+    <View style={[styles.listContainer, containerStyle]}>
+      {showLoadingCards ? (
+        <View style={styles.loadingList}>
+          {LOADING_CARD_COUNT.map((item) => (
+            <View key={item} style={styles.loadingCard}>
+              <View style={styles.loadingHeaderRow}>
+                <View style={styles.loadingAvatar} />
+                <View style={styles.loadingHeaderTextWrap}>
+                  <View style={styles.loadingLineLong} />
+                  <View style={styles.loadingLineShort} />
+                </View>
+              </View>
+              <View style={styles.loadingMap} />
             </View>
-          ) : null;
+          ))}
+        </View>
+      ) : null}
 
-        const hasCoords =
-          typeof post.latitude === 'number' &&
-          typeof post.longitude === 'number';
-        const sportLabel = post.sport?.trim() || 'Session';
-        const locationLabel = post.location?.trim() || 'Unknown location';
-        const timeLabel = formatPostTime(post.time);
-        const nameLabel = post.userName?.trim();
+      {loading && normalizedPosts.length > 0 ? (
+        <View style={styles.listLoader}>
+          <ActivityIndicator color="#1f6f5f" />
+        </View>
+      ) : null}
 
-        return (
-          <View
-            key={post.id}
-            style={{
-              backgroundColor: 'white',
-              borderRadius: 12,
-              padding: 14,
-              borderWidth: 1,
-              borderColor: '#ececec',
-            }}
-          >
-            {nameLabel ? (
-              onPressUser && post.userId ? (
-                <Pressable onPress={() => onPressUser(post.userId!, nameLabel)}>
-                  <Text style={{ fontSize: 16, fontWeight: '700' }}>
-                    {nameLabel}
+      {error ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{error}</Text>
+        </View>
+      ) : null}
+
+      {!loading && !error && normalizedPosts.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Text style={styles.emptyTitle}>{emptyMessage}</Text>
+          <Text style={styles.emptySubtitle}>
+            Once people post sessions, they will show up here.
+          </Text>
+        </View>
+      ) : null}
+
+      {!showLoadingCards &&
+        normalizedPosts.map((post) => {
+          const comments = commentsByPost[post.id] ?? [];
+          const actions = renderActions ? renderActions(post) : null;
+          const hasCoords =
+            typeof post.latitude === 'number' &&
+            typeof post.longitude === 'number';
+          const sportLabel = post.sport?.trim() || 'Session';
+          const locationLabel = post.location?.trim() || 'Unknown location';
+          const timeLabel = formatPostTime(post.time);
+          const nameLabel = post.userName?.trim() || 'User';
+          const initials = getInitials(nameLabel);
+          const draftComment = commentInputs[post.id] ?? '';
+          const postingComment = postingByPost[post.id] === true;
+          const canSubmitComment =
+            draftComment.trim().length > 0 && !postingComment;
+
+          return (
+            <View key={post.id} style={styles.postCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.avatar}>
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </View>
+
+                <View style={styles.headerCopy}>
+                  {onPressUser && post.userId ? (
+                    <Pressable
+                      onPress={() => onPressUser(post.userId!, nameLabel)}
+                      hitSlop={6}
+                    >
+                      <Text style={styles.userName}>{nameLabel}</Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={styles.userName}>{nameLabel}</Text>
+                  )}
+
+                  <Text style={styles.timeText}>{timeLabel}</Text>
+                </View>
+              </View>
+
+              <View style={styles.tagRow}>
+                <View style={styles.primaryTag}>
+                  <Text style={styles.primaryTagText}>{sportLabel}</Text>
+                </View>
+
+                <View style={styles.secondaryTag}>
+                  <Text style={styles.secondaryTagText} numberOfLines={1}>
+                    {locationLabel}
                   </Text>
-                </Pressable>
-              ) : (
-                <Text style={{ fontSize: 16, fontWeight: '700' }}>
-                  {nameLabel}
-                </Text>
-              )
-            ) : null}
+                </View>
+              </View>
 
-            <Text style={{ color: '#777', marginTop: nameLabel ? 2 : 0 }}>
-              {timeLabel}
-            </Text>
-
-            <Text style={{ marginTop: 8, fontWeight: '600' }}>
-              {sportLabel}
-            </Text>
-
-            <Text style={{ marginTop: 4 }}>{locationLabel}</Text>
-
-            {hasCoords ? (
-              <View
-                style={{
-                  marginTop: 10,
-                  height: 160,
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  borderWidth: 1,
-                  borderColor: '#e3e3e3',
-                }}
-              >
-                <MapView
-                  style={{ flex: 1 }}
-                  initialRegion={{
-                    latitude: post.latitude as number,
-                    longitude: post.longitude as number,
-                    latitudeDelta: 0.02,
-                    longitudeDelta: 0.02,
-                  }}
-                  scrollEnabled={false}
-                  zoomEnabled={false}
-                  pitchEnabled={false}
-                  rotateEnabled={false}
-                >
-                  <UrlTile
-                    urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    maximumZ={19}
-                  />
-                  <Marker
-                    coordinate={{
+              {hasCoords ? (
+                <View style={styles.mapWrap}>
+                  <MapView
+                    style={{ flex: 1 }}
+                    initialRegion={{
                       latitude: post.latitude as number,
                       longitude: post.longitude as number,
+                      latitudeDelta: 0.02,
+                      longitudeDelta: 0.02,
                     }}
-                  />
-                </MapView>
-              </View>
-            ) : null}
+                    scrollEnabled={false}
+                    zoomEnabled={false}
+                    pitchEnabled={false}
+                    rotateEnabled={false}
+                  >
+                    <UrlTile
+                      urlTemplate="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      maximumZ={19}
+                    />
+                    <Marker
+                      coordinate={{
+                        latitude: post.latitude as number,
+                        longitude: post.longitude as number,
+                      }}
+                    />
+                  </MapView>
+                </View>
+              ) : null}
 
-            {post.notes ? (
-              <Text style={{ marginTop: 6, color: '#666' }}>{post.notes}</Text>
-            ) : null}
+              {post.notes ? (
+                <Text style={styles.notesText}>{post.notes}</Text>
+              ) : null}
 
-            {footer ? <View style={{ marginTop: 12 }}>{footer}</View> : null}
-          </View>
-        );
-      })}
+              {showComments || actions ? (
+                <View style={styles.footer}>
+                  {actions ? <View>{actions}</View> : null}
+
+                  {showComments ? (
+                    <View style={styles.commentsSection}>
+                      <Text style={styles.commentsTitle}>Comments</Text>
+
+                      {commentsError ? (
+                        <Text style={styles.commentsError}>
+                          {commentsError}
+                        </Text>
+                      ) : null}
+
+                      {comments.length === 0 && !commentsError ? (
+                        <Text style={styles.commentsEmpty}>
+                          No comments yet.
+                        </Text>
+                      ) : null}
+
+                      {comments.map((comment) => {
+                        const createdAt = comment.createdAt
+                          ? new Date(comment.createdAt).toLocaleString()
+                          : '';
+
+                        const displayName = comment.userName ?? 'User';
+                        const canDelete = currentUserId === comment.userId;
+                        const deletingComment =
+                          deletingCommentId === comment.id;
+
+                        return (
+                          <View key={comment.id} style={styles.commentCard}>
+                            <View style={styles.commentHeader}>
+                              {onPressUser && comment.userId ? (
+                                <Pressable
+                                  onPress={() =>
+                                    onPressUser(comment.userId, displayName)
+                                  }
+                                  hitSlop={6}
+                                >
+                                  <Text style={styles.commentAuthor}>
+                                    {displayName}
+                                  </Text>
+                                </Pressable>
+                              ) : (
+                                <Text style={styles.commentAuthor}>
+                                  {displayName}
+                                </Text>
+                              )}
+
+                              {canDelete ? (
+                                <Pressable
+                                  onPress={() =>
+                                    confirmDeleteComment(post.id, comment.id)
+                                  }
+                                  disabled={deletingComment}
+                                  style={({ pressed }) => [
+                                    styles.commentDeleteButton,
+                                    deletingComment &&
+                                      styles.commentDeleteButtonDisabled,
+                                    pressed &&
+                                      !deletingComment &&
+                                      styles.commentDeleteButtonPressed,
+                                  ]}
+                                >
+                                  {deletingComment ? (
+                                    <ActivityIndicator
+                                      size="small"
+                                      color="#923333"
+                                    />
+                                  ) : (
+                                    <Text style={styles.commentDeleteText}>
+                                      Delete
+                                    </Text>
+                                  )}
+                                </Pressable>
+                              ) : null}
+                            </View>
+
+                            <Text style={styles.commentBody}>
+                              {comment.body}
+                            </Text>
+
+                            {createdAt ? (
+                              <Text style={styles.commentDate}>
+                                {createdAt}
+                              </Text>
+                            ) : null}
+                          </View>
+                        );
+                      })}
+
+                      <View style={styles.commentInputRow}>
+                        <TextInput
+                          value={draftComment}
+                          onChangeText={(text) =>
+                            updateCommentInput(post.id, text)
+                          }
+                          placeholder="Add a comment"
+                          placeholderTextColor="#8c9691"
+                          style={styles.commentInput}
+                        />
+
+                        <Pressable
+                          onPress={() => addComment(post.id)}
+                          disabled={!canSubmitComment}
+                          style={({ pressed }) => [
+                            styles.commentSubmitButton,
+                            !canSubmitComment &&
+                              styles.commentSubmitButtonDisabled,
+                            pressed &&
+                              canSubmitComment &&
+                              styles.commentSubmitButtonPressed,
+                          ]}
+                        >
+                          {postingComment ? (
+                            <ActivityIndicator color="#ffffff" />
+                          ) : (
+                            <Text style={styles.commentSubmitText}>Post</Text>
+                          )}
+                        </Pressable>
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+            </View>
+          );
+        })}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  listContainer: {
+    gap: 18,
+  },
+  loadingList: {
+    gap: 14,
+  },
+  loadingCard: {
+    borderWidth: 1,
+    borderColor: '#e2e8e3',
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    padding: 18,
+    gap: 14,
+  },
+  loadingHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingAvatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#e8eeea',
+  },
+  loadingHeaderTextWrap: {
+    gap: 8,
+    flex: 1,
+  },
+  loadingLineLong: {
+    height: 14,
+    width: '62%',
+    borderRadius: 7,
+    backgroundColor: '#e8eeea',
+  },
+  loadingLineShort: {
+    height: 12,
+    width: '40%',
+    borderRadius: 6,
+    backgroundColor: '#e8eeea',
+  },
+  loadingMap: {
+    height: 178,
+    borderRadius: 14,
+    backgroundColor: '#e8eeea',
+  },
+  listLoader: {
+    paddingVertical: 8,
+  },
+  errorBanner: {
+    borderWidth: 1,
+    borderColor: '#efcaca',
+    backgroundColor: '#fff0f0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  errorBannerText: {
+    color: '#a33b3b',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyCard: {
+    borderWidth: 1,
+    borderColor: '#dde4df',
+    borderRadius: 16,
+    backgroundColor: '#ffffff',
+    padding: 18,
+    gap: 6,
+  },
+  emptyTitle: {
+    color: '#283630',
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  emptySubtitle: {
+    color: '#5d6a64',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  postCard: {
+    borderWidth: 1,
+    borderColor: '#e2e8e3',
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    padding: 18,
+    shadowColor: '#13241e',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  avatar: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#1f6f5f',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  headerCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  userName: {
+    color: '#13201b',
+    fontSize: 21,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+  },
+  timeText: {
+    color: '#67756f',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  tagRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  primaryTag: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: '#b9dace',
+    backgroundColor: '#d8eee6',
+  },
+  primaryTagText: {
+    color: '#195848',
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'capitalize',
+  },
+  secondaryTag: {
+    maxWidth: '72%',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#edf3ef',
+    borderWidth: 1,
+    borderColor: '#d9e3dd',
+  },
+  secondaryTagText: {
+    color: '#4e5c56',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  mapWrap: {
+    marginTop: 12,
+    height: 192,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#d9e1dc',
+  },
+  notesText: {
+    marginTop: 10,
+    color: '#495751',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  footer: {
+    marginTop: 14,
+    gap: 12,
+  },
+  commentsSection: {
+    gap: 10,
+  },
+  commentsTitle: {
+    color: '#24312b',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  commentsError: {
+    color: '#a33b3b',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  commentsEmpty: {
+    color: '#66746e',
+    fontSize: 14,
+  },
+  commentCard: {
+    borderWidth: 1,
+    borderColor: '#dde5e0',
+    backgroundColor: '#f5f8f6',
+    borderRadius: 12,
+    padding: 12,
+    gap: 6,
+  },
+  commentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  commentAuthor: {
+    color: '#415048',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  commentDeleteButton: {
+    minHeight: 28,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8dfdf',
+  },
+  commentDeleteButtonPressed: {
+    backgroundColor: '#f3cbcb',
+  },
+  commentDeleteButtonDisabled: {
+    opacity: 0.8,
+  },
+  commentDeleteText: {
+    color: '#923333',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  commentBody: {
+    color: '#1f2a25',
+    fontSize: 16,
+    lineHeight: 21,
+  },
+  commentDate: {
+    color: '#74827b',
+    fontSize: 12,
+  },
+  commentInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 4,
+  },
+  commentInput: {
+    flex: 1,
+    minHeight: 46,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#cfd9d3',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#16201b',
+    fontSize: 16,
+  },
+  commentSubmitButton: {
+    minWidth: 76,
+    minHeight: 46,
+    borderRadius: 12,
+    backgroundColor: '#1f6f5f',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+  },
+  commentSubmitButtonDisabled: {
+    backgroundColor: '#b8c8c1',
+  },
+  commentSubmitButtonPressed: {
+    backgroundColor: '#19594d',
+  },
+  commentSubmitText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});

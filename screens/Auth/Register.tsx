@@ -1,7 +1,7 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
 import { registerWithEmail } from './auth.api';
 import type { RegisterBody, RegisterProps } from './auth.types';
 
@@ -48,8 +48,8 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
   };
 
   return (
-    <View style={{ gap: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: '700' }}>Register</Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Register</Text>
 
       <Input size="md">
         <InputField
@@ -57,7 +57,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
           value={form.name}
           onChangeText={(name) => setForm((p) => ({ ...p, name }))}
           autoCapitalize="words"
-          style={{ color: 'black' }}
+          style={styles.inputText}
           placeholderTextColor="gray"
         />
       </Input>
@@ -69,7 +69,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
           onChangeText={(email) => setForm((p) => ({ ...p, email }))}
           autoCapitalize="none"
           keyboardType="email-address"
-          style={{ color: 'black' }}
+          style={styles.inputText}
           placeholderTextColor="gray"
         />
       </Input>
@@ -80,7 +80,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
           value={form.password}
           onChangeText={(password) => setForm((p) => ({ ...p, password }))}
           secureTextEntry
-          style={{ color: 'black' }}
+          style={styles.inputText}
           placeholderTextColor="gray"
         />
       </Input>
@@ -93,8 +93,8 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
         )}
       </Button>
 
-      {error && <Text style={{ color: 'red' }}>{error}</Text>}
-      {success && <Text style={{ color: 'green' }}>{success}</Text>}
+      {error && <Text style={styles.errorText}>{error}</Text>}
+      {success && <Text style={styles.successText}>{success}</Text>}
 
       {onGoToLogin && (
         <Button onPress={onGoToLogin} disabled={loading}>
@@ -104,3 +104,22 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  inputText: {
+    color: 'black',
+  },
+  errorText: {
+    color: 'red',
+  },
+  successText: {
+    color: 'green',
+  },
+});

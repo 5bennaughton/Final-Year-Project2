@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -157,83 +158,66 @@ export default function AddSpot() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-        <Text style={{ fontSize: 22, fontWeight: '700' }}>Add Spot</Text>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Add Spot</Text>
 
         <Button onPress={() => router.replace('/(tabs)/Map')}>
           <ButtonText>Back to Map</ButtonText>
         </Button>
 
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Name</Text>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Name</Text>
           <Input size="md">
             <InputField
               placeholder="Spot name"
               value={name}
               onChangeText={setName}
-              style={{ color: 'black' }}
+              style={styles.inputText}
               placeholderTextColor="#888"
             />
           </Input>
         </View>
 
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Type</Text>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Type</Text>
           <Input size="md">
             <InputField
               placeholder="kitesurf, wing, surf..."
               value={type}
               onChangeText={setType}
-              style={{ color: 'black' }}
+              style={styles.inputText}
               placeholderTextColor="#888"
             />
           </Input>
         </View>
 
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Description (optional)</Text>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Description (optional)</Text>
           <TextInput
             placeholder="Short notes about the spot"
             placeholderTextColor="#888"
             value={description}
             onChangeText={setDescription}
             multiline
-            style={{
-              minHeight: 90,
-              borderWidth: 1,
-              borderColor: '#ddd',
-              borderRadius: 8,
-              padding: 10,
-              backgroundColor: 'white',
-              textAlignVertical: 'top',
-              color: 'black',
-            }}
+            style={styles.descriptionInput}
           />
         </View>
 
         {/* Optional wind direction range in degrees */}
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Wind direction (optional)</Text>
-          <Text style={{ color: '#666' }}>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Wind direction (optional)</Text>
+          <Text style={styles.helperText}>
             Put a range of degrees 0-359. Example: North (0) to SW (225)
           </Text>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={styles.row}>
             <TextInput
               placeholder="Start (0-359)"
               placeholderTextColor="#888"
               value={windDirStartInput}
               onChangeText={setWindDirStartInput}
               keyboardType="numeric"
-              style={{
-                flex: 1,
-                borderWidth: 1,
-                borderColor: '#ddd',
-                borderRadius: 8,
-                padding: 10,
-                backgroundColor: 'white',
-                color: 'black',
-              }}
+              style={styles.halfInput}
             />
             <TextInput
               placeholder="End (0-359)"
@@ -241,110 +225,103 @@ export default function AddSpot() {
               value={windDirEndInput}
               onChangeText={setWindDirEndInput}
               keyboardType="numeric"
-              style={{
-                flex: 1,
-                borderWidth: 1,
-                borderColor: '#ddd',
-                borderRadius: 8,
-                padding: 10,
-                backgroundColor: 'white',
-                color: 'black',
-              }}
+              style={styles.halfInput}
             />
           </View>
         </View>
 
         {/* Tidal toggle */}
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Tidal spot?</Text>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Tidal spot?</Text>
           <Pressable
             onPress={() => setIsTidal((prev) => !prev)}
-            style={{
-              alignSelf: 'flex-start',
-              backgroundColor: isTidal ? '#1f6f5f' : '#e6e6e6',
-              paddingHorizontal: 12,
-              paddingVertical: 8,
-              borderRadius: 8,
-            }}
+            style={[
+              styles.toggleButton,
+              isTidal ? styles.toggleButtonActive : styles.toggleButtonInactive,
+            ]}
           >
-            <Text style={{ color: isTidal ? 'white' : '#333' }}>
+            <Text
+              style={[
+                styles.toggleButtonText,
+                isTidal
+                  ? styles.toggleButtonTextActive
+                  : styles.toggleButtonTextInactive,
+              ]}
+            >
               {isTidal ? 'Yes (Tidal)' : 'No (Not tidal)'}
             </Text>
           </Pressable>
         </View>
 
         {isTidal ? (
-          <View style={{ gap: 8 }}>
-            <Text style={{ fontWeight: '600' }}>Tide preference</Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Tide preference</Text>
+            <View style={styles.row}>
               <Pressable
                 onPress={() => setTidePreference('high')}
-                style={{
-                  backgroundColor:
-                    tidePreference === 'high' ? '#1f6f5f' : '#e6e6e6',
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 8,
-                }}
+                style={[
+                  styles.toggleButton,
+                  tidePreference === 'high'
+                    ? styles.toggleButtonActive
+                    : styles.toggleButtonInactive,
+                ]}
               >
                 <Text
-                  style={{
-                    color: tidePreference === 'high' ? 'white' : '#333',
-                  }}
+                  style={[
+                    styles.toggleButtonText,
+                    tidePreference === 'high'
+                      ? styles.toggleButtonTextActive
+                      : styles.toggleButtonTextInactive,
+                  ]}
                 >
                   High tide
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => setTidePreference('low')}
-                style={{
-                  backgroundColor:
-                    tidePreference === 'low' ? '#1f6f5f' : '#e6e6e6',
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  borderRadius: 8,
-                }}
+                style={[
+                  styles.toggleButton,
+                  tidePreference === 'low'
+                    ? styles.toggleButtonActive
+                    : styles.toggleButtonInactive,
+                ]}
               >
                 <Text
-                  style={{ color: tidePreference === 'low' ? 'white' : '#333' }}
+                  style={[
+                    styles.toggleButtonText,
+                    tidePreference === 'low'
+                      ? styles.toggleButtonTextActive
+                      : styles.toggleButtonTextInactive,
+                  ]}
                 >
                   Low tide
                 </Text>
               </Pressable>
             </View>
 
-            <Text style={{ fontWeight: '600' }}>
-              Tide window hours (optional)
-            </Text>
+            <Text style={styles.label}>Tide window hours (optional)</Text>
             <TextInput
               placeholder="Example: 2"
               placeholderTextColor="#888"
               value={tideWindowHoursInput}
               onChangeText={setTideWindowHoursInput}
               keyboardType="numeric"
-              style={{
-                borderWidth: 1,
-                borderColor: '#ddd',
-                borderRadius: 8,
-                padding: 10,
-                backgroundColor: 'white',
-                color: 'black',
-              }}
+              style={styles.fullInput}
             />
           </View>
         ) : null}
 
         {/*Displays the cords in lat/long, that is if it is not null*/}
         {coords ? (
-          <Text style={{ color: '#777' }}>
+          <Text style={styles.coordsText}>
             Coordinates: {coords.latitude.toFixed(5)},{' '}
             {coords.longitude.toFixed(5)}
           </Text>
         ) : (
-          <Text style={{ color: 'red' }}>Missing coordinates.</Text>
+          <Text style={styles.errorText}>Missing coordinates.</Text>
         )}
 
-        {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Button onPress={createSpot} disabled={saving}>
           {saving ? (
@@ -357,3 +334,86 @@ export default function AddSpot() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f6f2',
+  },
+  content: {
+    padding: 20,
+    gap: 16,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  formGroup: {
+    gap: 8,
+  },
+  label: {
+    fontWeight: '600',
+  },
+  inputText: {
+    color: 'black',
+  },
+  descriptionInput: {
+    minHeight: 90,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: 'white',
+    textAlignVertical: 'top',
+    color: 'black',
+  },
+  helperText: {
+    color: '#666',
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  halfInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: 'white',
+    color: 'black',
+  },
+  fullInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: 'white',
+    color: 'black',
+  },
+  toggleButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#1f6f5f',
+  },
+  toggleButtonInactive: {
+    backgroundColor: '#e6e6e6',
+  },
+  toggleButtonText: {},
+  toggleButtonTextActive: {
+    color: 'white',
+  },
+  toggleButtonTextInactive: {
+    color: '#333',
+  },
+  coordsText: {
+    color: '#777',
+  },
+  errorText: {
+    color: 'red',
+  },
+});

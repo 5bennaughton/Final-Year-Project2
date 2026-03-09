@@ -2,7 +2,14 @@ import PostList from '@/components/PostList';
 import { getCurrentLocation } from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchNearbySessions } from './nearby.api';
 import type { GeoCoords } from './nearby.types';
@@ -61,65 +68,36 @@ export default function NearbySessionsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
+    <SafeAreaView style={styles.screen}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-        <Pressable
-          onPress={() => router.back()}
-          style={{
-            alignSelf: 'flex-start',
-            paddingHorizontal: 12,
-            paddingVertical: 6,
-            borderRadius: 8,
-            borderWidth: 1,
-            borderColor: '#dcdcdc',
-            backgroundColor: 'white',
-          }}
-        >
-          <Text style={{ fontWeight: '600' }}>Back</Text>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Pressable onPress={() => router.back()} style={styles.backButton}>
+          <Text style={styles.backButtonText}>Back</Text>
         </Pressable>
 
-        <Text style={{ fontSize: 22, fontWeight: '700' }}>Nearby Sessions</Text>
+        <Text style={styles.title}>Nearby Sessions</Text>
 
-        <Text style={{ color: '#666' }}>
+        <Text style={styles.subtitle}>
           Find future sessions within a radius of your current location.
         </Text>
 
-        <View style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '600' }}>Radius (km)</Text>
+        <View style={styles.formSection}>
+          <Text style={styles.fieldLabel}>Radius (km)</Text>
           <TextInput
             value={radiusKm}
             onChangeText={setRadiusKm}
             keyboardType="numeric"
             placeholder="10"
             placeholderTextColor="#888"
-            style={{
-              backgroundColor: 'white',
-              borderWidth: 1,
-              borderColor: '#ddd',
-              borderRadius: 8,
-              paddingHorizontal: 10,
-              paddingVertical: 8,
-            }}
+            style={styles.radiusInput}
           />
-          <Pressable
-            onPress={runNearbySearch}
-            style={{
-              backgroundColor: '#1f6f5f',
-              paddingHorizontal: 12,
-              paddingVertical: 10,
-              borderRadius: 8,
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ color: 'white', fontWeight: '600' }}>
-              Find Sessions
-            </Text>
+          <Pressable onPress={runNearbySearch} style={styles.searchButton}>
+            <Text style={styles.searchButtonText}>Find Sessions</Text>
           </Pressable>
         </View>
 
         {coords ? (
-          <Text style={{ color: '#777' }}>
+          <Text style={styles.coordsText}>
             Using location: {coords.latitude.toFixed(4)},{' '}
             {coords.longitude.toFixed(4)}
           </Text>
@@ -141,3 +119,61 @@ export default function NearbySessionsScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f6f2',
+  },
+  content: {
+    padding: 20,
+    gap: 16,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dcdcdc',
+    backgroundColor: 'white',
+  },
+  backButtonText: {
+    fontWeight: '600',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  subtitle: {
+    color: '#666',
+  },
+  formSection: {
+    gap: 8,
+  },
+  fieldLabel: {
+    fontWeight: '600',
+  },
+  radiusInput: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  searchButton: {
+    backgroundColor: '#1f6f5f',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  searchButtonText: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  coordsText: {
+    color: '#777',
+  },
+});

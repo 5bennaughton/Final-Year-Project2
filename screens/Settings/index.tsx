@@ -15,6 +15,7 @@ import {
   Alert,
   Image,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -253,41 +254,22 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f7f6f2' }}>
-      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+    <SafeAreaView style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.content}>
         {/* Screen title */}
-        <Text style={{ fontSize: 22, fontWeight: '700' }}>Settings</Text>
+        <Text style={styles.title}>Settings</Text>
 
         {/* Profile section */}
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontWeight: '700' }}>Profile</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Profile</Text>
 
           {/* Avatar preview + upload */}
-          <View style={{ alignItems: 'center', gap: 8 }}>
+          <View style={styles.avatarSection}>
             {avatarUrl ? (
-              <Image
-                source={{ uri: avatarUrl }}
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 40,
-                  backgroundColor: '#e6e6e6',
-                }}
-              />
+              <Image source={{ uri: avatarUrl }} style={styles.avatar} />
             ) : (
-              <View
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 40,
-                  backgroundColor: '#e6e6e6',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
-                  style={{ fontSize: 26, fontWeight: '700', color: '#555' }}
-                >
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarInitial}>
                   {(name.trim().charAt(0) || 'U').toUpperCase()}
                 </Text>
               </View>
@@ -302,37 +284,25 @@ export default function SettingsScreen() {
             </Button>
           </View>
 
-          <Input
-            variant="outline"
-            size="md"
-            style={{ backgroundColor: '#fff', borderColor: '#ddd' }}
-          >
+          <Input variant="outline" size="md" style={styles.input}>
             <InputField
               placeholder="Name"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
               selectionColor="#1f6f5f"
-              style={{ color: '#1A1A1A' }}
+              style={styles.inputText}
               placeholderTextColor="#777"
             />
           </Input>
 
-          <Input
-            variant="outline"
-            size="md"
-            style={{ backgroundColor: '#fff', borderColor: '#ddd' }}
-          >
+          <Input variant="outline" size="md" style={styles.input}>
             <InputField
               placeholder="Bio"
               value={bio}
               onChangeText={setBio}
               selectionColor="#1f6f5f"
-              style={{
-                color: '#1A1A1A',
-                minHeight: 80,
-                textAlignVertical: 'top',
-              }}
+              style={styles.bioInput}
               placeholderTextColor="#777"
             />
           </Input>
@@ -346,16 +316,16 @@ export default function SettingsScreen() {
           </Button>
 
           {loadingProfile && <ActivityIndicator />}
-          {profileError && <Text style={{ color: 'red' }}>{profileError}</Text>}
-          {error && <Text style={{ color: 'red' }}>{error}</Text>}
-          {success && <Text style={{ color: '#1f6f5f' }}>{success}</Text>}
+          {profileError && <Text style={styles.errorText}>{profileError}</Text>}
+          {error && <Text style={styles.errorText}>{error}</Text>}
+          {success && <Text style={styles.successText}>{success}</Text>}
         </View>
 
         {/* Privacy settings */}
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontWeight: '700' }}>Privacy</Text>
-          <Text style={{ color: '#666' }}>Profile visibility</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Privacy</Text>
+          <Text style={styles.subtleText}>Profile visibility</Text>
+          <View style={styles.privacyOptionsRow}>
             {VISIBILITY_OPTIONS.map((option) => {
               const isSelected = profileVisibility === option;
               return (
@@ -373,16 +343,16 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontWeight: '700' }}>Notifications</Text>
-          <Text style={{ color: '#666' }}>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Notifications</Text>
+          <Text style={styles.subtleText}>
             Future session reminders, comments
           </Text>
         </View>
 
         {/* Account deletion */}
-        <View style={{ gap: 10 }}>
-          <Text style={{ fontWeight: '700' }}>Account</Text>
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
           <Button onPress={confirmDeleteAccount} disabled={deletingAccount}>
             {deletingAccount ? (
               <ActivityIndicator color="white" />
@@ -392,7 +362,7 @@ export default function SettingsScreen() {
           </Button>
         </View>
 
-        <View>
+        <View style={styles.logoutWrap}>
           <Button onPress={logout}>
             <ButtonText>Logout</ButtonText>
           </Button>
@@ -406,3 +376,74 @@ export default function SettingsScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#f7f6f2',
+  },
+  content: {
+    padding: 20,
+    gap: 16,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  section: {
+    gap: 10,
+  },
+  sectionTitle: {
+    fontWeight: '700',
+  },
+  avatarSection: {
+    alignItems: 'center',
+    gap: 8,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#e6e6e6',
+  },
+  avatarPlaceholder: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#e6e6e6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitial: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#555',
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+  },
+  inputText: {
+    color: '#1A1A1A',
+  },
+  bioInput: {
+    color: '#1A1A1A',
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  errorText: {
+    color: 'red',
+  },
+  successText: {
+    color: '#1f6f5f',
+  },
+  subtleText: {
+    color: '#666',
+  },
+  privacyOptionsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  logoutWrap: {},
+});
