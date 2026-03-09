@@ -25,7 +25,7 @@ function parseRadiusKm(value: string): number | null {
 
 /**
  * Search for sessions within a radius of the user's current location.
- * Handles location permission, fetching, and simple error states.
+ * Handles location permission, fetching, and error states.
  */
 export default function NearbySessionsScreen() {
   const router = useRouter();
@@ -76,10 +76,6 @@ export default function NearbySessionsScreen() {
         </Pressable>
 
         <Text style={styles.title}>Nearby Sessions</Text>
-
-        <Text style={styles.subtitle}>
-          Find future sessions within a radius of your current location.
-        </Text>
 
         <View style={styles.formSection}>
           <Text style={styles.fieldLabel}>Radius (km)</Text>
@@ -144,9 +140,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
-  },
-  subtitle: {
-    color: '#666',
   },
   formSection: {
     gap: 8,

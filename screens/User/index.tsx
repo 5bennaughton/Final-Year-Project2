@@ -119,6 +119,8 @@ export default function UserPage() {
 
   const displayName = profile?.name ?? 'User';
   const bioText = profile?.bio ?? 'No bio yet.';
+  const friendCount =
+    typeof profile?.friendCount === 'number' ? profile.friendCount : 0;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -145,6 +147,8 @@ export default function UserPage() {
           </View>
 
           <Text style={styles.bioText}>{bioText}</Text>
+          {/* Keep this intentionally basic for now. */}
+          <Text style={styles.friendsText}>Friends: {friendCount}</Text>
 
           {/* Friend status / request button */}
           {loadingStatus ? (
@@ -231,6 +235,11 @@ const styles = StyleSheet.create({
   },
   bioText: {
     color: '#555',
+  },
+  friendsText: {
+    marginTop: 4,
+    color: '#1A1A1A',
+    fontWeight: '600',
   },
   friendStatusText: {
     color: '#1f6f5f',

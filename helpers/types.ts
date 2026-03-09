@@ -19,6 +19,7 @@ export type MeProfile = {
   bio?: string | null;
   avatarUrl?: string | null;
   profileVisibility?: string;
+  friendCount?: number;
 };
 
 export type SessionPost = {
@@ -38,6 +39,7 @@ export type AuthUser = {
   bio?: string | null;
   avatarUrl?: string | null;
   profileVisibility?: string;
+  friendCount?: number;
 };
 
 export interface StravaAthleteData {

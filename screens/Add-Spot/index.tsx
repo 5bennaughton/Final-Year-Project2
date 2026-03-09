@@ -311,16 +311,6 @@ export default function AddSpot() {
           </View>
         ) : null}
 
-        {/*Displays the cords in lat/long, that is if it is not null*/}
-        {coords ? (
-          <Text style={styles.coordsText}>
-            Coordinates: {coords.latitude.toFixed(5)},{' '}
-            {coords.longitude.toFixed(5)}
-          </Text>
-        ) : (
-          <Text style={styles.errorText}>Missing coordinates.</Text>
-        )}
-
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Button onPress={createSpot} disabled={saving}>
@@ -409,9 +399,6 @@ const styles = StyleSheet.create({
   },
   toggleButtonTextInactive: {
     color: '#333',
-  },
-  coordsText: {
-    color: '#777',
   },
   errorText: {
     color: 'red',

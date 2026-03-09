@@ -255,9 +255,6 @@ export default function PostList({
       {!loading && !error && normalizedPosts.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyTitle}>{emptyMessage}</Text>
-          <Text style={styles.emptySubtitle}>
-            Once people post sessions, they will show up here.
-          </Text>
         </View>
       ) : null}
 
@@ -554,11 +551,6 @@ const styles = StyleSheet.create({
     color: '#283630',
     fontSize: 17,
     fontWeight: '700',
-  },
-  emptySubtitle: {
-    color: '#5d6a64',
-    fontSize: 14,
-    lineHeight: 20,
   },
   postCard: {
     borderWidth: 1,

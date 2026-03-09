@@ -44,21 +44,12 @@ function getStatusChipColors(active: boolean) {
 const STAR_VALUES = [1, 2, 3, 4, 5] as const;
 
 /**
- * Spot details screen with a simple "upcoming posts" list.
+ * Spot details screen with a "upcoming posts" list.
  */
 export default function SpotDetails() {
   const router = useRouter();
-  const {
-    id,
-    name,
-    type,
-    description,
-    lat,
-    lng,
-    ownerId,
-    userId,
-    createdById,
-  } = useLocalSearchParams<SpotDetailsParams>();
+  const { id, name, type, description, ownerId, userId, createdById } =
+    useLocalSearchParams<SpotDetailsParams>();
 
   // List state for posts tied to this spot.
   const [posts, setPosts] = useState<any[]>([]);
@@ -140,7 +131,7 @@ export default function SpotDetails() {
         }
       } catch (err: any) {
         if (isMounted) {
-          // Clear the list on errors so UI stays simple.
+          // Clear the list on errors so UI stays.
           setPosts([]);
           setPostsError(err?.message ?? 'Fetch spot posts failed');
         }
@@ -376,12 +367,6 @@ export default function SpotDetails() {
           {posterError ? (
             <Text style={styles.posterErrorText}>{posterError}</Text>
           ) : null}
-
-          {lat && lng ? (
-            <Text style={styles.coordsText}>
-              Coordinates: {Number(lat).toFixed(5)}, {Number(lng).toFixed(5)}
-            </Text>
-          ) : null}
         </View>
 
         <View style={styles.sectionCard}>
@@ -542,7 +527,7 @@ export default function SpotDetails() {
                 Mode: {kiteableForecast?.thresholds?.directionMode ?? '-'}
               </Text>
               {kiteableForecast?.note ? (
-                <Text style={styles.coordsText}>{kiteableForecast.note}</Text>
+                <Text style={styles.metaText}>{kiteableForecast.note}</Text>
               ) : null}
             </View>
           ) : (
@@ -618,7 +603,7 @@ export default function SpotDetails() {
           </Button>
         ) : null}
 
-        {/* Simple back button */}
+        {/*back button */}
         <Button onPress={() => router.push('/(tabs)/Map')}>
           <ButtonText>Back to Map</ButtonText>
         </Button>
@@ -658,9 +643,6 @@ const styles = StyleSheet.create({
   posterErrorText: {
     color: '#999',
     fontSize: 12,
-  },
-  coordsText: {
-    color: '#777',
   },
   metaText: {
     color: '#555',

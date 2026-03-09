@@ -3,6 +3,7 @@ export type ProfileResponse = {
   name?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  friendCount?: number;
 };
 
 export type FriendStatus =

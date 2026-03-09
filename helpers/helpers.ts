@@ -1,5 +1,10 @@
 import { API_BASE } from '@/constants/constants';
-import type { GeoCoords, MeProfile, SessionPost, UserResult } from '@/helpers/types';
+import type {
+  GeoCoords,
+  MeProfile,
+  SessionPost,
+  UserResult,
+} from '@/helpers/types';
 import * as Location from 'expo-location';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { authFetch, getAuthUser, setAuthUser } from '../lib/auth';
@@ -80,6 +85,7 @@ export function useMeProfile() {
           bio: stored.bio ?? null,
           avatarUrl: stored.avatarUrl ?? null,
           profileVisibility: stored.profileVisibility ?? 'public',
+          friendCount: stored.friendCount ?? 0,
         });
       }
 
@@ -108,6 +114,10 @@ export function useMeProfile() {
           typeof data?.profileVisibility === 'string'
             ? data.profileVisibility
             : (stored?.profileVisibility ?? 'public'),
+        friendCount:
+          typeof data?.friendCount === 'number'
+            ? data.friendCount
+            : (stored?.friendCount ?? 0),
       };
 
       if (mountedRef.current) {
@@ -122,6 +132,7 @@ export function useMeProfile() {
           bio: nextProfile.bio ?? null,
           avatarUrl: nextProfile.avatarUrl ?? null,
           profileVisibility: nextProfile.profileVisibility ?? 'public',
+          friendCount: nextProfile.friendCount ?? 0,
         });
       }
     } catch (err: any) {

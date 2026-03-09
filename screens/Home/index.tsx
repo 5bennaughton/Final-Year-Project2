@@ -1,9 +1,7 @@
 import PostList from '@/components/PostList';
 import { useRouter } from 'expo-router';
-import { ArrowRight, MapPin } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -63,7 +61,7 @@ function matchesFilter(post: FeedPost, filter: FeedFilter) {
 
 /**
  * Home screen showing the friends feed with map pins and comments.
- * Fetches posts once on mount and renders a simple list.
+ * Fetches posts once on mount and renders a list.
  */
 export default function Home() {
   const router = useRouter();
@@ -100,9 +98,6 @@ export default function Home() {
     [feedPosts, activeFilter]
   );
 
-  const totalLabel = `${filteredPosts.length} ${
-    filteredPosts.length === 1 ? 'session' : 'sessions'
-  }`;
   const showInitialLoading = loading && feedPosts.length === 0;
 
   return (
@@ -120,12 +115,10 @@ export default function Home() {
         <View style={styles.headerRow}>
           <View style={styles.headerCopy}>
             <Text style={styles.headerTitle}>Friends Feed</Text>
-            <Text style={styles.headerSubtitle}>
-              Latest sessions from friends
-            </Text>
           </View>
         </View>
 
+        {/* Keep this CTA basic and clear: an outlined button with no icon. */}
         <Pressable
           onPress={() => router.push('/nearby')}
           style={({ pressed }) => [
@@ -133,13 +126,7 @@ export default function Home() {
             pressed && styles.nearbyButtonPressed,
           ]}
         >
-          <View style={styles.nearbyButtonMain}>
-            <View style={styles.nearbyIconBadge}>
-              <MapPin size={15} color="#1f6f5f" />
-            </View>
-            <Text style={styles.nearbyButtonText}>Find Sessions Nearby</Text>
-          </View>
-          <ArrowRight size={16} color="#1f6f5f" />
+          <Text style={styles.nearbyButtonText}>Find Sessions Nearby</Text>
         </Pressable>
 
         <View style={styles.filterSection}>
@@ -170,11 +157,6 @@ export default function Home() {
               );
             })}
           </View>
-        </View>
-
-        <View style={styles.feedMetaRow}>
-          <Text style={styles.feedMetaText}>{totalLabel}</Text>
-          {showInitialLoading ? <ActivityIndicator color="#1f6f5f" /> : null}
         </View>
 
         <PostList
@@ -220,42 +202,18 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '700',
   },
-  headerSubtitle: {
-    color: '#5d6a65',
-    fontSize: 14,
-    fontWeight: '500',
-  },
   nearbyButton: {
-    minHeight: 50,
+    minHeight: 52,
     borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#c9d8d2',
+    borderWidth: 1.5,
+    borderColor: '#1f6f5f',
     backgroundColor: '#ffffff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    shadowColor: '#12261f',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 1,
-  },
-  nearbyButtonMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  nearbyIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#e7f1ed',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 14,
   },
   nearbyButtonPressed: {
-    backgroundColor: '#edf3ef',
+    backgroundColor: '#eef7f3',
   },
   nearbyButtonText: {
     color: '#1f6f5f',
@@ -263,54 +221,45 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   filterSection: {
-    gap: 10,
-    marginTop: 2,
+    gap: 12,
+    marginTop: 4,
   },
   filterLabel: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
     color: '#596762',
   },
   filterRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
+    padding: 6,
+    borderRadius: 14,
+    backgroundColor: '#e7edea',
   },
   filterChip: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 42,
     paddingHorizontal: 10,
-    borderRadius: 12,
-    backgroundColor: '#dfe7e3',
+    borderRadius: 10,
+    backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#d0dbd5',
+    borderColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
   },
   filterChipActive: {
-    backgroundColor: '#d8ebe4',
-    borderColor: '#a2c4b8',
+    backgroundColor: '#ffffff',
+    borderColor: '#b8c9c2',
   },
   filterChipPressed: {
-    backgroundColor: '#d2dbd7',
+    backgroundColor: '#dce5e1',
   },
   filterChipText: {
-    color: '#5e6d67',
-    fontSize: 16,
+    color: '#5b6963',
+    fontSize: 15,
     fontWeight: '600',
   },
   filterChipTextActive: {
     color: '#1a5547',
-  },
-  feedMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 10,
-    marginTop: 2,
-  },
-  feedMetaText: {
-    fontSize: 15,
-    color: '#55635d',
-    fontWeight: '600',
   },
 });

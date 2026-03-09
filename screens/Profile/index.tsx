@@ -111,9 +111,9 @@ export default function HomePage() {
 
   const displayName = profile?.name ?? 'Your Name';
   const displayInitial = displayName.trim().charAt(0).toUpperCase() || 'U';
-  const bioText =
-    profile?.bio?.trim() ||
-    'Add a short bio about your riding style or favorite spots.';
+  const bioText = profile?.bio?.trim() || profile?.name;
+  const friendCount =
+    typeof profile?.friendCount === 'number' ? profile.friendCount : 0;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -121,7 +121,7 @@ export default function HomePage() {
         {/* Profile header: avatar, name, and quick actions */}
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
-            {/* Avatar image if set, otherwise a simple placeholder */}
+            {/* Avatar image if set, otherwise placeholder */}
             {profile?.avatarUrl ? (
               <Image
                 source={{ uri: profile.avatarUrl }}
@@ -156,6 +156,8 @@ export default function HomePage() {
         {/* Bio section */}
         <View>
           <Text style={styles.bioText}>{bioText}</Text>
+          {/* Keep this intentionally basic for now. */}
+          <Text style={styles.friendsText}>Friends: {friendCount}</Text>
           {profileError && <Text style={styles.errorText}>{profileError}</Text>}
         </View>
 
@@ -272,6 +274,11 @@ const styles = StyleSheet.create({
   },
   bioText: {
     color: '#555',
+  },
+  friendsText: {
+    marginTop: 4,
+    color: '#1A1A1A',
+    fontWeight: '600',
   },
   errorText: {
     color: 'red',
