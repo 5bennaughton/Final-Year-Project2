@@ -1,10 +1,12 @@
-import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { useUserSearch } from '@/helpers/helpers';
+import { searchGlobalSpots } from '@/screens/Spots/spots.api';
+import type { Spot } from '@/screens/Spots/spots.types';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,11 +15,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  fetchFriendsList,
   fetchIncomingFriendRequests,
   respondToFriendRequest,
 } from './friends.api';
-import type { FriendRequest, UserResult } from './friends.types';
+import type { FriendRequest } from './friends.types';
 
 /**
  * Prefer a human-readable label if the API provides it.
@@ -35,17 +36,11 @@ export default function Friends() {
   const [query, setQuery] = useState('');
   const { results, searching, searchError, search, clearResults } =
     useUserSearch();
+  const [spotResults, setSpotResults] = useState<Spot[]>([]);
+  const [searchingSpots, setSearchingSpots] = useState(false);
+  const [spotError, setSpotError] = useState<string | null>(null);
 
-  const [requestError, setRequestError] = useState<string | null>(null);
-  const [requestMessage, setRequestMessage] = useState<string | null>(null);
-
-  const [showFriends, setShowFriends] = useState(false);
-  const [friends, setFriends] = useState<UserResult[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(false);
-  const [friendsError, setFriendsError] = useState<string | null>(null);
-  const [friendsMessage, setFriendsMessage] = useState<string | null>(null);
-
-  const [showRequests, setShowRequests] = useState(false);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [requestsError, setRequestsError] = useState<string | null>(null);
@@ -56,20 +51,48 @@ export default function Friends() {
    * Debounce the user search input and clear results when empty.
    */
   useEffect(() => {
+    let isMounted = true;
     const trimmed = query.trim();
 
     if (!trimmed) {
       clearResults();
-      return;
+      setSpotResults([]);
+      setSearchingSpots(false);
+      setSpotError(null);
+      return () => {
+        isMounted = false;
+      };
     }
 
-    setRequestMessage(null);
-    setRequestError(null);
-
     const handle = setTimeout(() => {
-      search(trimmed);
+      void search(trimmed);
+
+      // Run spot search from the same input.
+      setSearchingSpots(true);
+      setSpotError(null);
+
+      searchGlobalSpots(trimmed)
+        .then((data) => {
+          if (!isMounted) return;
+          const items = Array.isArray(data?.spots) ? data.spots : [];
+          setSpotResults(items);
+        })
+        .catch((err: any) => {
+          if (!isMounted) return;
+          setSpotResults([]);
+          setSpotError(err?.message ?? 'Search spots failed');
+        })
+        .finally(() => {
+          if (isMounted) {
+            setSearchingSpots(false);
+          }
+        });
     }, 350);
-    return () => clearTimeout(handle);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(handle);
+    };
   }, [query, clearResults, search]);
 
   /**
@@ -79,51 +102,20 @@ export default function Friends() {
     const trimmed = (value ?? query).trim();
 
     if (!trimmed) return;
-    setRequestMessage(null);
-    setRequestError(null);
     await search(trimmed);
-  };
-
-  /**
-   * Load accepted friends for the current user.
-   * Updates loading and empty-state messaging.
-   */
-  const loadFriends = async () => {
-    setLoadingFriends(true);
-    setFriendsError(null);
-    setFriendsMessage(null);
 
     try {
-      const data = await fetchFriendsList();
-      if (!data || !Array.isArray(data.friends)) {
-        setFriends([]);
-        setFriendsError('Unexpected response from server.');
-        return;
-      }
-
-      setFriends(data.friends);
-
-      if (data.friends.length === 0) {
-        setFriendsMessage('No friends yet.');
-      }
+      setSearchingSpots(true);
+      setSpotError(null);
+      const data = await searchGlobalSpots(trimmed);
+      const items = Array.isArray(data?.spots) ? data.spots : [];
+      setSpotResults(items);
     } catch (err: any) {
-      setFriendsError(err?.message ?? 'Fetch friends failed');
+      setSpotResults([]);
+      setSpotError(err?.message ?? 'Search spots failed');
     } finally {
-      setLoadingFriends(false);
+      setSearchingSpots(false);
     }
-  };
-
-  /**
-   * Toggle the friends list and load it when opening.
-   * Avoids extra requests when closing.
-   */
-  const toggleFriends = async () => {
-    if (showFriends) {
-      setShowFriends(false);
-      return;
-    }
-    setShowFriends(true);
-    await loadFriends();
   };
 
   /**
@@ -154,15 +146,10 @@ export default function Friends() {
   };
 
   /**
-   * Toggle the request list and load it when opening.
-   * Avoids extra requests when closing.
+   * Open the requests modal and refresh data.
    */
-  const toggleRequests = async () => {
-    if (showRequests) {
-      setShowRequests(false);
-      return;
-    }
-    setShowRequests(true);
+  const openRequestsModal = async () => {
+    setShowRequestsModal(true);
     await loadFriendRequests();
   };
 
@@ -196,28 +183,46 @@ export default function Friends() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Friends</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.title}>Search</Text>
+          <Pressable onPress={openRequestsModal} style={styles.requestsButton}>
+            <Text style={styles.requestsButtonText}>
+              Requests ({requests.length})
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Search section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Search users</Text>
-          <Input size="md">
-            <InputField
-              placeholder="Search by name"
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={() => searchUsers(query)}
-              returnKeyType="search"
-              autoCapitalize="words"
-              style={styles.inputText}
-              placeholderTextColor="gray"
-            />
-          </Input>
-          {searching && <ActivityIndicator />}
+          <View style={styles.searchPillWrap}>
+            <Input size="md" style={styles.searchPillInput}>
+              <InputField
+                placeholder="Search by name or spot"
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={() => searchUsers(query)}
+                returnKeyType="search"
+                autoCapitalize="words"
+                style={styles.inputText}
+                placeholderTextColor="gray"
+              />
+            </Input>
+          </View>
+
+          {searching || searchingSpots ? <ActivityIndicator /> : null}
           {searchError && <Text style={styles.errorText}>{searchError}</Text>}
-          {results.length === 0 && !searching && !searchError && (
-            <Text style={styles.subtleText}>No results yet.</Text>
-          )}
+          {spotError && <Text style={styles.errorText}>{spotError}</Text>}
+          {query.trim().length > 0 &&
+            results.length === 0 &&
+            spotResults.length === 0 &&
+            !searching &&
+            !searchingSpots &&
+            !searchError &&
+            !spotError && (
+              <Text style={styles.subtleText}>No results yet.</Text>
+            )}
+
+          {results.length > 0 && <Text style={styles.subtleLabel}>People</Text>}
           {results.map((user) => (
             <Pressable
               key={user.id}
@@ -233,121 +238,107 @@ export default function Friends() {
               <Text style={styles.listCardSubtle}>{user.email}</Text>
             </Pressable>
           ))}
-          {requestMessage && (
-            <Text style={styles.successText}>{requestMessage}</Text>
+
+          {spotResults.length > 0 && (
+            <Text style={styles.subtleLabel}>Spots</Text>
           )}
-          {requestError && <Text style={styles.errorText}>{requestError}</Text>}
-        </View>
-
-        {/* Friends section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your friends</Text>
-          <Button onPress={toggleFriends}>
-            <ButtonText>
-              {showFriends ? 'Hide friends' : 'Show friends'}
-            </ButtonText>
-          </Button>
-
-          {showFriends && (
-            <View style={styles.section}>
-              <Button onPress={loadFriends} disabled={loadingFriends}>
-                {loadingFriends ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <ButtonText>Refresh friends</ButtonText>
-                )}
-              </Button>
-
-              {friends.length === 0 && !loadingFriends && !friendsError && (
-                <Text style={styles.subtleText}>No friends yet.</Text>
-              )}
-
-              {friends.map((friend) => (
-                <View key={friend.id} style={styles.listCard}>
-                  <Text style={styles.listCardTitle}>{friend.name}</Text>
-                  <Text style={styles.listCardSubtle}>{friend.email}</Text>
-                </View>
-              ))}
-
-              {friendsMessage && (
-                <Text style={styles.successText}>{friendsMessage}</Text>
-              )}
-              {friendsError && (
-                <Text style={styles.errorText}>{friendsError}</Text>
-              )}
-            </View>
-          )}
-        </View>
-
-        {/* Friend requests section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Friend requests</Text>
-          <Button onPress={toggleRequests}>
-            <ButtonText>
-              {showRequests ? 'Hide requests' : 'Show requests'}
-            </ButtonText>
-          </Button>
-
-          {showRequests && (
-            <View style={styles.section}>
-              <Button onPress={loadFriendRequests} disabled={loadingRequests}>
-                {loadingRequests ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <ButtonText>Refresh requests</ButtonText>
-                )}
-              </Button>
-
-              {requests.length === 0 && !loadingRequests && !requestsError && (
-                <Text style={styles.subtleText}>No pending requests.</Text>
-              )}
-
-              {requests.map((request) => {
-                const isActing = actingRequestId === request.id;
-                return (
-                  <View key={request.id} style={styles.requestCard}>
-                    <Text style={styles.listCardTitle}>
-                      {getRequesterLabel(request)}
-                    </Text>
-                    <Text style={styles.listCardSubtle}>
-                      Request id: {request.id}
-                    </Text>
-                    <View style={styles.section}>
-                      <Button
-                        onPress={() => respondToRequest(request.id, 'accept')}
-                        disabled={isActing}
-                      >
-                        {isActing ? (
-                          <ActivityIndicator color="white" />
-                        ) : (
-                          <ButtonText>Accept</ButtonText>
-                        )}
-                      </Button>
-                      <Button
-                        onPress={() => respondToRequest(request.id, 'decline')}
-                        disabled={isActing}
-                      >
-                        {isActing ? (
-                          <ActivityIndicator color="white" />
-                        ) : (
-                          <ButtonText>Decline</ButtonText>
-                        )}
-                      </Button>
-                    </View>
-                  </View>
-                );
-              })}
-
-              {requestsMessage && (
-                <Text style={styles.successText}>{requestsMessage}</Text>
-              )}
-              {requestsError && (
-                <Text style={styles.errorText}>{requestsError}</Text>
-              )}
-            </View>
-          )}
+          {spotResults.map((spot) => (
+            <Pressable
+              key={spot.id}
+              onPress={() =>
+                router.push({
+                  pathname: '/spot-details',
+                  params: {
+                    id: spot.id,
+                    name: spot.name,
+                    type: spot.type,
+                    description: spot.description ?? '',
+                    lat: String(spot.latitude),
+                    lng: String(spot.longitude),
+                    ownerId: spot.ownerId ?? '',
+                    userId: spot.userId ?? '',
+                    createdById: spot.createdById ?? '',
+                  },
+                })
+              }
+              style={styles.listCard}
+            >
+              <Text style={styles.listCardTitle}>{spot.name}</Text>
+              <Text style={styles.listCardSubtle}>{spot.type}</Text>
+            </Pressable>
+          ))}
         </View>
       </ScrollView>
+
+      {/* Keep friend-request handling separate from the main search layout. */}
+      <Modal
+        visible={showRequestsModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowRequestsModal(false)}
+      >
+        <Pressable
+          style={styles.modalBackdrop}
+          onPress={() => setShowRequestsModal(false)}
+        >
+          <Pressable style={styles.modalCard} onPress={() => {}}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.sectionTitle}>Friend requests</Text>
+              <Pressable
+                onPress={() => setShowRequestsModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Text style={styles.modalCloseButtonText}>Close</Text>
+              </Pressable>
+            </View>
+
+            <Pressable
+              onPress={loadFriendRequests}
+              style={styles.refreshRequestsButton}
+            >
+              <Text style={styles.refreshRequestsText}>Refresh requests</Text>
+            </Pressable>
+
+            {loadingRequests ? <ActivityIndicator /> : null}
+            {requestsError ? (
+              <Text style={styles.errorText}>{requestsError}</Text>
+            ) : null}
+            {requestsMessage ? (
+              <Text style={styles.successText}>{requestsMessage}</Text>
+            ) : null}
+            {requests.length === 0 && !loadingRequests && !requestsError ? (
+              <Text style={styles.subtleText}>No pending requests.</Text>
+            ) : null}
+
+            {requests.map((request) => {
+              const isActing = actingRequestId === request.id;
+              return (
+                <View key={request.id} style={styles.requestCard}>
+                  <Text style={styles.listCardTitle}>
+                    {getRequesterLabel(request)}
+                  </Text>
+                  <View style={styles.requestActionsRow}>
+                    <Pressable
+                      onPress={() => respondToRequest(request.id, 'accept')}
+                      disabled={isActing}
+                      style={styles.acceptRequestButton}
+                    >
+                      <Text style={styles.acceptRequestText}>Accept</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => respondToRequest(request.id, 'decline')}
+                      disabled={isActing}
+                      style={styles.declineRequestButton}
+                    >
+                      <Text style={styles.declineRequestText}>Decline</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -365,12 +356,42 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
   },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  requestsButton: {
+    borderWidth: 1,
+    borderColor: '#cfdad5',
+    borderRadius: 999,
+    backgroundColor: '#f4f8f6',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  requestsButtonText: {
+    color: '#1f6f5f',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   section: {
     gap: 10,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  searchPillWrap: {
+    borderWidth: 1,
+    borderColor: '#d6dfda',
+    borderRadius: 999,
+    backgroundColor: 'white',
+    paddingHorizontal: 6,
+  },
+  searchPillInput: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   inputText: {
     color: 'black',
@@ -383,6 +404,12 @@ const styles = StyleSheet.create({
   },
   subtleText: {
     color: '#666',
+  },
+  subtleLabel: {
+    color: '#4d5a55',
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
   },
   listCard: {
     padding: 12,
@@ -398,10 +425,83 @@ const styles = StyleSheet.create({
     borderColor: '#ddd',
     gap: 8,
   },
+  requestActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  acceptRequestButton: {
+    borderRadius: 8,
+    backgroundColor: '#1f6f5f',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  acceptRequestText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  declineRequestButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d6d6d6',
+    backgroundColor: 'white',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  declineRequestText: {
+    color: '#555',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   listCardTitle: {
     fontWeight: '600',
   },
   listCardSubtle: {
     color: '#666',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    borderRadius: 14,
+    backgroundColor: 'white',
+    padding: 14,
+    gap: 10,
+    maxHeight: '70%',
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalCloseButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d6d6d6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  modalCloseButtonText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '600',
+  },
+  refreshRequestsButton: {
+    alignSelf: 'flex-start',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#d6d6d6',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#f8f8f8',
+  },
+  refreshRequestsText: {
+    fontSize: 12,
+    color: '#555',
+    fontWeight: '600',
   },
 });
