@@ -123,7 +123,12 @@ export default function AddSpot() {
         return;
       }
 
-      if (parsedTideWindow !== null && parsedTideWindow < 0) {
+      if (parsedTideWindow === null) {
+        setError('Tide window is required for tidal spots.');
+        return;
+      }
+
+      if (parsedTideWindow < 0) {
         setError('Tide window must be 0 or greater.');
         return;
       }
@@ -207,9 +212,6 @@ export default function AddSpot() {
         {/* Optional wind direction range in degrees */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Wind direction (optional)</Text>
-          <Text style={styles.helperText}>
-            Put a range of degrees 0-359. Example: North (0) to SW (225)
-          </Text>
           <View style={styles.row}>
             <TextInput
               placeholder="Start (0-359)"
@@ -299,7 +301,7 @@ export default function AddSpot() {
               </Pressable>
             </View>
 
-            <Text style={styles.label}>Tide window hours (optional)</Text>
+            <Text style={styles.label}>Tide window hours</Text>
             <TextInput
               placeholder="Example: 2"
               placeholderTextColor="#888"

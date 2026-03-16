@@ -343,6 +343,8 @@ export default function SpotDetails() {
 
   //This is just colouring for red and green for boolean
   const speedChipColors = getStatusChipColors(Boolean(kiteableNow?.speedOk));
+  const tideChipColors = getStatusChipColors(Boolean(kiteableNow?.tideOk));
+  const isTidalSpot = kiteableForecast?.thresholds?.isTidal === true;
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -512,6 +514,26 @@ export default function SpotDetails() {
                     Speed {kiteableNow.speedOk ? 'Pass' : 'Fail'}
                   </Text>
                 </View>
+                {isTidalSpot ? (
+                  <View
+                    style={[
+                      styles.statusChip,
+                      {
+                        backgroundColor: tideChipColors.backgroundColor,
+                        borderColor: tideChipColors.borderColor,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.statusChipText,
+                        { color: tideChipColors.textColor },
+                      ]}
+                    >
+                      Tide {kiteableNow.tideOk ? 'Pass' : 'Fail'}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
 
               <Text style={styles.metaText}>
@@ -526,6 +548,16 @@ export default function SpotDetails() {
               <Text style={styles.metaText}>
                 Mode: {kiteableForecast?.thresholds?.directionMode ?? '-'}
               </Text>
+              {isTidalSpot ? (
+                <>
+                  <Text style={styles.metaText}>
+                    Tide rule:{' '}
+                    {kiteableForecast?.thresholds?.tideWindowHours ?? '-'}h
+                    before and after{' '}
+                    {kiteableForecast?.thresholds?.tidePreference ?? '-'} tide
+                  </Text>
+                </>
+              ) : null}
               {kiteableForecast?.note ? (
                 <Text style={styles.metaText}>{kiteableForecast.note}</Text>
               ) : null}
@@ -684,6 +716,7 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   statusChip: {
     borderWidth: 1,

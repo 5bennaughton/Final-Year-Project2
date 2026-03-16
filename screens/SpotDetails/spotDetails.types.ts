@@ -26,6 +26,10 @@ export type KiteableForecastThresholds = {
   windDirStart?: number;
   windDirEnd?: number;
   directionMode?: string;
+  isTidal?: boolean;
+  tidePreference?: string | null;
+  tideWindowHours?: number | null;
+  tideProvider?: string | null;
 };
 
 export type KiteableForecastResult = {
