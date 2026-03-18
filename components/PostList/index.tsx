@@ -4,6 +4,7 @@ import type {
   NormalizedPost,
   PostListProps,
   RawPost,
+  SessionKiteability,
 } from '@/helpers/types';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -19,6 +20,7 @@ import MapView, { Marker, UrlTile } from 'react-native-maps';
 import {
   createPostComment,
   fetchPostComments,
+  fetchSessionKiteability,
   removePostComment,
 } from './PostList.api';
 
@@ -73,6 +75,12 @@ function normalizePost(
           ? base.userId
           : undefined,
     userName,
+    spotId:
+      typeof base.spotId === 'string'
+        ? base.spotId
+        : raw?.spotId === null || base.spotId === null
+          ? null
+          : undefined,
     sport: typeof base.sport === 'string' ? base.sport : undefined,
     time: typeof base.time === 'string' ? base.time : undefined,
     location: typeof base.location === 'string' ? base.location : undefined,
@@ -86,6 +94,32 @@ function getInitials(name?: string) {
   if (!name?.trim()) return 'U';
   const parts = name.trim().split(/\s+/).slice(0, 2);
   return parts.map((part) => part[0]?.toUpperCase() ?? '').join('') || 'U';
+}
+
+/**
+ * Only request kiteability when the session starts within the next 48 hours
+ * and is linked to a spot. Outside that window the UI stays unchanged.
+ */
+function sessionsToLoadKiteability(post: NormalizedPost) {
+  if (!post.spotId || !post.time) return false;
+
+  const startTime = new Date(post.time);
+  if (Number.isNaN(startTime.getTime())) return false;
+
+  const now = Date.now();
+  const startMs = startTime.getTime();
+  const hoursUntilStart = (startMs - now) / (1000 * 60 * 60);
+
+  return hoursUntilStart >= 0 && hoursUntilStart <= 48;
+}
+
+/**
+ * Turn the backend status into the pill label shown on the card.
+ */
+function getKiteabilityLabel(status?: SessionKiteability['status']) {
+  if (status === 'kiteable') return 'Kiteable';
+  if (status === 'not_kiteable') return 'Not Kiteable';
+  return null;
 }
 
 export default function PostList({
@@ -113,6 +147,9 @@ export default function PostList({
   const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
     null
   );
+  const [kiteabilityByPost, setKiteabilityByPost] = useState<
+    Record<string, SessionKiteability | null>
+  >({});
 
   const normalizedPosts = useMemo(
     () =>
@@ -162,6 +199,57 @@ export default function PostList({
 
     void Promise.all(normalizedPosts.map((post) => fetchComments(post.id)));
   }, [normalizedPosts, showComments, fetchComments]);
+
+  useEffect(() => {
+    // Only fetch kiteability for sessions that are within the supported time window.
+    const posts = normalizedPosts.filter(sessionsToLoadKiteability);
+
+    if (posts.length === 0) {
+      setKiteabilityByPost({});
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadKiteability = async () => {
+      // Load all session statuses at the same time so the list updates together.
+      const results = await Promise.all(
+        posts.map(async (post) => {
+          try {
+            const result = await fetchSessionKiteability(post.id);
+            return [post.id, result] as const;
+          } catch {
+            return [post.id, null] as const;
+          }
+        })
+      );
+
+      if (!isMounted) return;
+
+      // Keep only statuses the UI knows how to render; treat everything else as unavailable.
+      const sessions: Record<string, SessionKiteability | null> = {};
+
+      for (const [postId, result] of results) {
+        if (
+          result?.eligible &&
+          (result.status === 'kiteable' || result.status === 'not_kiteable')
+        ) {
+          sessions[postId] = result;
+        } else {
+          sessions[postId] = null;
+        }
+      }
+
+      setKiteabilityByPost(sessions);
+    };
+
+    void loadKiteability();
+
+    return () => {
+      // Prevent state updates if the post list changes or the component unmounts mid-request.
+      isMounted = false;
+    };
+  }, [normalizedPosts]);
 
   const updateCommentInput = useCallback((postId: string, value: string) => {
     setCommentInputs((prev) => ({ ...prev, [postId]: value }));
@@ -258,6 +346,10 @@ export default function PostList({
         </View>
       ) : null}
 
+      {/**
+       * Loop through every normalized post, just cleans and prepares
+       * the data so the JSX is cleaner creats fallbacks
+       */}
       {!showLoadingCards &&
         normalizedPosts.map((post) => {
           const comments = commentsByPost[post.id] ?? [];
@@ -274,6 +366,16 @@ export default function PostList({
           const postingComment = postingByPost[post.id] === true;
           const canSubmitComment =
             draftComment.trim().length > 0 && !postingComment;
+          const kiteability = kiteabilityByPost[post.id];
+          const kiteabilityLabel = getKiteabilityLabel(kiteability?.status);
+          const kiteabilityPillStyle =
+            kiteability?.status === 'kiteable'
+              ? styles.kiteablePill
+              : styles.notKiteablePill;
+          const kiteabilityTextStyle =
+            kiteability?.status === 'kiteable'
+              ? styles.kiteablePillText
+              : styles.notKiteablePillText;
 
           return (
             <View key={post.id} style={styles.postCard}>
@@ -309,6 +411,23 @@ export default function PostList({
                   </Text>
                 </View>
               </View>
+
+              {kiteabilityLabel ? (
+                <View style={styles.kiteabilityRow}>
+                  <View
+                    style={[styles.kiteabilityPillBase, kiteabilityPillStyle]}
+                  >
+                    <Text
+                      style={[
+                        styles.kiteabilityPillTextBase,
+                        kiteabilityTextStyle,
+                      ]}
+                    >
+                      {kiteabilityLabel}
+                    </Text>
+                  </View>
+                </View>
+              ) : null}
 
               {hasCoords ? (
                 <View style={styles.mapWrap}>
@@ -631,6 +750,34 @@ const styles = StyleSheet.create({
     color: '#4e5c56',
     fontSize: 14,
     fontWeight: '600',
+  },
+  kiteabilityRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+  },
+  kiteabilityPillBase: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  kiteablePill: {
+    backgroundColor: '#dff4e5',
+    borderColor: '#a8d5b4',
+  },
+  notKiteablePill: {
+    backgroundColor: '#fde7e7',
+    borderColor: '#efb8b8',
+  },
+  kiteabilityPillTextBase: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  kiteablePillText: {
+    color: '#1f6b3b',
+  },
+  notKiteablePillText: {
+    color: '#9d2f2f',
   },
   mapWrap: {
     marginTop: 12,

@@ -64,12 +64,18 @@ export type NormalizedPost = {
   id: string;
   userId?: string;
   userName?: string;
+  spotId?: string | null;
   sport?: string;
   time?: string;
   location?: string;
   latitude?: number | null;
   longitude?: number | null;
   notes?: string | null;
+};
+
+export type SessionKiteability = {
+  eligible: boolean;
+  status: 'kiteable' | 'not_kiteable' | 'unavailable';
 };
 
 export type CommentItem = {

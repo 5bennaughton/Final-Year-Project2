@@ -1,5 +1,6 @@
 import { API_BASE } from '@/constants/constants';
 import { requestJson } from '@/helpers/helpers';
+import type { SessionKiteability } from '@/helpers/types';
 
 const FUTURE_SESSIONS_BASE = `${API_BASE}/future-sessions`;
 
@@ -28,5 +29,15 @@ export async function removePostComment(postId: string, commentId: string) {
     `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(postId)}/delete-comment/${encodeURIComponent(commentId)}`,
     { method: 'DELETE' },
     'Delete comment failed'
+  );
+}
+
+export async function fetchSessionKiteability(
+  postId: string
+): Promise<SessionKiteability> {
+  return requestJson(
+    `${FUTURE_SESSIONS_BASE}/${encodeURIComponent(postId)}/kiteability`,
+    {},
+    'Fetch session kiteability failed'
   );
 }
