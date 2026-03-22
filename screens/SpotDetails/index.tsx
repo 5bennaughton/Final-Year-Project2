@@ -1,5 +1,6 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
+import { buildSpotRouteParams } from '@/helpers/spotRoute';
 import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -48,14 +49,29 @@ const STAR_VALUES = [1, 2, 3, 4, 5] as const;
  */
 export default function SpotDetails() {
   const router = useRouter();
-  const { id, name, type, description, ownerId, userId, createdById } =
-    useLocalSearchParams<SpotDetailsParams>();
+  const {
+    id,
+    name,
+    type,
+    description,
+    ownerId,
+    userId,
+    createdById,
+    lat,
+    lng,
+    windDirStart,
+    windDirEnd,
+    isTidal,
+    tidePreference,
+    tideWindowHours,
+  } = useLocalSearchParams<SpotDetailsParams>();
 
   // List state for posts tied to this spot.
   const [posts, setPosts] = useState<any[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'admin'>('user');
   const [deletingSpot, setDeletingSpot] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [posterName, setPosterName] = useState<string | null>(null);
@@ -78,8 +94,10 @@ export default function SpotDetails() {
 
   // Owner id is passed via route params from the map screen (spot.createdBy, etc).
   const spotOwnerId = (ownerId ?? userId ?? createdById ?? '').toString();
-  const canDeleteSpot = Boolean(
-    id && currentUserId && spotOwnerId && currentUserId === spotOwnerId
+  const canManageSpot = Boolean(
+    id &&
+      currentUserId &&
+      (currentUserId === spotOwnerId || currentUserRole === 'admin')
   );
 
   useEffect(() => {
@@ -89,11 +107,13 @@ export default function SpotDetails() {
       .then((user) => {
         if (isMounted) {
           setCurrentUserId(user?.id ?? null);
+          setCurrentUserRole(user?.role === 'admin' ? 'admin' : 'user');
         }
       })
       .catch(() => {
         if (isMounted) {
           setCurrentUserId(null);
+          setCurrentUserRole('user');
         }
       });
 
@@ -309,6 +329,32 @@ export default function SpotDetails() {
     } finally {
       setDeletingSpot(false);
     }
+  };
+
+  /**
+   * Reuse the existing Add Spot screen as the edit form.
+   * This keeps the spot form basic by having only one UI to maintain.
+   */
+  const editSpot = () => {
+    if (!id) return;
+
+    router.push({
+      pathname: '/add-spot',
+      params: {
+        mode: 'edit',
+        id,
+        name: (name ?? '').toString(),
+        type: (type ?? '').toString(),
+        description: (description ?? '').toString(),
+        lat: (lat ?? '').toString(),
+        lng: (lng ?? '').toString(),
+        windDirStart: (windDirStart ?? '').toString(),
+        windDirEnd: (windDirEnd ?? '').toString(),
+        isTidal: (isTidal ?? '').toString(),
+        tidePreference: (tidePreference ?? '').toString(),
+        tideWindowHours: (tideWindowHours ?? '').toString(),
+      },
+    });
   };
 
   /**
@@ -627,12 +673,18 @@ export default function SpotDetails() {
           <Text style={styles.errorText}>{deleteError}</Text>
         ) : null}
 
-        {canDeleteSpot ? (
-          <Button onPress={confirmDeleteSpot} disabled={deletingSpot}>
-            <ButtonText>
-              {deletingSpot ? 'Deleting...' : 'Delete Spot'}
-            </ButtonText>
-          </Button>
+        {canManageSpot ? (
+          <View style={styles.manageActions}>
+            <Button onPress={editSpot}>
+              <ButtonText>Edit Spot</ButtonText>
+            </Button>
+
+            <Button onPress={confirmDeleteSpot} disabled={deletingSpot}>
+              <ButtonText>
+                {deletingSpot ? 'Deleting...' : 'Delete Spot'}
+              </ButtonText>
+            </Button>
+          </View>
         ) : null}
 
         {/*back button */}
@@ -753,6 +805,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   upcomingSection: {
+    gap: 10,
+  },
+  manageActions: {
     gap: 10,
   },
   errorText: {
