@@ -1,6 +1,7 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { useListPosts } from '@/helpers/helpers';
+import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,6 +17,7 @@ import {
   createFriendRequest,
   fetchFriendStatus,
   fetchUserProfile,
+  updateUserRole,
 } from './user.api';
 import type { FriendStatus, ProfileResponse } from './user.types';
 
@@ -34,6 +36,12 @@ export default function UserPage() {
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [requesting, setRequesting] = useState(false);
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'admin'>(
+    'user'
+  );
+  const [updatingRole, setUpdatingRole] = useState(false);
+  const [roleMessage, setRoleMessage] = useState<string | null>(null);
 
   const { posts, postsError, loadingPosts, listPosts } = useListPosts(
     userId || undefined
@@ -44,6 +52,18 @@ export default function UserPage() {
    */
   useEffect(() => {
     let isMounted = true;
+
+    getAuthUser()
+      .then((user) => {
+        if (!isMounted) return;
+        setCurrentUserId(user?.id ?? null);
+        setCurrentUserRole(user?.role === 'admin' ? 'admin' : 'user');
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setCurrentUserId(null);
+        setCurrentUserRole('user');
+      });
 
     const loadProfile = async () => {
       if (!userId) return;
@@ -100,6 +120,36 @@ export default function UserPage() {
   }, [listPosts, userId]);
 
   /**
+   * Promote the viewed user to admin.
+   * This keeps admin management basic: admins search for a user,
+   * open their profile, and tap one button.
+   */
+  const makeAdmin = async () => {
+    if (!userId || updatingRole) return;
+
+    setUpdatingRole(true);
+    setRoleMessage(null);
+    setRequestError(null);
+
+    try {
+      await updateUserRole(userId, 'admin');
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              role: 'admin',
+            }
+          : prev
+      );
+      setRoleMessage('Admin access granted.');
+    } catch (err: any) {
+      setRoleMessage(err?.message ?? 'Update user role failed');
+    } finally {
+      setUpdatingRole(false);
+    }
+  };
+
+  /**
    * Send a friend request when not already friends.
    */
   const sendFriendRequest = async () => {
@@ -121,6 +171,9 @@ export default function UserPage() {
   const bioText = profile?.bio ?? 'No bio yet.';
   const friendCount =
     typeof profile?.friendCount === 'number' ? profile.friendCount : 0;
+  const canPromoteUser =
+    currentUserRole === 'admin' && Boolean(userId) && currentUserId !== userId;
+  const targetIsAdmin = profile?.role === 'admin';
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -149,6 +202,9 @@ export default function UserPage() {
           <Text style={styles.bioText}>{bioText}</Text>
           {/* Keep this intentionally basic for now. */}
           <Text style={styles.friendsText}>Friends: {friendCount}</Text>
+          {targetIsAdmin ? (
+            <Text style={styles.adminStatusText}>Admin user</Text>
+          ) : null}
 
           {/* Friend status / request button */}
           {loadingStatus ? (
@@ -173,6 +229,33 @@ export default function UserPage() {
 
           {profileError && <Text style={styles.errorText}>{profileError}</Text>}
           {requestError && <Text style={styles.errorText}>{requestError}</Text>}
+          {roleMessage && (
+            <Text
+              style={
+                targetIsAdmin ? styles.successText : styles.pendingStatusText
+              }
+            >
+              {roleMessage}
+            </Text>
+          )}
+
+          {canPromoteUser ? (
+            <View style={styles.adminPanel}>
+              <Text style={styles.adminPanelTitle}>Admin tools</Text>
+              <Button
+                onPress={makeAdmin}
+                disabled={updatingRole || targetIsAdmin}
+              >
+                {updatingRole ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <ButtonText>
+                    {targetIsAdmin ? 'Already Admin' : 'Make Admin'}
+                  </ButtonText>
+                )}
+              </Button>
+            </View>
+          ) : null}
         </View>
 
         <View style={styles.postsSection}>
@@ -248,6 +331,29 @@ const styles = StyleSheet.create({
   pendingStatusText: {
     color: '#666',
     fontWeight: '600',
+  },
+  adminStatusText: {
+    color: '#1f6f5f',
+    fontWeight: '700',
+  },
+  adminPanel: {
+    gap: 8,
+    borderWidth: 1,
+    borderColor: '#d8d8d8',
+    borderRadius: 12,
+    backgroundColor: '#fff',
+    padding: 12,
+  },
+  adminPanelTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  adminPanelText: {
+    color: '#555',
+  },
+  successText: {
+    color: '#1f6f5f',
+    fontWeight: '700',
   },
   errorText: {
     color: 'red',

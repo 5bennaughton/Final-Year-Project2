@@ -12,12 +12,15 @@ export type UserResult = {
   email: string;
 };
 
+export type UserRole = 'user' | 'admin';
+
 export type MeProfile = {
   id?: string;
   email?: string;
   name?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  role?: UserRole;
   profileVisibility?: string;
   friendCount?: number;
 };
@@ -38,6 +41,7 @@ export type AuthUser = {
   name?: string;
   bio?: string | null;
   avatarUrl?: string | null;
+  role?: UserRole;
   profileVisibility?: string;
   friendCount?: number;
 };

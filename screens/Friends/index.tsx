@@ -1,5 +1,6 @@
 import { Input, InputField } from '@/components/ui/input';
 import { useUserSearch } from '@/helpers/helpers';
+import { buildSpotRouteParams } from '@/helpers/spotRoute';
 import { searchGlobalSpots } from '@/screens/Spots/spots.api';
 import type { Spot } from '@/screens/Spots/spots.types';
 import { useRouter } from 'expo-router';
@@ -248,17 +249,7 @@ export default function Friends() {
               onPress={() =>
                 router.push({
                   pathname: '/spot-details',
-                  params: {
-                    id: spot.id,
-                    name: spot.name,
-                    type: spot.type,
-                    description: spot.description ?? '',
-                    lat: String(spot.latitude),
-                    lng: String(spot.longitude),
-                    ownerId: spot.ownerId ?? '',
-                    userId: spot.userId ?? '',
-                    createdById: spot.createdById ?? '',
-                  },
+                  params: buildSpotRouteParams(spot),
                 })
               }
               style={styles.listCard}

@@ -13,3 +13,15 @@ export async function createGlobalSpot(payload: SpotPayload) {
     'Create spot failed'
   );
 }
+
+export async function updateGlobalSpot(spotId: string, payload: SpotPayload) {
+  return requestJson(
+    `${API_BASE}/global-spots/${encodeURIComponent(spotId)}`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    'Update spot failed'
+  );
+}

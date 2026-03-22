@@ -35,6 +35,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
           name: data.user.name,
           bio: data.user.bio ?? null,
           avatarUrl: data.user.avatarUrl ?? null,
+          role: data.user.role ?? 'user',
           profileVisibility: data.user.profileVisibility ?? 'public',
         });
       }

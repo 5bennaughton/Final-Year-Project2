@@ -84,6 +84,7 @@ export function useMeProfile() {
           name: stored.name,
           bio: stored.bio ?? null,
           avatarUrl: stored.avatarUrl ?? null,
+          role: stored.role ?? 'user',
           profileVisibility: stored.profileVisibility ?? 'public',
           friendCount: stored.friendCount ?? 0,
         });
@@ -110,6 +111,10 @@ export function useMeProfile() {
           typeof data?.avatarUrl === 'string'
             ? data.avatarUrl
             : (data?.avatarUrl ?? stored?.avatarUrl ?? null),
+        role:
+          data?.role === 'admin' || data?.role === 'user'
+            ? data.role
+            : (stored?.role ?? 'user'),
         profileVisibility:
           typeof data?.profileVisibility === 'string'
             ? data.profileVisibility
@@ -131,6 +136,7 @@ export function useMeProfile() {
           name: nextProfile.name ?? stored.name,
           bio: nextProfile.bio ?? null,
           avatarUrl: nextProfile.avatarUrl ?? null,
+          role: nextProfile.role ?? stored.role ?? 'user',
           profileVisibility: nextProfile.profileVisibility ?? 'public',
           friendCount: nextProfile.friendCount ?? 0,
         });

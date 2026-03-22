@@ -114,6 +114,7 @@ export default function HomePage() {
   const bioText = profile?.bio?.trim() || profile?.name;
   const friendCount =
     typeof profile?.friendCount === 'number' ? profile.friendCount : 0;
+  const roleLabel = profile?.role === 'admin' ? 'Admin' : 'User';
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -158,6 +159,7 @@ export default function HomePage() {
           <Text style={styles.bioText}>{bioText}</Text>
           {/* Keep this intentionally basic for now. */}
           <Text style={styles.friendsText}>Friends: {friendCount}</Text>
+          <Text style={styles.roleText}>Role: {roleLabel}</Text>
           {profileError && <Text style={styles.errorText}>{profileError}</Text>}
         </View>
 
@@ -279,6 +281,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#1A1A1A',
     fontWeight: '600',
+  },
+  roleText: {
+    color: '#555',
   },
   errorText: {
     color: 'red',

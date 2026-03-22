@@ -1,5 +1,11 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
+import {
+  buildSpotRouteParams,
+  parseRouteBoolean,
+  parseRouteNumber,
+  parseRouteText,
+} from '@/helpers/spotRoute';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
@@ -12,7 +18,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { createGlobalSpot } from './addSpot.api';
+import { createGlobalSpot, updateGlobalSpot } from './addSpot.api';
 import type {
   AddSpotParams,
   SpotPayload,
@@ -21,33 +27,67 @@ import type {
 
 export default function AddSpot() {
   const router = useRouter();
-  const { lat, lng } = useLocalSearchParams<AddSpotParams>();
+  const {
+    id,
+    mode,
+    name: routeName,
+    type: routeType,
+    description: routeDescription,
+    lat,
+    lng,
+    windDirStart: routeWindDirStart,
+    windDirEnd: routeWindDirEnd,
+    isTidal: routeIsTidal,
+    tidePreference: routeTidePreference,
+    tideWindowHours: routeTideWindowHours,
+  } = useLocalSearchParams<AddSpotParams>();
+
+  const isEditMode =
+    mode === 'edit' && typeof id === 'string' && id.trim().length > 0;
 
   // Parse the map coordinates passed from the long-press screen.
   const coords = useMemo(() => {
-    const latitude = typeof lat === 'string' ? Number.parseFloat(lat) : NaN;
-    const longitude = typeof lng === 'string' ? Number.parseFloat(lng) : NaN;
+    const latitude = parseRouteNumber(lat);
+    const longitude = parseRouteNumber(lng);
 
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    if (latitude === null || longitude === null) {
       return null;
     }
     return { latitude, longitude };
   }, [lat, lng]);
 
-  const [name, setName] = useState('');
-  const [type, setType] = useState('');
-  const [description, setDescription] = useState('');
+  // The same screen handles both create and edit flows.
+  // We hydrate the local form state from route params when editing.
+  const [name, setName] = useState(parseRouteText(routeName));
+  const [type, setType] = useState(parseRouteText(routeType));
+  const [description, setDescription] = useState(parseRouteText(routeDescription));
   // Optional wind direction rules (stored as strings so the inputs stay controlled).
-  const [windDirStartInput, setWindDirStartInput] = useState('');
-  const [windDirEndInput, setWindDirEndInput] = useState('');
+  const [windDirStartInput, setWindDirStartInput] = useState(
+    routeWindDirStart ? parseRouteText(routeWindDirStart) : ''
+  );
+  const [windDirEndInput, setWindDirEndInput] = useState(
+    routeWindDirEnd ? parseRouteText(routeWindDirEnd) : ''
+  );
   // Basic tidal flag. Default is false (non-tidal).
-  const [isTidal, setIsTidal] = useState(false);
+  const [isTidal, setIsTidal] = useState(parseRouteBoolean(routeIsTidal) === true);
   // choose whether high or low tide is preferred.
-  const [tidePreference, setTidePreference] = useState<TidePreference>('high');
+  const [tidePreference, setTidePreference] = useState<TidePreference>(
+    routeTidePreference === 'low' ? 'low' : 'high'
+  );
   // Optional "near high/low tide" window (hours).
-  const [tideWindowHoursInput, setTideWindowHoursInput] = useState('');
+  const [tideWindowHoursInput, setTideWindowHoursInput] = useState(
+    routeTideWindowHours ? parseRouteText(routeTideWindowHours) : ''
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const goBack = () => {
+    if (isEditMode) {
+      router.back();
+      return;
+    }
+    router.replace('/(tabs)/Map');
+  };
 
   /**
    * Convert a text input into a number or null.
@@ -62,9 +102,11 @@ export default function AddSpot() {
   };
 
   /**
-   * Creates a spot on the global map
+   * Save the form.
+   * This stays intentionally basic: one form, one payload builder,
+   * and we choose create vs update based on the route mode.
    */
-  const createSpot = async () => {
+  const saveSpot = async () => {
     setError(null);
 
     if (!coords) {
@@ -153,10 +195,23 @@ export default function AddSpot() {
 
     setSaving(true);
     try {
-      await createGlobalSpot(payload);
-      router.back();
+      if (isEditMode && typeof id === 'string') {
+        const updated = await updateGlobalSpot(id, payload);
+
+        // After editing we replace the current screen with fresh route params
+        // so the details screen shows the updated spot data immediately.
+        router.replace({
+          pathname: '/spot-details',
+          params: buildSpotRouteParams(updated),
+        });
+      } else {
+        await createGlobalSpot(payload);
+        router.back();
+      }
     } catch (err: any) {
-      setError(err?.message ?? 'Create spot failed');
+      setError(
+        err?.message ?? (isEditMode ? 'Update spot failed' : 'Create spot failed')
+      );
     } finally {
       setSaving(false);
     }
@@ -165,10 +220,10 @@ export default function AddSpot() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Add Spot</Text>
+        <Text style={styles.title}>{isEditMode ? 'Edit Spot' : 'Add Spot'}</Text>
 
-        <Button onPress={() => router.replace('/(tabs)/Map')}>
-          <ButtonText>Back to Map</ButtonText>
+        <Button onPress={goBack}>
+          <ButtonText>{isEditMode ? 'Back to Details' : 'Back to Map'}</ButtonText>
         </Button>
 
         <View style={styles.formGroup}>
@@ -315,11 +370,11 @@ export default function AddSpot() {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <Button onPress={createSpot} disabled={saving}>
+        <Button onPress={saveSpot} disabled={saving}>
           {saving ? (
             <ActivityIndicator color="white" />
           ) : (
-            <ButtonText>Create Spot</ButtonText>
+            <ButtonText>{isEditMode ? 'Save Spot' : 'Create Spot'}</ButtonText>
           )}
         </Button>
       </ScrollView>

@@ -1,6 +1,16 @@
 export type AddSpotParams = {
+  id?: string;
+  mode?: 'create' | 'edit';
+  name?: string;
+  type?: string;
+  description?: string;
   lat?: string;
   lng?: string;
+  windDirStart?: string;
+  windDirEnd?: string;
+  isTidal?: string;
+  tidePreference?: string;
+  tideWindowHours?: string;
 };
 
 export type TidePreference = 'high' | 'low';

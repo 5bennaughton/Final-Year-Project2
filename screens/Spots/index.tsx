@@ -12,6 +12,7 @@ import MapView, { Callout, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input, InputField } from '@/components/ui/input';
 import { getCurrentLocation } from '@/helpers/helpers';
+import { buildSpotRouteParams } from '@/helpers/spotRoute';
 import { fetchGlobalSpots, searchGlobalSpots } from './spots.api';
 import type { Pin, Spot } from './spots.types';
 
@@ -256,20 +257,7 @@ export default function SpotsScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/spot-details',
-                      params: {
-                        id: spot.id,
-                        name: spot.name,
-                        type: spot.type,
-                        description: spot.description ?? '',
-                        ownerId:
-                          spot.createdBy ??
-                          spot.ownerId ??
-                          spot.userId ??
-                          spot.createdById ??
-                          '',
-                        lat: String(spot.latitude),
-                        lng: String(spot.longitude),
-                      },
+                      params: buildSpotRouteParams(spot),
                     })
                   }
                 >

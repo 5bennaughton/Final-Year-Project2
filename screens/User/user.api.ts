@@ -28,3 +28,15 @@ export async function createFriendRequest(addresseeId: string) {
     'Request failed'
   );
 }
+
+export async function updateUserRole(userId: string, role: 'user' | 'admin') {
+  return requestJson(
+    `${API_BASE}/users/${encodeURIComponent(userId)}/role`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role }),
+    },
+    'Update user role failed'
+  );
+}

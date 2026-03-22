@@ -10,6 +10,11 @@ export type Spot = {
   latitude: number;
   longitude: number;
   description?: string | null;
+  windDirStart?: number | null;
+  windDirEnd?: number | null;
+  isTidal?: boolean | null;
+  tidePreference?: string | null;
+  tideWindowHours?: number | null;
   createdBy?: string | null;
   ownerId?: string | null;
   userId?: string | null;

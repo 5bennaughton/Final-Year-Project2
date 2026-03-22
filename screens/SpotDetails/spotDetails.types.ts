@@ -8,6 +8,11 @@ export type SpotDetailsParams = {
   ownerId?: string;
   userId?: string;
   createdById?: string;
+  windDirStart?: string;
+  windDirEnd?: string;
+  isTidal?: string;
+  tidePreference?: string;
+  tideWindowHours?: string;
 };
 
 export type KiteableForecastHour = {
