@@ -49,7 +49,6 @@ Spots & Map
 - Users must be able to see upcoming posts for a spot (time > now). (complete)
 - Users must be able to search spots by name/type.
 - Add photos to a spot, displayed in the descritpsion
-- Users must be able to filter spots by sport type.
 - The map must show the user’s current location.(complete)
 - Data quality: duplicate spot detection.
 - Users can suggest edits to make to a spot to the owner of the spot; the owner or admins can choose to take this on board
@@ -57,10 +56,6 @@ Spots & Map
 - to deal with inaccuraties, after x amount of flags the spot is set-up for review by an admin.
 - Comments can be added to each spot, can rate the spot 1-5 star, Photos can be added to the spot.
 - A spot becomes verified when there are x amount of comments, or reviews
-
-Offline
-
-- To be able to view certain things when in offline mode.
 
 Location Search
 
@@ -94,8 +89,3 @@ Wind, tides, & Kiteability Forecast
 - The app must fetch wind forecast data for a spot using a weather API.
 - The app must calculate whether a spot is kiteable for a given day/time based on wind direction and speed.
 - While creating the spot too, users have the option to say if it is tidal or not. If it is not tidal then it does not take tides into account. However if it is tidal, the spot will pull tides in the area and say if it is near high or low tide.
-
-Strava sessions
-
-- Import strava sessions, and if these sessions are linked to the same location as a spot on the global map, it will be added to the spot, which will be displayed in spot details
-- If you plan a session, and then after the sessions you can import that session and link it to the planned session for reputation points.

@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Callout, Marker, type Region } from 'react-native-maps';
+import MapView, { Callout, Marker, type Region } from '@/components/maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Input, InputField } from '@/components/ui/input';
 import { getCurrentLocation } from '@/helpers/helpers';

@@ -15,7 +15,7 @@ import {
   Text,
   View,
 } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
+import MapView, { Marker, UrlTile } from '@/components/maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   createFutureSession,
