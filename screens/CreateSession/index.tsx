@@ -46,7 +46,6 @@ const VISIBILITY_OPTIONS: readonly PostVisibility[] = [
   'custom',
 ];
 const IOS_PICKER_TEXT_COLOR = '#1A1A1A';
-const IOS_PICKER_THEME_VARIANT = 'light' as const;
 
 /**
  * Format a date into a short month/day label.
@@ -709,11 +708,6 @@ export default function CreateSessionScreen() {
                   textColor={
                     Platform.OS === 'ios' ? IOS_PICKER_TEXT_COLOR : undefined
                   }
-                  themeVariant={
-                    Platform.OS === 'ios'
-                      ? IOS_PICKER_THEME_VARIANT
-                      : undefined
-                  }
                   onChange={handleDraftDateChange}
                   style={styles.datePicker}
                 />
@@ -727,11 +721,6 @@ export default function CreateSessionScreen() {
                   is24Hour={false}
                   textColor={
                     Platform.OS === 'ios' ? IOS_PICKER_TEXT_COLOR : undefined
-                  }
-                  themeVariant={
-                    Platform.OS === 'ios'
-                      ? IOS_PICKER_THEME_VARIANT
-                      : undefined
                   }
                   onChange={handleDraftTimeChange}
                   style={styles.timePicker}
