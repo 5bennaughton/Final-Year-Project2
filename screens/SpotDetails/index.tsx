@@ -1,6 +1,5 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
-import { buildSpotRouteParams } from '@/helpers/spotRoute';
 import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -71,7 +70,9 @@ export default function SpotDetails() {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'admin'>('user');
+  const [currentUserRole, setCurrentUserRole] = useState<'user' | 'admin'>(
+    'user'
+  );
   const [deletingSpot, setDeletingSpot] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [posterName, setPosterName] = useState<string | null>(null);
@@ -96,8 +97,8 @@ export default function SpotDetails() {
   const spotOwnerId = (ownerId ?? userId ?? createdById ?? '').toString();
   const canManageSpot = Boolean(
     id &&
-      currentUserId &&
-      (currentUserId === spotOwnerId || currentUserRole === 'admin')
+    currentUserId &&
+    (currentUserId === spotOwnerId || currentUserRole === 'admin')
   );
 
   useEffect(() => {

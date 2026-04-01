@@ -16,7 +16,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import MapView, { Marker, UrlTile } from 'react-native-maps';
+import MapView, { Marker, UrlTile } from '@/components/maps';
 import {
   createPostComment,
   fetchPostComments,

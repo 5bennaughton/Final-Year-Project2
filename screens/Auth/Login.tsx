@@ -1,25 +1,15 @@
-import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
 import { setAuthToken, setAuthUser } from '@/lib/auth';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { loginWithEmail } from './auth.api';
 import type { LoginBody, LoginProps } from './auth.types';
 
-/**
- * Render the login form and handle authentication flow.
- * Updates local state and persists the auth token on success.
- */
 export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
   const [form, setForm] = useState<LoginBody>({ email: '', password: '' });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Submit login credentials to the API and handle errors.
-   * Persists the token and triggers the success callback.
-   */
   const onSubmit = async () => {
     setError(null);
     setLoading(true);
@@ -39,6 +29,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
           profileVisibility: data.user.profileVisibility ?? 'public',
         });
       }
+
       onSuccess?.(data);
     } catch (err: any) {
       const message = err?.message ?? 'Could not connect to server';
@@ -51,62 +42,100 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-
-      <Input size="md">
+      <Text style={styles.title}>Welcome back</Text>
+      <Input size="lg" style={styles.input}>
         <InputField
           placeholder="Email"
           value={form.email}
           onChangeText={(email) => setForm((p) => ({ ...p, email }))}
           autoCapitalize="none"
+          autoCorrect={false}
           keyboardType="email-address"
+          selectionColor="#1f6f5f"
           style={styles.inputText}
-          placeholderTextColor="gray"
+          placeholderTextColor="#9aa8a2"
         />
       </Input>
 
-      <Input size="md">
+      <Input size="lg" style={styles.input}>
         <InputField
           placeholder="Password"
           value={form.password}
           onChangeText={(password) => setForm((p) => ({ ...p, password }))}
           secureTextEntry
+          textContentType="password"
+          selectionColor="#1f6f5f"
           style={styles.inputText}
-          placeholderTextColor="gray"
+          placeholderTextColor="#9aa8a2"
         />
       </Input>
 
-      <Button onPress={onSubmit} disabled={loading}>
+      <Pressable
+        onPress={onSubmit}
+        disabled={loading}
+        style={({ pressed }) => [
+          styles.primaryButton,
+          pressed && !loading && styles.primaryButtonPressed,
+          loading && styles.primaryButtonDisabled,
+        ]}
+      >
         {loading ? (
-          <ActivityIndicator color="white" />
+          <ActivityIndicator color="#ffffff" />
         ) : (
-          <ButtonText>Sign in</ButtonText>
+          <Text style={styles.primaryButtonText}>Sign in</Text>
         )}
-      </Button>
+      </Pressable>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      {onGoToRegister && (
-        <Button onPress={onGoToRegister} disabled={loading}>
-          <ButtonText>Need an account? Register</ButtonText>
-        </Button>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    gap: 14,
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#17231f',
+    textAlign: 'center',
+  },
+  input: {
+    height: 52,
+    borderRadius: 14,
+    borderColor: '#dbe4df',
+    backgroundColor: '#f8faf9',
   },
   inputText: {
-    color: 'black',
+    color: '#111827',
+    fontSize: 15,
+  },
+  primaryButton: {
+    width: '100%',
+    minHeight: 56,
+    marginTop: 4,
+    borderRadius: 999,
+    backgroundColor: '#1f6f5f',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryButtonPressed: {
+    backgroundColor: '#19594d',
+  },
+  primaryButtonDisabled: {
+    opacity: 0.7,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
   },
   errorText: {
-    color: 'red',
+    color: '#b91c1c',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });
