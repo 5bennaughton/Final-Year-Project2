@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.leaflet-container {
+  background: #e5e7eb;
+}
+
+.leaflet-container .leaflet-tile {
+  mix-blend-mode: normal !important;
+}

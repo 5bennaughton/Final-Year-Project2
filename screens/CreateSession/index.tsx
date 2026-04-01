@@ -47,6 +47,18 @@ const VISIBILITY_OPTIONS: readonly PostVisibility[] = [
 ];
 const IOS_PICKER_TEXT_COLOR = '#1A1A1A';
 
+function padDateTimePart(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function formatWebDateTimeInputValue(value: Date) {
+  return `${value.getFullYear()}-${padDateTimePart(
+    value.getMonth() + 1
+  )}-${padDateTimePart(value.getDate())}T${padDateTimePart(
+    value.getHours()
+  )}:${padDateTimePart(value.getMinutes())}`;
+}
+
 /**
  * Format a date into a short month/day label.
  */
@@ -357,6 +369,15 @@ export default function CreateSessionScreen() {
       next.setHours(selected.getHours(), selected.getMinutes(), 0, 0);
       return next;
     });
+  }
+
+  function handleWebDraftDateTimeChange(value: string) {
+    if (!value) return;
+
+    const next = new Date(value);
+    if (Number.isNaN(next.getTime())) return;
+
+    setDraftDateTime(next);
   }
 
   /**
@@ -698,35 +719,59 @@ export default function CreateSessionScreen() {
             <Text style={styles.modalPreviewText}>
               {formatDateTime(draftDateTime)}
             </Text>
-            <View style={styles.pickerPanel}>
-              <View style={styles.pickerDateWrap}>
-                <View pointerEvents="none" style={styles.pickerHighlight} />
-                <DateTimePicker
-                  value={draftDateTime}
-                  mode="date"
-                  display="spinner"
-                  textColor={
-                    Platform.OS === 'ios' ? IOS_PICKER_TEXT_COLOR : undefined
+            {Platform.OS === 'web' ? (
+              <View style={styles.pickerPanel}>
+                <Text style={styles.webPickerLabel}>Date and time</Text>
+                <input
+                  type="datetime-local"
+                  step={60}
+                  value={formatWebDateTimeInputValue(draftDateTime)}
+                  onChange={(event) =>
+                    handleWebDraftDateTimeChange(event.currentTarget.value)
                   }
-                  onChange={handleDraftDateChange}
-                  style={styles.datePicker}
+                  style={{
+                    width: '100%',
+                    borderRadius: 16,
+                    border: '1px solid #ddd',
+                    padding: '14px 16px',
+                    fontSize: 16,
+                    color: '#1A1A1A',
+                    backgroundColor: '#fff',
+                    boxSizing: 'border-box',
+                  }}
                 />
               </View>
-              <View style={styles.pickerTimeWrap}>
-                <View pointerEvents="none" style={styles.pickerHighlight} />
-                <DateTimePicker
-                  value={draftDateTime}
-                  mode="time"
-                  display="spinner"
-                  is24Hour={false}
-                  textColor={
-                    Platform.OS === 'ios' ? IOS_PICKER_TEXT_COLOR : undefined
-                  }
-                  onChange={handleDraftTimeChange}
-                  style={styles.timePicker}
-                />
+            ) : (
+              <View style={styles.pickerPanel}>
+                <View style={styles.pickerDateWrap}>
+                  <View pointerEvents="none" style={styles.pickerHighlight} />
+                  <DateTimePicker
+                    value={draftDateTime}
+                    mode="date"
+                    display="spinner"
+                    textColor={
+                      Platform.OS === 'ios' ? IOS_PICKER_TEXT_COLOR : undefined
+                    }
+                    onChange={handleDraftDateChange}
+                    style={styles.datePicker}
+                  />
+                </View>
+                <View style={styles.pickerTimeWrap}>
+                  <View pointerEvents="none" style={styles.pickerHighlight} />
+                  <DateTimePicker
+                    value={draftDateTime}
+                    mode="time"
+                    display="spinner"
+                    is24Hour={false}
+                    textColor={
+                      Platform.OS === 'ios' ? IOS_PICKER_TEXT_COLOR : undefined
+                    }
+                    onChange={handleDraftTimeChange}
+                    style={styles.timePicker}
+                  />
+                </View>
               </View>
-            </View>
+            )}
             <View style={styles.modalActionsRow}>
               <Button
                 onPress={closeDateTimePicker}
@@ -1006,6 +1051,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 14,
     color: '#666',
+  },
+  webPickerLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   pickerPanel: {
     marginTop: 16,
