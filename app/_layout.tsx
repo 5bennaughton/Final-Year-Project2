@@ -22,7 +22,7 @@ export default function RootLayout() {
   }
 
   return (
-    <GluestackUIProvider mode="dark">
+    <GluestackUIProvider mode="light">
       <Stack initialRouteName="(auth)" screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
