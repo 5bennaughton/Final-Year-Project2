@@ -2,7 +2,8 @@
 import React from 'react';
 import { createInput } from '@gluestack-ui/core/input/creator';
 import { View, Pressable, TextInput } from 'react-native';
-import { tva ,
+import {
+  tva,
   withStyleContext,
   useStyleContext,
 } from '@gluestack-ui/utils/nativewind-utils';

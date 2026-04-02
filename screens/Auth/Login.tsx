@@ -1,7 +1,14 @@
 import { Input, InputField } from '@/components/ui/input';
 import { setAuthToken, setAuthUser } from '@/lib/auth';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { loginWithEmail } from './auth.api';
 import type { LoginBody, LoginProps } from './auth.types';
 
@@ -87,7 +94,6 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
       </Pressable>
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
     </View>
   );
 }

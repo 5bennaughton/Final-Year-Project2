@@ -407,7 +407,9 @@ export default function AddSpot() {
             <Text style={styles.label}>Tide window hours</Text>
             <View style={styles.sliderGroup}>
               {/* Reuse the same slider control as wind direction, but clamp it to 0-6 hours. */}
-              <Text style={styles.windValueText}>{tideWindowHoursValue} hours</Text>
+              <Text style={styles.windValueText}>
+                {tideWindowHoursValue} hours
+              </Text>
               <Slider
                 minimumValue={0}
                 maximumValue={6}

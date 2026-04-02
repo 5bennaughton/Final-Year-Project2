@@ -155,7 +155,9 @@ function getTileConfig(tile: UrlTileProps | null, mapType?: string) {
   if (tile?.urlTemplate) {
     return {
       maxZoom: tile.maximumZ ?? 19,
-      subdomains: tile.urlTemplate.includes('{s}') ? ['a', 'b', 'c'] : undefined,
+      subdomains: tile.urlTemplate.includes('{s}')
+        ? ['a', 'b', 'c']
+        : undefined,
       url: tile.urlTemplate,
     };
   }
@@ -257,7 +259,10 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
     const onPressRef = useRef(onPress);
     const onRegionChangeCompleteRef = useRef(onRegionChangeComplete);
     const [mapReady, setMapReady] = useState(false);
-    const parsedChildren = useMemo(() => parseMapChildren(children), [children]);
+    const parsedChildren = useMemo(
+      () => parseMapChildren(children),
+      [children]
+    );
     const activeRegion = region ?? initialRegion ?? DEFAULT_REGION;
     const initialMountRegionRef = useRef(activeRegion);
 
@@ -357,9 +362,13 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
       const map = mapRef.current;
       if (!map || !region) return;
 
-      map.setView([region.latitude, region.longitude], getZoomFromRegion(region), {
-        animate: false,
-      });
+      map.setView(
+        [region.latitude, region.longitude],
+        getZoomFromRegion(region),
+        {
+          animate: false,
+        }
+      );
     }, [region]);
 
     // Render the correct tile source for each screen.
@@ -438,7 +447,9 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
           if (marker.callout?.onPress) {
             nextMarker.on('popupopen', (event: any) => {
               const root = event.popup?.getElement?.();
-              const trigger = root?.querySelector?.('[data-role="spot-details"]');
+              const trigger = root?.querySelector?.(
+                '[data-role="spot-details"]'
+              );
 
               if (trigger) {
                 trigger.addEventListener('click', () => {
@@ -463,7 +474,12 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
     // Add a simple "you are here" marker when the screen requests it.
     useEffect(() => {
       const map = mapRef.current;
-      if (!mapReady || !map || !showsUserLocation || typeof navigator === 'undefined') {
+      if (
+        !mapReady ||
+        !map ||
+        !showsUserLocation ||
+        typeof navigator === 'undefined'
+      ) {
         return;
       }
 

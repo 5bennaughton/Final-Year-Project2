@@ -1,6 +1,13 @@
 import { Input, InputField } from '@/components/ui/input';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { registerWithEmail } from './auth.api';
 import type { RegisterBody, RegisterProps } from './auth.types';
 
@@ -96,7 +103,6 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
 
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
       {success ? <Text style={styles.successText}>{success}</Text> : null}
-
     </View>
   );
 }
