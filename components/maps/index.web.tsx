@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { Linking, StyleSheet, Text, View, type ViewProps } from 'react-native';
@@ -25,10 +26,18 @@ type WebMapViewHandle = {
   animateToRegion: (region: Region, duration?: number) => void;
 };
 
+type MapPressEvent = {
+  nativeEvent: {
+    coordinate: Coordinate;
+  };
+};
+
 type WebMapViewProps = ViewProps & {
   children?: React.ReactNode;
   initialRegion?: Region;
   region?: Region;
+  onLongPress?: (event: MapPressEvent) => void;
+  onPress?: (event: MapPressEvent) => void;
   onRegionChangeComplete?: (region: Region) => void;
 };
 
@@ -79,11 +88,24 @@ function parseMapChildren(children: React.ReactNode) {
 }
 
 const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
-  ({ children, initialRegion, onRegionChangeComplete, region, style }, ref) => {
+  (
+    {
+      children,
+      initialRegion,
+      onLongPress,
+      onPress,
+      onRegionChangeComplete,
+      region,
+      style,
+    },
+    ref
+  ) => {
     const parsedChildren = useMemo(() => parseMapChildren(children), [children]);
     const [currentRegion, setCurrentRegion] = useState<Region>(
       region ?? initialRegion ?? DEFAULT_REGION
     );
+    const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const longPressTriggeredRef = useRef(false);
 
     useEffect(() => {
       if (!region) return;
@@ -100,6 +122,46 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
       },
     }));
 
+    function buildPressEvent(): MapPressEvent {
+      return {
+        nativeEvent: {
+          coordinate: {
+            latitude: currentRegion.latitude,
+            longitude: currentRegion.longitude,
+          },
+        },
+      };
+    }
+
+    function clearHoldTimer() {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+    }
+
+    function startHoldTimer() {
+      clearHoldTimer();
+      longPressTriggeredRef.current = false;
+      holdTimerRef.current = setTimeout(() => {
+        longPressTriggeredRef.current = true;
+        onLongPress?.(buildPressEvent());
+      }, 550);
+    }
+
+    function stopHoldTimer() {
+      clearHoldTimer();
+    }
+
+    function handleOverlayClick() {
+      if (longPressTriggeredRef.current) {
+        longPressTriggeredRef.current = false;
+        return;
+      }
+
+      onPress?.(buildPressEvent());
+    }
+
     const primaryMarker = parsedChildren.markers[0];
     const bbox = buildBbox(currentRegion);
     const markerQuery = primaryMarker
@@ -111,6 +173,15 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
     return (
       <View style={[styles.mapWrap, style]}>
         <iframe src={iframeUrl} style={styles.iframe} title="Map" />
+        <div
+          onClick={handleOverlayClick}
+          onMouseDown={startHoldTimer}
+          onMouseLeave={stopHoldTimer}
+          onMouseUp={stopHoldTimer}
+          onTouchEnd={stopHoldTimer}
+          onTouchStart={startHoldTimer}
+          style={styles.touchOverlay}
+        />
         <Text style={styles.linkText} onPress={() => Linking.openURL(externalMapUrl)}>
           Open larger map
         </Text>
@@ -152,6 +223,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
     minHeight: 180,
     overflow: 'hidden',
+    position: 'relative',
+  },
+  touchOverlay: {
+    bottom: 32,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
 });
 
