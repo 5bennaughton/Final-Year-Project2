@@ -50,6 +50,18 @@ export default function TabsLayout() {
           tabBarIcon: ({ color }) => <User color={color} size={24} />,
         }}
       />
+      <Tabs.Screen
+        name="user"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen name="add-spot" options={{ href: null }} />
+      <Tabs.Screen name="create-session" options={{ href: null }} />
+      <Tabs.Screen name="nearby" options={{ href: null }} />
+      <Tabs.Screen name="session" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="spot-details" options={{ href: null }} />
     </Tabs>
   );
 }

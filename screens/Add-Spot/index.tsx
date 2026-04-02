@@ -6,13 +6,14 @@ import {
   parseRouteNumber,
   parseRouteText,
 } from '@/helpers/spotRoute';
+import Slider from '@react-native-community/slider';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   View,
@@ -60,7 +61,9 @@ export default function AddSpot() {
   // We hydrate the local form state from route params when editing.
   const [name, setName] = useState(parseRouteText(routeName));
   const [type, setType] = useState(parseRouteText(routeType));
-  const [description, setDescription] = useState(parseRouteText(routeDescription));
+  const [description, setDescription] = useState(
+    parseRouteText(routeDescription)
+  );
   // Optional wind direction rules (stored as strings so the inputs stay controlled).
   const [windDirStartInput, setWindDirStartInput] = useState(
     routeWindDirStart ? parseRouteText(routeWindDirStart) : ''
@@ -69,7 +72,9 @@ export default function AddSpot() {
     routeWindDirEnd ? parseRouteText(routeWindDirEnd) : ''
   );
   // Basic tidal flag. Default is false (non-tidal).
-  const [isTidal, setIsTidal] = useState(parseRouteBoolean(routeIsTidal) === true);
+  const [isTidal, setIsTidal] = useState(
+    parseRouteBoolean(routeIsTidal) === true
+  );
   // choose whether high or low tide is preferred.
   const [tidePreference, setTidePreference] = useState<TidePreference>(
     routeTidePreference === 'low' ? 'low' : 'high'
@@ -99,6 +104,29 @@ export default function AddSpot() {
     if (!trimmed) return null;
     const parsed = Number.parseFloat(trimmed);
     return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  // Sliders need a real number, so empty values fall back to sensible defaults.
+  const windDirStartValue = parseOptionalNumber(windDirStartInput) ?? 0;
+  const windDirEndValue = parseOptionalNumber(windDirEndInput) ?? 180;
+  const tideWindowHoursValue = Math.min(
+    6,
+    Math.max(0, parseOptionalNumber(tideWindowHoursInput) ?? 2)
+  );
+
+  const setWindDirection = (key: 'start' | 'end', value: number) => {
+    const nextValue = String(Math.round(value));
+
+    if (key === 'start') {
+      setWindDirStartInput(nextValue);
+      return;
+    }
+
+    setWindDirEndInput(nextValue);
+  };
+
+  const setTideWindowHours = (value: number) => {
+    setTideWindowHoursInput(String(Math.round(value)));
   };
 
   /**
@@ -201,7 +229,7 @@ export default function AddSpot() {
         // After editing we replace the current screen with fresh route params
         // so the details screen shows the updated spot data immediately.
         router.replace({
-          pathname: '/spot-details',
+          pathname: '/(tabs)/spot-details',
           params: buildSpotRouteParams(updated),
         });
       } else {
@@ -210,7 +238,8 @@ export default function AddSpot() {
       }
     } catch (err: any) {
       setError(
-        err?.message ?? (isEditMode ? 'Update spot failed' : 'Create spot failed')
+        err?.message ??
+          (isEditMode ? 'Update spot failed' : 'Create spot failed')
       );
     } finally {
       setSaving(false);
@@ -220,10 +249,14 @@ export default function AddSpot() {
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>{isEditMode ? 'Edit Spot' : 'Add Spot'}</Text>
+        <Text style={styles.title}>
+          {isEditMode ? 'Edit Spot' : 'Add Spot'}
+        </Text>
 
         <Button onPress={goBack}>
-          <ButtonText>{isEditMode ? 'Back to Details' : 'Back to Map'}</ButtonText>
+          <ButtonText>
+            {isEditMode ? 'Back to Details' : 'Back to Map'}
+          </ButtonText>
         </Button>
 
         <View style={styles.formGroup}>
@@ -240,10 +273,10 @@ export default function AddSpot() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Type</Text>
+          <Text style={styles.label}>Sport</Text>
           <Input size="md">
             <InputField
-              placeholder="kitesurf, wing, surf..."
+              placeholder="kitesurfing"
               value={type}
               onChangeText={setType}
               style={styles.inputText}
@@ -253,9 +286,9 @@ export default function AddSpot() {
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Description (optional)</Text>
+          <Text style={styles.label}>Description</Text>
           <TextInput
-            placeholder="Short notes about the spot"
+            placeholder="Great kickers on high"
             placeholderTextColor="#888"
             value={description}
             onChangeText={setDescription}
@@ -264,107 +297,128 @@ export default function AddSpot() {
           />
         </View>
 
-        {/* Optional wind direction range in degrees */}
+        {/* Keep the same saved values, but make them visual instead of typed. */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Wind direction (optional)</Text>
-          <View style={styles.row}>
-            <TextInput
-              placeholder="Start (0-359)"
-              placeholderTextColor="#888"
-              value={windDirStartInput}
-              onChangeText={setWindDirStartInput}
-              keyboardType="numeric"
-              style={styles.halfInput}
-            />
-            <TextInput
-              placeholder="End (0-359)"
-              placeholderTextColor="#888"
-              value={windDirEndInput}
-              onChangeText={setWindDirEndInput}
-              keyboardType="numeric"
-              style={styles.halfInput}
-            />
+          <View style={styles.windCard}>
+            <View style={styles.windPreviewRow}>
+              <View style={styles.compass}>
+                <Text style={[styles.compassLabel, styles.compassNorth]}>
+                  N
+                </Text>
+                <Text style={[styles.compassLabel, styles.compassEast]}>E</Text>
+                <Text style={[styles.compassLabel, styles.compassSouth]}>
+                  S
+                </Text>
+                <Text style={[styles.compassLabel, styles.compassWest]}>W</Text>
+
+                <View
+                  style={[
+                    styles.compassHand,
+                    { transform: [{ rotate: `${windDirStartValue}deg` }] },
+                  ]}
+                >
+                  <View style={[styles.compassHandSegment, styles.startHand]} />
+                </View>
+                <View
+                  style={[
+                    styles.compassHand,
+                    { transform: [{ rotate: `${windDirEndValue}deg` }] },
+                  ]}
+                >
+                  <View style={[styles.compassHandSegment, styles.endHand]} />
+                </View>
+                <View style={styles.compassCenterDot} />
+              </View>
+
+              <View style={styles.windValues}>
+                <Text style={styles.windValueText}>
+                  Start: {windDirStartValue}°
+                </Text>
+                <Text style={styles.windValueText}>
+                  End: {windDirEndValue}°
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.sliderGroup}>
+              <Text style={styles.sliderLabel}>Start</Text>
+              <Slider
+                minimumValue={0}
+                maximumValue={359}
+                step={1}
+                minimumTrackTintColor="#ff8c42"
+                maximumTrackTintColor="#d8d8d8"
+                thumbTintColor="#ff8c42"
+                value={windDirStartValue}
+                onValueChange={(value) => setWindDirection('start', value)}
+              />
+            </View>
+
+            <View style={styles.sliderGroup}>
+              <Text style={styles.sliderLabel}>End</Text>
+              <Slider
+                minimumValue={0}
+                maximumValue={359}
+                step={1}
+                minimumTrackTintColor="#1f6f5f"
+                maximumTrackTintColor="#d8d8d8"
+                thumbTintColor="#1f6f5f"
+                value={windDirEndValue}
+                onValueChange={(value) => setWindDirection('end', value)}
+              />
+            </View>
           </View>
         </View>
 
         {/* Tidal toggle */}
         <View style={styles.formGroup}>
           <Text style={styles.label}>Tidal spot?</Text>
-          <Pressable
-            onPress={() => setIsTidal((prev) => !prev)}
-            style={[
-              styles.toggleButton,
-              isTidal ? styles.toggleButtonActive : styles.toggleButtonInactive,
-            ]}
-          >
-            <Text
-              style={[
-                styles.toggleButtonText,
-                isTidal
-                  ? styles.toggleButtonTextActive
-                  : styles.toggleButtonTextInactive,
-              ]}
-            >
-              {isTidal ? 'Yes (Tidal)' : 'No (Not tidal)'}
-            </Text>
-          </Pressable>
+          <View style={styles.switchRow}>
+            <Switch
+              value={isTidal}
+              onValueChange={setIsTidal}
+              trackColor={{ false: '#cfcfcf', true: '#1f6f5f' }}
+              thumbColor="white"
+              ios_backgroundColor="#cfcfcf"
+            />
+            <Text style={styles.switchStateText}>{isTidal ? 'Yes' : 'No'}</Text>
+          </View>
         </View>
 
         {isTidal ? (
           <View style={styles.formGroup}>
             <Text style={styles.label}>Tide preference</Text>
-            <View style={styles.row}>
-              <Pressable
-                onPress={() => setTidePreference('high')}
-                style={[
-                  styles.toggleButton,
-                  tidePreference === 'high'
-                    ? styles.toggleButtonActive
-                    : styles.toggleButtonInactive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    tidePreference === 'high'
-                      ? styles.toggleButtonTextActive
-                      : styles.toggleButtonTextInactive,
-                  ]}
-                >
-                  High tide
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setTidePreference('low')}
-                style={[
-                  styles.toggleButton,
-                  tidePreference === 'low'
-                    ? styles.toggleButtonActive
-                    : styles.toggleButtonInactive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.toggleButtonText,
-                    tidePreference === 'low'
-                      ? styles.toggleButtonTextActive
-                      : styles.toggleButtonTextInactive,
-                  ]}
-                >
-                  Low tide
-                </Text>
-              </Pressable>
+            <View style={styles.switchRow}>
+              <Switch
+                value={tidePreference === 'high'}
+                onValueChange={(value) =>
+                  setTidePreference(value ? 'high' : 'low')
+                }
+                trackColor={{ false: '#cfcfcf', true: '#1f6f5f' }}
+                thumbColor="white"
+                ios_backgroundColor="#cfcfcf"
+              />
+              <Text style={styles.switchStateText}>
+                {tidePreference === 'high' ? 'High tide' : 'Low tide'}
+              </Text>
             </View>
 
             <Text style={styles.label}>Tide window hours</Text>
-            <TextInput
-              placeholder="Example: 2"
-              placeholderTextColor="#888"
-              value={tideWindowHoursInput}
-              onChangeText={setTideWindowHoursInput}
-              keyboardType="numeric"
-              style={styles.fullInput}
-            />
+            <View style={styles.sliderGroup}>
+              {/* Reuse the same slider control as wind direction, but clamp it to 0-6 hours. */}
+              <Text style={styles.windValueText}>{tideWindowHoursValue} hours</Text>
+              <Slider
+                minimumValue={0}
+                maximumValue={6}
+                step={1}
+                minimumTrackTintColor="#1f6f5f"
+                maximumTrackTintColor="#d8d8d8"
+                thumbTintColor="#1f6f5f"
+                value={tideWindowHoursValue}
+                onValueChange={setTideWindowHours}
+              />
+            </View>
           </View>
         ) : null}
 
@@ -417,47 +471,100 @@ const styles = StyleSheet.create({
   helperText: {
     color: '#666',
   },
-  row: {
+  switchRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
   },
-  halfInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: 'white',
-    color: 'black',
-  },
-  fullInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: 'white',
-    color: 'black',
-  },
-  toggleButton: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  toggleButtonActive: {
-    backgroundColor: '#1f6f5f',
-  },
-  toggleButtonInactive: {
-    backgroundColor: '#e6e6e6',
-  },
-  toggleButtonText: {},
-  toggleButtonTextActive: {
-    color: 'white',
-  },
-  toggleButtonTextInactive: {
+  switchStateText: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#333',
   },
   errorText: {
     color: 'red',
+  },
+  windCard: {
+    gap: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    backgroundColor: 'white',
+  },
+  windPreviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  compass: {
+    width: 120,
+    height: 120,
+    borderWidth: 2,
+    borderColor: '#d7d7d7',
+    borderRadius: 60,
+    backgroundColor: '#fafafa',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  compassLabel: {
+    position: 'absolute',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#777',
+  },
+  compassNorth: {
+    top: 8,
+  },
+  compassEast: {
+    right: 10,
+  },
+  compassSouth: {
+    bottom: 8,
+  },
+  compassWest: {
+    left: 10,
+  },
+  // Each hand stays centered and rotates around the middle of the compass.
+  compassHand: {
+    position: 'absolute',
+    width: 52,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  compassHandSegment: {
+    width: 4,
+    height: 26,
+    borderRadius: 999,
+  },
+  startHand: {
+    backgroundColor: '#ff8c42',
+  },
+  endHand: {
+    backgroundColor: '#1f6f5f',
+  },
+  compassCenterDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 999,
+    backgroundColor: '#333',
+  },
+  windValues: {
+    gap: 8,
+    flex: 1,
+  },
+  windValueText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+  },
+  sliderGroup: {
+    gap: 6,
+  },
+  sliderLabel: {
+    fontWeight: '600',
+    color: '#333',
   },
 });

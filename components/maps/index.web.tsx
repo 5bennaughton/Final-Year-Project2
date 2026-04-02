@@ -206,6 +206,31 @@ function buildPinIconHtml(isPending: boolean) {
   `;
 }
 
+// Keep the popup markup minimal and reuse the marker data already provided by the screens.
+function buildPopupHtml(marker: ParsedMarker) {
+  const parts: string[] = [];
+
+  if (marker.title) {
+    parts.push(
+      `<div style="font-size:14px;font-weight:700;color:#0f172a;">${marker.title}</div>`
+    );
+  }
+
+  if (marker.description) {
+    parts.push(
+      `<div style="margin-top:4px;font-size:12px;color:#475569;">${marker.description}</div>`
+    );
+  }
+
+  if (marker.callout?.onPress) {
+    parts.push(
+      `<button type="button" data-role="spot-details" style="margin-top:8px;border:0;background:none;padding:0;color:#1f6f5f;font-size:12px;font-weight:600;cursor:pointer;">View details</button>`
+    );
+  }
+
+  return parts.join('');
+}
+
 const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
   (
     {
@@ -405,16 +430,21 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
           );
 
           // Keep popups/basic detail behavior minimal for web.
-          if (marker.title || marker.description) {
-            nextMarker.bindPopup(
-              [marker.title, marker.description].filter(Boolean).join('<br />')
-            );
+          if (marker.title || marker.description || marker.callout?.onPress) {
+            nextMarker.bindPopup(buildPopupHtml(marker));
           }
 
-          // If a Callout has an action, treat marker click as that action on web.
+          // Match the old mobile flow: first open the popup, then let the user tap through.
           if (marker.callout?.onPress) {
-            nextMarker.on('click', () => {
-              marker.callout?.onPress?.();
+            nextMarker.on('popupopen', (event: any) => {
+              const root = event.popup?.getElement?.();
+              const trigger = root?.querySelector?.('[data-role="spot-details"]');
+
+              if (trigger) {
+                trigger.addEventListener('click', () => {
+                  marker.callout?.onPress?.();
+                });
+              }
             });
           }
 

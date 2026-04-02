@@ -106,7 +106,7 @@ export default function NearbySessionsScreen() {
           emptyMessage="No nearby sessions found."
           onPressUser={(userId, name) =>
             router.push({
-              pathname: '/user',
+              pathname: '/(tabs)/user',
               params: { id: userId, name: name ?? 'User' },
             })
           }

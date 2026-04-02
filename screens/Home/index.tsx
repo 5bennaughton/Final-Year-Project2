@@ -120,7 +120,7 @@ export default function Home() {
 
         {/* Keep this CTA basic and clear: an outlined button with no icon. */}
         <Pressable
-          onPress={() => router.push('/nearby')}
+          onPress={() => router.push('/(tabs)/nearby')}
           style={({ pressed }) => [
             styles.nearbyButton,
             pressed && styles.nearbyButtonPressed,
@@ -170,7 +170,7 @@ export default function Home() {
           }
           onPressUser={(userId, name) =>
             router.push({
-              pathname: '/user',
+              pathname: '/(tabs)/user',
               params: { id: userId, name: name ?? 'User' },
             })
           }

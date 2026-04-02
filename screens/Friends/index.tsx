@@ -229,7 +229,7 @@ export default function Friends() {
               key={user.id}
               onPress={() =>
                 router.push({
-                  pathname: '/user',
+                  pathname: '/(tabs)/user',
                   params: { id: user.id },
                 })
               }
@@ -248,7 +248,7 @@ export default function Friends() {
               key={spot.id}
               onPress={() =>
                 router.push({
-                  pathname: '/spot-details',
+                  pathname: '/(tabs)/spot-details',
                   params: buildSpotRouteParams(spot),
                 })
               }

@@ -57,21 +57,21 @@ export default function HomePage() {
    * Navigate to the Create Session screen.
    */
   function goToCreatePost() {
-    router.push('/create-session');
+    router.push('/(tabs)/create-session');
   }
 
   /**
    * Navigate to the sessions screen.
    */
   function goToSessions() {
-    router.push('/session');
+    router.push('/(tabs)/session');
   }
 
   /**
    * Navigate to the settings screen.
    */
   function goToSettings() {
-    router.push('/settings');
+    router.push('/(tabs)/settings');
   }
 
   /**

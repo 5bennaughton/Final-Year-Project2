@@ -340,7 +340,7 @@ export default function SpotDetails() {
     if (!id) return;
 
     router.push({
-      pathname: '/add-spot',
+      pathname: '/(tabs)/add-spot',
       params: {
         mode: 'edit',
         id,

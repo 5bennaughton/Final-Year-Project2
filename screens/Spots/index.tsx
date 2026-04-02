@@ -256,7 +256,7 @@ export default function SpotsScreen() {
                 <Callout
                   onPress={() =>
                     router.push({
-                      pathname: '/spot-details',
+                      pathname: '/(tabs)/spot-details',
                       params: buildSpotRouteParams(spot),
                     })
                   }
@@ -277,7 +277,7 @@ export default function SpotsScreen() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: '/add-spot',
+                  pathname: '/(tabs)/add-spot',
                   params: {
                     lat: String(pendingSpot.latitude),
                     lng: String(pendingSpot.longitude),
