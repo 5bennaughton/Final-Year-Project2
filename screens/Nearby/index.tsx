@@ -1,26 +1,31 @@
 import PostList from '@/components/PostList';
+import Slider from '@react-native-community/slider';
 import { getCurrentLocation } from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchNearbySessions } from './nearby.api';
 import type { GeoCoords } from './nearby.types';
 
 /**
- * Parse a string radius input into a positive number.
+ * The first half of the slider covers 1-30km for finer control nearby.
+ * The second half covers 30-100km more quickly.
  */
-function parseRadiusKm(value: string): number | null {
-  const parsed = Number.parseFloat(value.trim());
-  if (!Number.isFinite(parsed) || parsed <= 0) return null;
-  return parsed;
+function sliderToRadiusKm(value: number): number {
+  if (value <= 50) {
+    return Math.round(1 + (value / 50) * 29);
+  }
+
+  return Math.round(30 + ((value - 50) / 50) * 70);
+}
+
+function radiusKmToSlider(value: number): number {
+  if (value <= 30) {
+    return ((value - 1) / 29) * 50;
+  }
+
+  return 50 + ((value - 30) / 70) * 50;
 }
 
 /**
@@ -29,7 +34,7 @@ function parseRadiusKm(value: string): number | null {
  */
 export default function NearbySessionsScreen() {
   const router = useRouter();
-  const [radiusKm, setRadiusKm] = useState('10');
+  const [radiusKm, setRadiusKm] = useState(10);
   const [posts, setPosts] = useState<any[]>([]);
   const [coords, setCoords] = useState<GeoCoords | null>(null);
   const [loading, setLoading] = useState(false);
@@ -39,12 +44,6 @@ export default function NearbySessionsScreen() {
    * Fetch nearby sessions from the API using the current location.
    */
   const runNearbySearch = async () => {
-    const radius = parseRadiusKm(radiusKm);
-    if (!radius) {
-      setError('Enter a valid radius in kilometers.');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -55,7 +54,7 @@ export default function NearbySessionsScreen() {
       const data = await fetchNearbySessions(
         location.latitude,
         location.longitude,
-        radius
+        radiusKm
       );
       const items = Array.isArray(data?.posts) ? data.posts : [];
       setPosts(items);
@@ -79,14 +78,24 @@ export default function NearbySessionsScreen() {
 
         <View style={styles.formSection}>
           <Text style={styles.fieldLabel}>Radius (km)</Text>
-          <TextInput
-            value={radiusKm}
-            onChangeText={setRadiusKm}
-            keyboardType="numeric"
-            placeholder="10"
-            placeholderTextColor="#888"
-            style={styles.radiusInput}
-          />
+          <View style={styles.sliderCard}>
+            <Text style={styles.radiusValue}>{radiusKm} km</Text>
+            <Slider
+              minimumValue={0}
+              maximumValue={100}
+              step={1}
+              minimumTrackTintColor="#1f6f5f"
+              maximumTrackTintColor="#d8d8d8"
+              thumbTintColor="#1f6f5f"
+              value={radiusKmToSlider(radiusKm)}
+              onValueChange={(value) => setRadiusKm(sliderToRadiusKm(value))}
+            />
+            <View style={styles.sliderRangeLabels}>
+              <Text style={styles.sliderRangeText}>1 km</Text>
+              <Text style={styles.sliderRangeText}>30 km</Text>
+              <Text style={styles.sliderRangeText}>100 km</Text>
+            </View>
+          </View>
           <Pressable onPress={runNearbySearch} style={styles.searchButton}>
             <Text style={styles.searchButtonText}>Find Sessions</Text>
           </Pressable>
@@ -147,13 +156,26 @@ const styles = StyleSheet.create({
   fieldLabel: {
     fontWeight: '600',
   },
-  radiusInput: {
+  sliderCard: {
+    gap: 8,
+    padding: 12,
     backgroundColor: 'white',
     borderWidth: 1,
     borderColor: '#ddd',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+  },
+  radiusValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#222',
+  },
+  sliderRangeLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  sliderRangeText: {
+    color: '#666',
+    fontSize: 12,
   },
   searchButton: {
     backgroundColor: '#1f6f5f',
