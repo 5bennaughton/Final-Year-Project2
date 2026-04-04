@@ -1,5 +1,6 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
+import { appTheme } from '@/constants/theme';
 import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -22,6 +23,7 @@ import {
 } from './spotDetails.api';
 import type {
   DirectionMode,
+  KiteableForecastHour,
   KiteableForecastResult,
   SpotRatingSummary,
   SpotDetailsParams,
@@ -30,18 +32,51 @@ import type {
 function getStatusChipColors(active: boolean) {
   return active
     ? {
-        backgroundColor: '#e4f6ee',
-        borderColor: '#b9e7d2',
-        textColor: '#1f6f5f',
+        backgroundColor: appTheme.colors.successBg,
+        borderColor: appTheme.colors.successBorder,
+        textColor: appTheme.colors.successText,
       }
     : {
-        backgroundColor: '#fdeaea',
-        borderColor: '#f4caca',
-        textColor: '#a33b3b',
+        backgroundColor: appTheme.colors.dangerBg,
+        borderColor: appTheme.colors.dangerBorder,
+        textColor: appTheme.colors.dangerText,
       };
 }
 
 const STAR_VALUES = [1, 2, 3, 4, 5] as const;
+
+function formatDirectionModeLabel(mode?: string | null) {
+  if (mode === 'clockwise') return 'Clockwise';
+  if (mode === 'anticlockwise') return 'Anti-clockwise';
+  return '-';
+}
+
+function formatForecastTimeLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatForecastDayLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toLocaleDateString([], {
+    weekday: 'short',
+  });
+}
+
+function getForecastStatusLabel(hour: KiteableForecastHour) {
+  if (hour.kiteable) return 'Kiteable';
+  if (!hour.directionOk) return 'Direction fail';
+  if (!hour.speedOk) return 'Wind fail';
+  if (!hour.tideOk) return 'Tide fail';
+  return 'No go';
+}
 
 /**
  * Spot details screen with a "upcoming posts" list.
@@ -392,25 +427,79 @@ export default function SpotDetails() {
   const speedChipColors = getStatusChipColors(Boolean(kiteableNow?.speedOk));
   const tideChipColors = getStatusChipColors(Boolean(kiteableNow?.tideOk));
   const isTidalSpot = kiteableForecast?.thresholds?.isTidal === true;
+  const windSpeedLabel =
+    typeof kiteableNow?.speedKn === 'number'
+      ? kiteableNow.speedKn.toFixed(1)
+      : '--';
+  const directionLabel =
+    typeof kiteableNow?.directionDeg === 'number'
+      ? `${kiteableNow.directionDeg}°`
+      : '--';
+  const ratingAverageLabel =
+    typeof ratingSummary?.averageRating === 'number'
+      ? ratingSummary.averageRating.toFixed(1)
+      : '-';
 
   return (
     <SafeAreaView style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Spot metadata */}
-        <View style={styles.sectionCard}>
-          <Text style={styles.pageTitle}>{name ?? 'Spot Details'}</Text>
-          <Text style={styles.subtleText}>{type ?? 'Unknown type'}</Text>
+        <View style={styles.heroCard}>
+          <View style={styles.heroHeaderRow}>
+            <View style={styles.heroTextBlock}>
+              <Text style={styles.heroEyebrow}>Spot details</Text>
+              <Text style={styles.pageTitle}>{name ?? 'Spot Details'}</Text>
+              <View style={styles.heroMetaRow}>
+                <View style={styles.metaBadge}>
+                  <Text style={styles.metaBadgeText}>
+                    {type ?? 'Unknown type'}
+                  </Text>
+                </View>
+                {spotOwnerId ? (
+                  <Text style={styles.subtleText}>
+                    {posterLoading
+                      ? 'Posted by loading...'
+                      : posterName
+                        ? `Posted by ${posterName}`
+                        : 'Posted by user'}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
 
-          {description ? <Text>{description}</Text> : null}
+            <View
+              style={[
+                styles.heroStatusBadge,
+                {
+                  backgroundColor: kiteableNowChipColors.backgroundColor,
+                  borderColor: kiteableNowChipColors.borderColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.heroStatusLabel,
+                  { color: kiteableNowChipColors.textColor },
+                ]}
+              >
+                Kiteable
+              </Text>
+              <Text
+                style={[
+                  styles.heroStatusValue,
+                  { color: kiteableNowChipColors.textColor },
+                ]}
+              >
+                {kiteableForecastLoading
+                  ? '...'
+                  : kiteableNow?.kiteable
+                    ? 'Yes'
+                    : 'No'}
+              </Text>
+            </View>
+          </View>
 
-          {spotOwnerId ? (
-            <Text style={styles.subtleText}>
-              {posterLoading
-                ? 'Posted by: Loading...'
-                : posterName
-                  ? `Posted by: ${posterName}`
-                  : 'Posted by: User'}
-            </Text>
+          {description ? (
+            <Text style={styles.heroDescription}>{description}</Text>
           ) : null}
 
           {posterError ? (
@@ -419,194 +508,86 @@ export default function SpotDetails() {
         </View>
 
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Spot rating</Text>
-
-          {ratingLoading ? (
-            <Text style={styles.subtleText}>Loading rating...</Text>
-          ) : (
-            <>
-              <Text style={styles.metaText}>
-                Average: {ratingSummary?.averageRating ?? '-'} (
-                {ratingSummary?.ratingCount ?? 0}{' '}
-                {ratingSummary?.ratingCount === 1 ? 'rating' : 'ratings'})
-              </Text>
-              <Text style={styles.metaText}>
-                Your rating: {ratingSummary?.myRating ?? 'Not rated yet'}
-              </Text>
-
-              {/**Looping through the stars to create 5 pressable stars
-               * Mapping each one from 1-5
-               */}
-              <View style={styles.starRow}>
-                {STAR_VALUES.map((value) => {
-                  const selected = value <= (ratingSummary?.myRating ?? 0);
-                  return (
-                    <Pressable
-                      key={value}
-                      onPress={() => rateSpot(value)}
-                      disabled={ratingSubmitting}
-                      style={styles.starButton}
-                    >
-                      {/**This is where the stars are rendered */}
-                      <Text
-                        style={[
-                          styles.starIcon,
-                          selected
-                            ? styles.starIconSelected
-                            : styles.starIconOff,
-                        ]}
-                      >
-                        ★
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-
-              {ratingSubmitting ? (
-                <Text style={styles.subtleText}>Saving your rating...</Text>
-              ) : null}
-            </>
-          )}
-
-          {ratingError ? (
-            <Text style={styles.errorText}>{ratingError}</Text>
-          ) : null}
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Direction mode</Text>
-          <View style={styles.directionButtonsRow}>
-            <Button
-              variant={directionMode === 'clockwise' ? 'solid' : 'outline'}
-              onPress={() => setDirectionMode('clockwise')}
-            >
-              <ButtonText>Clockwise</ButtonText>
-            </Button>
-            <Button
-              variant={directionMode === 'anticlockwise' ? 'solid' : 'outline'}
-              onPress={() => setDirectionMode('anticlockwise')}
-            >
-              <ButtonText>Anti-clockwise</ButtonText>
-            </Button>
-          </View>
-        </View>
-
-        <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Kiteable now</Text>
+          <Text style={styles.sectionEyebrow}>Current wind</Text>
 
           {kiteableForecastLoading ? (
             <Text style={styles.subtleText}>Checking current wind...</Text>
           ) : kiteableForecastError ? (
             <Text style={styles.errorText}>{kiteableForecastError}</Text>
           ) : kiteableNow ? (
-            <View style={styles.kiteableNowWrap}>
-              <View
-                style={[
-                  styles.kiteableStatusChip,
-                  {
-                    backgroundColor: kiteableNowChipColors.backgroundColor,
-                    borderColor: kiteableNowChipColors.borderColor,
-                  },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.kiteableStatusText,
-                    { color: kiteableNowChipColors.textColor },
-                  ]}
-                >
-                  {kiteableNow.kiteable ? 'Kiteable: Yes' : 'Kiteable: No'}
-                </Text>
+            <View style={styles.conditionsWrap}>
+              <View style={styles.windHeadlineRow}>
+                <Text style={styles.windValue}>{windSpeedLabel}</Text>
+                <Text style={styles.windUnit}>knots</Text>
               </View>
 
-              <Text style={styles.metaText}>
-                Wind: {kiteableNow.speedKn ?? '-'} kn at{' '}
-                {kiteableNow.directionDeg ?? '-'}°
-              </Text>
-              <View style={styles.chipRow}>
-                <View
-                  style={[
-                    styles.statusChip,
-                    {
-                      backgroundColor: directionChipColors.backgroundColor,
-                      borderColor: directionChipColors.borderColor,
-                    },
-                  ]}
-                >
+              <Text style={styles.windDirectionText}>{directionLabel}</Text>
+
+              <View style={styles.quickStatsRow}>
+                <View style={styles.quickStatCard}>
+                  <Text style={styles.quickStatLabel}>Direction</Text>
                   <Text
                     style={[
-                      styles.statusChipText,
+                      styles.quickStatValue,
                       { color: directionChipColors.textColor },
                     ]}
                   >
-                    Direction {kiteableNow.directionOk ? 'Pass' : 'Fail'}
+                    {kiteableNow.directionOk ? 'Pass' : 'Fail'}
                   </Text>
                 </View>
-                <View
-                  style={[
-                    styles.statusChip,
-                    {
-                      backgroundColor: speedChipColors.backgroundColor,
-                      borderColor: speedChipColors.borderColor,
-                    },
-                  ]}
-                >
+                <View style={styles.quickStatCard}>
+                  <Text style={styles.quickStatLabel}>Speed</Text>
                   <Text
                     style={[
-                      styles.statusChipText,
+                      styles.quickStatValue,
                       { color: speedChipColors.textColor },
                     ]}
                   >
-                    Speed {kiteableNow.speedOk ? 'Pass' : 'Fail'}
+                    {kiteableNow.speedOk ? 'Pass' : 'Fail'}
                   </Text>
                 </View>
                 {isTidalSpot ? (
-                  <View
-                    style={[
-                      styles.statusChip,
-                      {
-                        backgroundColor: tideChipColors.backgroundColor,
-                        borderColor: tideChipColors.borderColor,
-                      },
-                    ]}
-                  >
+                  <View style={styles.quickStatCard}>
+                    <Text style={styles.quickStatLabel}>Tide</Text>
                     <Text
                       style={[
-                        styles.statusChipText,
+                        styles.quickStatValue,
                         { color: tideChipColors.textColor },
                       ]}
                     >
-                      Tide {kiteableNow.tideOk ? 'Pass' : 'Fail'}
+                      {kiteableNow.tideOk ? 'Pass' : 'Fail'}
                     </Text>
                   </View>
                 ) : null}
               </View>
 
-              <Text style={styles.metaText}>
-                Wind range: {kiteableForecast?.thresholds?.minWindKn ?? '-'} to{' '}
-                {kiteableForecast?.thresholds?.maxWindKn ?? '-'} kn
-              </Text>
-              <Text style={styles.metaText}>
-                Direction range:{' '}
-                {kiteableForecast?.thresholds?.windDirStart ?? '-'} to{' '}
-                {kiteableForecast?.thresholds?.windDirEnd ?? '-'}°
-              </Text>
-              <Text style={styles.metaText}>
-                Mode: {kiteableForecast?.thresholds?.directionMode ?? '-'}
-              </Text>
-              {isTidalSpot ? (
-                <>
-                  <Text style={styles.metaText}>
-                    Tide rule:{' '}
-                    {kiteableForecast?.thresholds?.tideWindowHours ?? '-'}h
-                    before and after{' '}
-                    {kiteableForecast?.thresholds?.tidePreference ?? '-'} tide
+              <View style={styles.ruleSummaryWrap}>
+                <Text style={styles.ruleSummaryText}>
+                  Wind range {kiteableForecast?.thresholds?.minWindKn ?? '-'} to{' '}
+                  {kiteableForecast?.thresholds?.maxWindKn ?? '-'} kn
+                </Text>
+                <Text style={styles.ruleSummaryText}>
+                  Direction range{' '}
+                  {kiteableForecast?.thresholds?.windDirStart ?? '-'} to{' '}
+                  {kiteableForecast?.thresholds?.windDirEnd ?? '-'}°
+                </Text>
+                <Text style={styles.ruleSummaryText}>
+                  Rotation{' '}
+                  {formatDirectionModeLabel(
+                    kiteableForecast?.thresholds?.directionMode
+                  )}
+                </Text>
+                {isTidalSpot ? (
+                  <Text style={styles.ruleSummaryText}>
+                    Tide {kiteableForecast?.thresholds?.tideWindowHours ?? '-'}h
+                    around {kiteableForecast?.thresholds?.tidePreference ?? '-'}{' '}
+                    tide
                   </Text>
-                </>
-              ) : null}
+                ) : null}
+              </View>
+
               {kiteableForecast?.note ? (
-                <Text style={styles.metaText}>{kiteableForecast.note}</Text>
+                <Text style={styles.noteText}>{kiteableForecast.note}</Text>
               ) : null}
             </View>
           ) : (
@@ -614,51 +595,169 @@ export default function SpotDetails() {
           )}
         </View>
 
+        <View style={styles.splitRow}>
+          <View style={[styles.sectionCard, styles.splitCard]}>
+            <Text style={styles.sectionEyebrow}>Rotation preference</Text>
+            <View style={styles.segmentedControl}>
+              <Pressable
+                onPress={() => setDirectionMode('clockwise')}
+                style={[
+                  styles.segmentButton,
+                  directionMode === 'clockwise' && styles.segmentButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.segmentButtonText,
+                    directionMode === 'clockwise' &&
+                      styles.segmentButtonTextActive,
+                  ]}
+                >
+                  Clockwise
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => setDirectionMode('anticlockwise')}
+                style={[
+                  styles.segmentButton,
+                  directionMode === 'anticlockwise' &&
+                    styles.segmentButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.segmentButtonText,
+                    directionMode === 'anticlockwise' &&
+                      styles.segmentButtonTextActive,
+                  ]}
+                >
+                  Anti-clockwise
+                </Text>
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={[styles.sectionCard, styles.splitCard]}>
+            <Text style={styles.sectionEyebrow}>Spot rating</Text>
+
+            {ratingLoading ? (
+              <Text style={styles.subtleText}>Loading rating...</Text>
+            ) : (
+              <>
+                <View style={styles.ratingHeaderRow}>
+                  <Text style={styles.ratingNumber}>{ratingAverageLabel}</Text>
+                  <Text style={styles.ratingCountText}>
+                    {ratingSummary?.ratingCount ?? 0}{' '}
+                    {ratingSummary?.ratingCount === 1 ? 'rating' : 'ratings'}
+                  </Text>
+                </View>
+
+                <View style={styles.starRow}>
+                  {STAR_VALUES.map((value) => {
+                    const selected = value <= (ratingSummary?.myRating ?? 0);
+                    return (
+                      <Pressable
+                        key={value}
+                        onPress={() => rateSpot(value)}
+                        disabled={ratingSubmitting}
+                        style={styles.starButton}
+                      >
+                        <Text
+                          style={[
+                            styles.starIcon,
+                            selected
+                              ? styles.starIconSelected
+                              : styles.starIconOff,
+                          ]}
+                        >
+                          ★
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                <Text style={styles.subtleText}>
+                  Your rating: {ratingSummary?.myRating ?? 'Not rated yet'}
+                </Text>
+
+                {ratingSubmitting ? (
+                  <Text style={styles.subtleText}>Saving your rating...</Text>
+                ) : null}
+              </>
+            )}
+
+            {ratingError ? (
+              <Text style={styles.errorText}>{ratingError}</Text>
+            ) : null}
+          </View>
+        </View>
+
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Next 42 hours</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Next 42 hours</Text>
+            <Text style={styles.sectionHeaderMeta}>
+              {kiteableForecast?.kiteableHours ?? 0}/
+              {kiteableForecast?.requestedHours ?? 42} kiteable
+            </Text>
+          </View>
 
           {kiteableForecastLoading ? (
             <Text style={styles.subtleText}>Loading forecast...</Text>
           ) : kiteableForecastError ? (
             <Text style={styles.errorText}>{kiteableForecastError}</Text>
           ) : kiteableForecast?.forecast?.length ? (
-            <View style={styles.kiteableNowWrap}>
-              <Text style={styles.metaText}>
-                Kiteable hours: {kiteableForecast.kiteableHours ?? 0}/
-                {kiteableForecast.requestedHours ?? 42}
-              </Text>
+            <ScrollView
+              style={styles.forecastScrollArea}
+              contentContainerStyle={styles.forecastGrid}
+              nestedScrollEnabled
+            >
+              {kiteableForecast.forecast.map((hour) => {
+                const hourColors = getStatusChipColors(hour.kiteable);
 
-              {/* Showing all 42 rows but as sscrollable. */}
-              <ScrollView
-                style={styles.forecastList}
-                contentContainerStyle={styles.forecastListContent}
-                nestedScrollEnabled
-              >
-                {kiteableForecast.forecast.map((hour, index) => (
+                return (
                   <View
                     key={hour.time}
                     style={[
-                      styles.forecastRow,
-                      index % 2 === 0
-                        ? styles.forecastRowStriped
-                        : styles.forecastRowPlain,
+                      styles.forecastTile,
+                      {
+                        backgroundColor: hourColors.backgroundColor,
+                        borderColor: hourColors.borderColor,
+                      },
                     ]}
                   >
-                    <Text style={styles.forecastRowText}>
-                      {hour.time} - {hour.kiteable ? 'Yes' : 'No'} -{' '}
-                      {hour.speedKn} kn - {hour.directionDeg}°
+                    <Text style={styles.forecastTileDay}>
+                      {formatForecastDayLabel(hour.time)}
+                    </Text>
+                    <Text style={styles.forecastTileTime}>
+                      {formatForecastTimeLabel(hour.time)}
+                    </Text>
+                    <Text style={styles.forecastTileSpeed}>
+                      {hour.speedKn?.toFixed(1) ?? '-'}
+                    </Text>
+                    <Text style={styles.forecastTileUnit}>kn</Text>
+                    <Text style={styles.forecastTileMeta}>
+                      {hour.directionDeg}°
+                    </Text>
+                    <Text
+                      style={[
+                        styles.forecastTileStatus,
+                        { color: hourColors.textColor },
+                      ]}
+                    >
+                      {getForecastStatusLabel(hour)}
                     </Text>
                   </View>
-                ))}
-              </ScrollView>
-            </View>
+                );
+              })}
+            </ScrollView>
           ) : (
             <Text style={styles.subtleText}>No forecast data yet.</Text>
           )}
         </View>
 
         {/* Upcoming posts list */}
-        <View style={styles.upcomingSection}>
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Upcoming posts</Text>
 
           <PostList
@@ -700,37 +799,107 @@ export default function SpotDetails() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
     gap: 16,
   },
-  sectionCard: {
-    gap: 10,
+  heroCard: {
+    gap: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    backgroundColor: 'white',
-    padding: 12,
+    borderColor: appTheme.colors.borderSoft,
+    borderRadius: 18,
+    backgroundColor: appTheme.colors.surface,
+    padding: 18,
+  },
+  heroHeaderRow: {
+    gap: 14,
+  },
+  heroTextBlock: {
+    gap: 8,
+  },
+  heroEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: appTheme.colors.primary,
+  },
+  sectionCard: {
+    gap: 12,
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    borderRadius: 16,
+    backgroundColor: appTheme.colors.surface,
+    padding: 16,
   },
   pageTitle: {
-    fontSize: 22,
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -1,
+    color: appTheme.colors.text,
+  },
+  heroMetaRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+  },
+  metaBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: appTheme.colors.surfaceSoft,
+  },
+  metaBadgeText: {
+    color: appTheme.colors.primary,
     fontWeight: '700',
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  subtleText: {
-    color: '#666',
-  },
-  posterErrorText: {
-    color: '#999',
     fontSize: 12,
   },
-  metaText: {
-    color: '#555',
+  heroStatusBadge: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minWidth: 112,
+  },
+  heroStatusLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+  },
+  heroStatusValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  heroDescription: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: '#353535',
+  },
+  sectionEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    color: appTheme.colors.accent,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    color: appTheme.colors.text,
+  },
+  subtleText: {
+    color: appTheme.colors.textMuted,
+  },
+  posterErrorText: {
+    color: appTheme.colors.textSubtle,
+    fontSize: 12,
   },
   starRow: {
     flexDirection: 'row',
@@ -744,74 +913,185 @@ const styles = StyleSheet.create({
     fontSize: 28,
   },
   starIconSelected: {
-    color: '#f2b01e',
+    color: appTheme.colors.accent,
   },
   starIconOff: {
-    color: '#d0d0d0',
+    color: appTheme.colors.borderSoft,
   },
-  directionButtonsRow: {
+  conditionsWrap: {
+    gap: 14,
+  },
+  windHeadlineRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+  },
+  windValue: {
+    fontSize: 56,
+    fontWeight: '800',
+    letterSpacing: -2,
+    color: appTheme.colors.textStrong,
+  },
+  windUnit: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: appTheme.colors.accent,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
+  windDirectionText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#314152',
+  },
+  quickStatsRow: {
     flexDirection: 'row',
     gap: 10,
-  },
-  kiteableNowWrap: {
-    gap: 4,
-  },
-  kiteableStatusChip: {
-    alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  kiteableStatusText: {
-    fontWeight: '700',
-  },
-  chipRow: {
-    flexDirection: 'row',
-    gap: 8,
     flexWrap: 'wrap',
   },
-  statusChip: {
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  quickStatCard: {
+    flexGrow: 1,
+    minWidth: 96,
+    backgroundColor: appTheme.colors.surfaceMuted,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
-  statusChipText: {
-    fontSize: 12,
+  quickStatLabel: {
+    color: '#7c8794',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
-  forecastList: {
-    maxHeight: 220,
-    borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
+  quickStatValue: {
+    fontSize: 18,
+    fontWeight: '800',
   },
-  forecastListContent: {
-    padding: 8,
+  ruleSummaryWrap: {
     gap: 6,
+    paddingTop: 2,
   },
-  forecastRow: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+  ruleSummaryText: {
+    color: appTheme.colors.textSoft,
+    fontSize: 14,
   },
-  forecastRowStriped: {
-    backgroundColor: '#fafafa',
-  },
-  forecastRowPlain: {
-    backgroundColor: '#fff',
-  },
-  forecastRowText: {
-    color: '#444',
+  noteText: {
+    color: appTheme.colors.textSubtle,
     fontSize: 12,
   },
-  upcomingSection: {
+  splitRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  splitCard: {
+    flexGrow: 1,
+    flexBasis: 220,
+  },
+  segmentedControl: {
+    flexDirection: 'row',
+    backgroundColor: appTheme.colors.surfaceTint,
+    borderRadius: 12,
+    padding: 4,
+    gap: 4,
+  },
+  segmentButton: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+  segmentButtonActive: {
+    backgroundColor: appTheme.colors.accent,
+  },
+  segmentButtonText: {
+    textAlign: 'center',
+    fontWeight: '700',
+    color: appTheme.colors.textSoft,
+  },
+  segmentButtonTextActive: {
+    color: appTheme.colors.white,
+  },
+  ratingHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  ratingNumber: {
+    fontSize: 36,
+    fontWeight: '800',
+    letterSpacing: -1,
+    color: appTheme.colors.textStrong,
+  },
+  ratingCountText: {
+    color: appTheme.colors.textSubtle,
+    fontSize: 13,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     gap: 10,
+  },
+  sectionHeaderMeta: {
+    color: appTheme.colors.primary,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  forecastScrollArea: {
+    maxHeight: 340,
+  },
+  // Use cards instead of a long raw text list so the forecast feels closer to the reference layout.
+  forecastGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 12,
+    paddingRight: 4,
+  },
+  forecastTile: {
+    width: '48%',
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 10,
+    gap: 3,
+  },
+  forecastTileDay: {
+    color: appTheme.colors.textSubtle,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  forecastTileTime: {
+    color: appTheme.colors.textStrong,
+    fontWeight: '700',
+  },
+  forecastTileSpeed: {
+    fontSize: 28,
+    fontWeight: '800',
+    letterSpacing: -1,
+    color: appTheme.colors.textStrong,
+  },
+  forecastTileUnit: {
+    color: appTheme.colors.accent,
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  forecastTileMeta: {
+    color: appTheme.colors.textSoft,
+    fontSize: 12,
+  },
+  forecastTileStatus: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   manageActions: {
     gap: 10,
   },
   errorText: {
-    color: 'red',
+    color: appTheme.colors.dangerTextStrong,
   },
 });

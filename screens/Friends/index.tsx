@@ -1,4 +1,5 @@
 import { Input, InputField } from '@/components/ui/input';
+import { appTheme } from '@/constants/theme';
 import { useUserSearch } from '@/helpers/helpers';
 import { buildSpotRouteParams } from '@/helpers/spotRoute';
 import { searchGlobalSpots } from '@/screens/Spots/spots.api';
@@ -355,14 +356,14 @@ const styles = StyleSheet.create({
   },
   requestsButton: {
     borderWidth: 1,
-    borderColor: '#cfdad5',
+    borderColor: appTheme.colors.borderSubtle,
     borderRadius: 999,
-    backgroundColor: '#f4f8f6',
+    backgroundColor: appTheme.colors.surfaceSoft,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   requestsButtonText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   },
   searchPillWrap: {
     borderWidth: 1,
-    borderColor: '#d6dfda',
+    borderColor: appTheme.colors.borderSubtle,
     borderRadius: 999,
     backgroundColor: 'white',
     paddingHorizontal: 6,
@@ -394,7 +395,7 @@ const styles = StyleSheet.create({
     color: 'green',
   },
   subtleText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   subtleLabel: {
     color: '#4d5a55',
@@ -406,14 +407,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
     gap: 6,
   },
   requestCard: {
     padding: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
     gap: 8,
   },
   requestActionsRow: {
@@ -422,7 +423,7 @@ const styles = StyleSheet.create({
   },
   acceptRequestButton: {
     borderRadius: 8,
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
@@ -440,7 +441,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   declineRequestText: {
-    color: '#555',
+    color: appTheme.colors.textSoft,
     fontSize: 12,
     fontWeight: '600',
   },
@@ -448,7 +449,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   listCardSubtle: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   modalBackdrop: {
     flex: 1,
@@ -478,7 +479,7 @@ const styles = StyleSheet.create({
   },
   modalCloseButtonText: {
     fontSize: 12,
-    color: '#555',
+    color: appTheme.colors.textSoft,
     fontWeight: '600',
   },
   refreshRequestsButton: {
@@ -488,11 +489,11 @@ const styles = StyleSheet.create({
     borderColor: '#d6d6d6',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: appTheme.colors.surfaceMuted,
   },
   refreshRequestsText: {
     fontSize: 12,
-    color: '#555',
+    color: appTheme.colors.textSoft,
     fontWeight: '600',
   },
 });

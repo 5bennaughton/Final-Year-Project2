@@ -1,4 +1,5 @@
 import { Input, InputField } from '@/components/ui/input';
+import { appTheme } from '@/constants/theme';
 import { setAuthToken, setAuthUser } from '@/lib/auth';
 import React, { useState } from 'react';
 import {
@@ -58,9 +59,9 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="email-address"
-          selectionColor="#1f6f5f"
+          selectionColor={appTheme.colors.primary}
           style={styles.inputText}
-          placeholderTextColor="#9aa8a2"
+          placeholderTextColor={appTheme.colors.textSubtle}
         />
       </Input>
 
@@ -71,9 +72,9 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
           onChangeText={(password) => setForm((p) => ({ ...p, password }))}
           secureTextEntry
           textContentType="password"
-          selectionColor="#1f6f5f"
+          selectionColor={appTheme.colors.primary}
           style={styles.inputText}
-          placeholderTextColor="#9aa8a2"
+          placeholderTextColor={appTheme.colors.textSubtle}
         />
       </Input>
 
@@ -87,7 +88,7 @@ export default function Login({ onSuccess, onGoToRegister }: LoginProps) {
         ]}
       >
         {loading ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={appTheme.colors.white} />
         ) : (
           <Text style={styles.primaryButtonText}>Sign in</Text>
         )}
@@ -105,17 +106,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#17231f',
+    color: appTheme.colors.textStrong,
     textAlign: 'center',
   },
   input: {
     height: 52,
     borderRadius: 14,
-    borderColor: '#dbe4df',
-    backgroundColor: '#f8faf9',
+    borderColor: appTheme.colors.borderSubtle,
+    backgroundColor: appTheme.colors.surfaceMuted,
   },
   inputText: {
-    color: '#111827',
+    color: appTheme.colors.text,
     fontSize: 15,
   },
   primaryButton: {
@@ -123,12 +124,12 @@ const styles = StyleSheet.create({
     minHeight: 56,
     marginTop: 4,
     borderRadius: 999,
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonPressed: {
-    backgroundColor: '#19594d',
+    backgroundColor: appTheme.colors.primaryPressed,
   },
   primaryButtonDisabled: {
     opacity: 0.7,
@@ -139,7 +140,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorText: {
-    color: '#b91c1c',
+    color: appTheme.colors.dangerTextStrong,
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',

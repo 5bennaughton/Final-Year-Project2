@@ -1,5 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
+import { appTheme } from '@/constants/theme';
 import { useMeProfile } from '@/helpers/helpers';
 import {
   clearAuthToken,
@@ -290,7 +291,7 @@ export default function SettingsScreen() {
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
-              selectionColor="#1f6f5f"
+              selectionColor={appTheme.colors.primary}
               style={styles.inputText}
               placeholderTextColor="#777"
             />
@@ -301,7 +302,7 @@ export default function SettingsScreen() {
               placeholder="Bio"
               value={bio}
               onChangeText={setBio}
-              selectionColor="#1f6f5f"
+              selectionColor={appTheme.colors.primary}
               style={styles.bioInput}
               placeholderTextColor="#777"
             />
@@ -380,7 +381,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
@@ -404,30 +405,30 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: appTheme.colors.borderSoft,
   },
   avatarPlaceholder: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: appTheme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 26,
     fontWeight: '700',
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   input: {
-    backgroundColor: '#fff',
-    borderColor: '#ddd',
+    backgroundColor: appTheme.colors.surface,
+    borderColor: appTheme.colors.border,
   },
   inputText: {
-    color: '#1A1A1A',
+    color: appTheme.colors.text,
   },
   bioInput: {
-    color: '#1A1A1A',
+    color: appTheme.colors.text,
     minHeight: 80,
     textAlignVertical: 'top',
   },
@@ -435,10 +436,10 @@ const styles = StyleSheet.create({
     color: 'red',
   },
   successText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
   },
   subtleText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   privacyOptionsRow: {
     flexDirection: 'row',

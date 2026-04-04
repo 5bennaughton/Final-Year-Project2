@@ -1,6 +1,7 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
+import { appTheme } from '@/constants/theme';
 import { useListPosts, useMeProfile } from '@/helpers/helpers';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -213,7 +214,7 @@ export default function HomePage() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
@@ -234,20 +235,20 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: appTheme.colors.borderSoft,
   },
   avatarPlaceholder: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: appTheme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   nameWrap: {
     gap: 2,
@@ -264,8 +265,8 @@ const styles = StyleSheet.create({
   },
   quickActionButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -275,15 +276,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   bioText: {
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   friendsText: {
     marginTop: 4,
-    color: '#1A1A1A',
+    color: appTheme.colors.text,
     fontWeight: '600',
   },
   roleText: {
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   errorText: {
     color: 'red',
@@ -299,13 +300,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   deleteActionButton: {
-    backgroundColor: '#f5d5d5',
+    backgroundColor: appTheme.colors.dangerBg,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
   },
   deleteActionText: {
-    color: '#7a1f1f',
+    color: appTheme.colors.dangerText,
     fontWeight: '600',
   },
 });

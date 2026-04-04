@@ -1,5 +1,6 @@
 import PostList from '@/components/PostList';
 import Slider from '@react-native-community/slider';
+import { appTheme } from '@/constants/theme';
 import { getCurrentLocation } from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -84,9 +85,9 @@ export default function NearbySessionsScreen() {
               minimumValue={0}
               maximumValue={100}
               step={1}
-              minimumTrackTintColor="#1f6f5f"
-              maximumTrackTintColor="#d8d8d8"
-              thumbTintColor="#1f6f5f"
+              minimumTrackTintColor={appTheme.colors.primary}
+              maximumTrackTintColor={appTheme.colors.borderSoft}
+              thumbTintColor={appTheme.colors.primary}
               value={radiusKmToSlider(radiusKm)}
               onValueChange={(value) => setRadiusKm(sliderToRadiusKm(value))}
             />
@@ -128,7 +129,7 @@ export default function NearbySessionsScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
@@ -140,8 +141,8 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#dcdcdc',
-    backgroundColor: 'white',
+    borderColor: appTheme.colors.borderSoft,
+    backgroundColor: appTheme.colors.surface,
   },
   backButtonText: {
     fontWeight: '600',
@@ -159,36 +160,36 @@ const styles = StyleSheet.create({
   sliderCard: {
     gap: 8,
     padding: 12,
-    backgroundColor: 'white',
+    backgroundColor: appTheme.colors.surface,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
     borderRadius: 8,
   },
   radiusValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#222',
+    color: appTheme.colors.textStrong,
   },
   sliderRangeLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   sliderRangeText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
     fontSize: 12,
   },
   searchButton: {
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center',
   },
   searchButtonText: {
-    color: 'white',
+    color: appTheme.colors.white,
     fontWeight: '600',
   },
   coordsText: {
-    color: '#777',
+    color: appTheme.colors.textSubtle,
   },
 });

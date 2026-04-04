@@ -1,3 +1,4 @@
+import { appTheme } from '@/constants/theme';
 import { Tabs } from 'expo-router';
 import { Home, MapPin, Search, User } from 'lucide-react-native';
 import React from 'react';
@@ -9,8 +10,8 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarHideOnKeyboard: true,
-        tabBarActiveTintColor: '#1f6f5f',
-        tabBarInactiveTintColor: '#7d8a84',
+        tabBarActiveTintColor: appTheme.colors.primary,
+        tabBarInactiveTintColor: appTheme.colors.textSubtle,
         tabBarStyle: styles.tabBar,
         tabBarItemStyle: styles.tabItem,
         tabBarLabelStyle: styles.tabLabel,
@@ -31,7 +32,12 @@ export default function TabsLayout() {
             <View
               style={[styles.mapIconWrap, focused && styles.mapIconWrapFocused]}
             >
-              <MapPin color={focused ? '#ffffff' : '#1f6f5f'} size={21} />
+              <MapPin
+                color={
+                  focused ? appTheme.colors.white : appTheme.colors.primary
+                }
+                size={21}
+              />
             </View>
           ),
         }}
@@ -72,8 +78,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
     borderTopWidth: 1,
-    borderTopColor: '#dce5e0',
-    backgroundColor: '#f8fbf8',
+    borderTopColor: appTheme.colors.borderSubtle,
+    backgroundColor: appTheme.colors.surface,
   },
   tabItem: {
     paddingVertical: 2,
@@ -89,11 +95,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#1f6f5f33',
-    backgroundColor: '#e6f0ec',
+    borderColor: `${appTheme.colors.primary}33`,
+    backgroundColor: appTheme.colors.primarySoft,
   },
   mapIconWrapFocused: {
-    borderColor: '#f27d3d',
-    backgroundColor: '#f27d3d',
+    borderColor: appTheme.colors.accent,
+    backgroundColor: appTheme.colors.accent,
   },
 });

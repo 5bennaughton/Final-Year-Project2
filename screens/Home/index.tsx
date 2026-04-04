@@ -1,4 +1,5 @@
 import PostList from '@/components/PostList';
+import { appTheme } from '@/constants/theme';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -108,7 +109,7 @@ export default function Home() {
           <RefreshControl
             refreshing={loading && feedPosts.length > 0}
             onRefresh={loadFeed}
-            tintColor="#1f6f5f"
+            tintColor={appTheme.colors.primary}
           />
         }
       >
@@ -183,7 +184,7 @@ export default function Home() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f0f3ef',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
@@ -198,7 +199,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   headerTitle: {
-    color: '#1d2924',
+    color: appTheme.colors.textStrong,
     fontSize: 28,
     fontWeight: '700',
   },
@@ -206,17 +207,17 @@ const styles = StyleSheet.create({
     minHeight: 52,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#1f6f5f',
-    backgroundColor: '#ffffff',
+    borderColor: appTheme.colors.primary,
+    backgroundColor: appTheme.colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
   },
   nearbyButtonPressed: {
-    backgroundColor: '#eef7f3',
+    backgroundColor: appTheme.colors.surfaceSoft,
   },
   nearbyButtonText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -227,14 +228,14 @@ const styles = StyleSheet.create({
   filterLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#596762',
+    color: appTheme.colors.textMuted,
   },
   filterRow: {
     flexDirection: 'row',
     gap: 8,
     padding: 6,
     borderRadius: 14,
-    backgroundColor: '#e7edea',
+    backgroundColor: appTheme.colors.surfaceSoftAlt,
   },
   filterChip: {
     flex: 1,
@@ -248,14 +249,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   filterChipActive: {
-    backgroundColor: '#ffffff',
-    borderColor: '#b8c9c2',
+    backgroundColor: appTheme.colors.surface,
+    borderColor: appTheme.colors.borderSubtle,
   },
   filterChipPressed: {
-    backgroundColor: '#dce5e1',
+    backgroundColor: appTheme.colors.primarySoft,
   },
   filterChipText: {
-    color: '#5b6963',
+    color: appTheme.colors.textSoft,
     fontSize: 15,
     fontWeight: '600',
   },

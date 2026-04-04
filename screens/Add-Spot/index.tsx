@@ -1,5 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
+import { appTheme } from '@/constants/theme';
 import {
   buildSpotRouteParams,
   parseRouteBoolean,
@@ -441,7 +442,7 @@ export default function AddSpot() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
   descriptionInput: {
     minHeight: 90,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
     borderRadius: 8,
     padding: 10,
     backgroundColor: 'white',
@@ -471,7 +472,7 @@ const styles = StyleSheet.create({
     color: 'black',
   },
   helperText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   switchRow: {
     flexDirection: 'row',
@@ -481,7 +482,7 @@ const styles = StyleSheet.create({
   switchStateText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: appTheme.colors.textSoft,
   },
   errorText: {
     color: 'red',
@@ -490,7 +491,7 @@ const styles = StyleSheet.create({
     gap: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
     borderRadius: 12,
     backgroundColor: 'white',
   },
@@ -503,9 +504,9 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderWidth: 2,
-    borderColor: '#d7d7d7',
+    borderColor: appTheme.colors.borderSoft,
     borderRadius: 60,
-    backgroundColor: '#fafafa',
+    backgroundColor: appTheme.colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -514,7 +515,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     fontSize: 12,
     fontWeight: '700',
-    color: '#777',
+    color: appTheme.colors.textSubtle,
   },
   compassNorth: {
     top: 8,
@@ -542,10 +543,10 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   startHand: {
-    backgroundColor: '#ff8c42',
+    backgroundColor: appTheme.colors.accent,
   },
   endHand: {
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
   },
   compassCenterDot: {
     width: 10,
@@ -560,13 +561,13 @@ const styles = StyleSheet.create({
   windValueText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#222',
+    color: appTheme.colors.textStrong,
   },
   sliderGroup: {
     gap: 6,
   },
   sliderLabel: {
     fontWeight: '600',
-    color: '#333',
+    color: appTheme.colors.textSoft,
   },
 });

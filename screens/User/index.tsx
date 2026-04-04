@@ -1,5 +1,6 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
+import { appTheme } from '@/constants/theme';
 import { useListPosts } from '@/helpers/helpers';
 import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams } from 'expo-router';
@@ -276,7 +277,7 @@ export default function UserPage() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     padding: 20,
@@ -294,20 +295,20 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: appTheme.colors.borderSoft,
   },
   avatarPlaceholder: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#e6e6e6',
+    backgroundColor: appTheme.colors.borderSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarInitial: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   nameWrap: {
     gap: 2,
@@ -317,31 +318,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   bioText: {
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   friendsText: {
     marginTop: 4,
-    color: '#1A1A1A',
+    color: appTheme.colors.text,
     fontWeight: '600',
   },
   friendStatusText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontWeight: '700',
   },
   pendingStatusText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
     fontWeight: '600',
   },
   adminStatusText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontWeight: '700',
   },
   adminPanel: {
     gap: 8,
     borderWidth: 1,
-    borderColor: '#d8d8d8',
+    borderColor: appTheme.colors.borderSoft,
     borderRadius: 12,
-    backgroundColor: '#fff',
+    backgroundColor: appTheme.colors.surface,
     padding: 12,
   },
   adminPanelTitle: {
@@ -349,10 +350,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   adminPanelText: {
-    color: '#555',
+    color: appTheme.colors.textSoft,
   },
   successText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontWeight: '700',
   },
   errorText: {

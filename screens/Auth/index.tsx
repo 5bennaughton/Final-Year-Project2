@@ -1,4 +1,5 @@
 import { API_BASE } from '@/constants/constants';
+import { appTheme } from '@/constants/theme';
 import { getAuthToken } from '@/lib/auth';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f0f3ef',
+    backgroundColor: appTheme.colors.background,
   },
   content: {
     width: '100%',
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     textAlign: 'center',
   },
   modeRow: {
@@ -110,7 +111,7 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 4,
     borderRadius: 16,
-    backgroundColor: '#e3ebe6',
+    backgroundColor: appTheme.colors.surfaceSoftAlt,
   },
   modeButton: {
     flex: 1,
@@ -120,23 +121,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modeButtonActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: appTheme.colors.surface,
   },
   modeButtonText: {
-    color: '#60706a',
+    color: appTheme.colors.textSubtle,
     fontSize: 15,
     fontWeight: '700',
   },
   modeButtonTextActive: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
   },
   card: {
     padding: 22,
     borderRadius: 24,
-    backgroundColor: '#ffffff',
+    backgroundColor: appTheme.colors.surface,
     borderWidth: 1,
-    borderColor: '#dfe7e3',
-    shadowColor: '#173129',
+    borderColor: appTheme.colors.borderSubtle,
+    shadowColor: appTheme.colors.textStrong,
     shadowOpacity: 0.08,
     shadowRadius: 12,
     shadowOffset: { width: 0, height: 8 },

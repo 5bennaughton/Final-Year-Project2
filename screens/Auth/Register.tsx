@@ -1,4 +1,5 @@
 import { Input, InputField } from '@/components/ui/input';
+import { appTheme } from '@/constants/theme';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -51,9 +52,9 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
           onChangeText={(name) => setForm((p) => ({ ...p, name }))}
           autoCapitalize="words"
           textContentType="name"
-          selectionColor="#1f6f5f"
+          selectionColor={appTheme.colors.primary}
           style={styles.inputText}
-          placeholderTextColor="#9aa8a2"
+          placeholderTextColor={appTheme.colors.textSubtle}
         />
       </Input>
 
@@ -66,9 +67,9 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
           autoCorrect={false}
           keyboardType="email-address"
           textContentType="emailAddress"
-          selectionColor="#1f6f5f"
+          selectionColor={appTheme.colors.primary}
           style={styles.inputText}
-          placeholderTextColor="#9aa8a2"
+          placeholderTextColor={appTheme.colors.textSubtle}
         />
       </Input>
 
@@ -79,9 +80,9 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
           onChangeText={(password) => setForm((p) => ({ ...p, password }))}
           secureTextEntry
           textContentType="newPassword"
-          selectionColor="#1f6f5f"
+          selectionColor={appTheme.colors.primary}
           style={styles.inputText}
-          placeholderTextColor="#9aa8a2"
+          placeholderTextColor={appTheme.colors.textSubtle}
         />
       </Input>
 
@@ -95,7 +96,7 @@ export default function Register({ onSuccess, onGoToLogin }: RegisterProps) {
         ]}
       >
         {loading ? (
-          <ActivityIndicator color="#ffffff" />
+          <ActivityIndicator color={appTheme.colors.white} />
         ) : (
           <Text style={styles.primaryButtonText}>Sign up</Text>
         )}
@@ -114,17 +115,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#17231f',
+    color: appTheme.colors.textStrong,
     textAlign: 'center',
   },
   input: {
     height: 52,
     borderRadius: 14,
-    borderColor: '#dbe4df',
-    backgroundColor: '#f8faf9',
+    borderColor: appTheme.colors.borderSubtle,
+    backgroundColor: appTheme.colors.surfaceMuted,
   },
   inputText: {
-    color: '#111827',
+    color: appTheme.colors.text,
     fontSize: 15,
   },
   primaryButton: {
@@ -132,12 +133,12 @@ const styles = StyleSheet.create({
     minHeight: 56,
     marginTop: 4,
     borderRadius: 999,
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   primaryButtonPressed: {
-    backgroundColor: '#19594d',
+    backgroundColor: appTheme.colors.primaryPressed,
   },
   primaryButtonDisabled: {
     opacity: 0.7,
@@ -148,13 +149,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   errorText: {
-    color: '#b91c1c',
+    color: appTheme.colors.dangerTextStrong,
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',
   },
   successText: {
-    color: '#166534',
+    color: appTheme.colors.successText,
     fontSize: 13,
     lineHeight: 18,
     textAlign: 'center',

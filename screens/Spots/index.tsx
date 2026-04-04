@@ -1,3 +1,4 @@
+import { appTheme } from '@/constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -311,7 +312,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   stateText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   fallbackWrap: {
     padding: 20,
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
   },
   fallbackSubtitle: {
     marginTop: 8,
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   errorText: {
     marginTop: 8,
@@ -340,28 +341,28 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   searchInput: {
-    backgroundColor: '#fff',
-    borderColor: '#ddd',
+    backgroundColor: appTheme.colors.surface,
+    borderColor: appTheme.colors.border,
   },
   searchInputText: {
-    color: '#1A1A1A',
+    color: appTheme.colors.text,
   },
   refreshButton: {
     alignSelf: 'flex-end',
-    backgroundColor: '#fff',
+    backgroundColor: appTheme.colors.surface,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   refreshButtonText: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontWeight: '600',
     fontSize: 12,
   },
   searchStateText: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
     fontSize: 12,
   },
   searchErrorText: {
@@ -369,8 +370,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   suggestionsList: {
-    backgroundColor: '#fff',
-    borderColor: '#ddd',
+    backgroundColor: appTheme.colors.surface,
+    borderColor: appTheme.colors.border,
     borderWidth: 1,
     borderRadius: 10,
     maxHeight: 200,
@@ -385,7 +386,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   suggestionType: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
     fontSize: 12,
   },
   map: {
@@ -399,17 +400,17 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   calloutType: {
-    color: '#666',
+    color: appTheme.colors.textMuted,
   },
   calloutAction: {
-    color: '#1f6f5f',
+    color: appTheme.colors.primary,
     fontWeight: '600',
   },
   addSpotButton: {
     position: 'absolute',
     bottom: 20,
     alignSelf: 'center',
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 10,

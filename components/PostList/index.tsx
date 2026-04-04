@@ -1,4 +1,5 @@
 import { getAuthUser } from '@/lib/auth';
+import { appTheme } from '@/constants/theme';
 import type {
   CommentItem,
   NormalizedPost,
@@ -330,7 +331,7 @@ export default function PostList({
 
       {loading && normalizedPosts.length > 0 ? (
         <View style={styles.listLoader}>
-          <ActivityIndicator color="#1f6f5f" />
+          <ActivityIndicator color={appTheme.colors.primary} />
         </View>
       ) : null}
 
@@ -561,7 +562,7 @@ export default function PostList({
                             updateCommentInput(post.id, text)
                           }
                           placeholder="Add a comment"
-                          placeholderTextColor="#8c9691"
+                          placeholderTextColor={appTheme.colors.textSubtle}
                           style={styles.commentInput}
                         />
 
@@ -578,7 +579,7 @@ export default function PostList({
                           ]}
                         >
                           {postingComment ? (
-                            <ActivityIndicator color="#ffffff" />
+                            <ActivityIndicator color={appTheme.colors.white} />
                           ) : (
                             <Text style={styles.commentSubmitText}>Post</Text>
                           )}
@@ -604,9 +605,9 @@ const styles = StyleSheet.create({
   },
   loadingCard: {
     borderWidth: 1,
-    borderColor: '#e2e8e3',
+    borderColor: appTheme.colors.borderSubtle,
     borderRadius: 18,
-    backgroundColor: '#ffffff',
+    backgroundColor: appTheme.colors.surface,
     padding: 18,
     gap: 14,
   },
@@ -619,7 +620,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#e8eeea',
+    backgroundColor: appTheme.colors.surfaceSoftAlt,
   },
   loadingHeaderTextWrap: {
     gap: 8,
@@ -629,53 +630,53 @@ const styles = StyleSheet.create({
     height: 14,
     width: '62%',
     borderRadius: 7,
-    backgroundColor: '#e8eeea',
+    backgroundColor: appTheme.colors.surfaceSoftAlt,
   },
   loadingLineShort: {
     height: 12,
     width: '40%',
     borderRadius: 6,
-    backgroundColor: '#e8eeea',
+    backgroundColor: appTheme.colors.surfaceSoftAlt,
   },
   loadingMap: {
     height: 178,
     borderRadius: 14,
-    backgroundColor: '#e8eeea',
+    backgroundColor: appTheme.colors.surfaceSoftAlt,
   },
   listLoader: {
     paddingVertical: 8,
   },
   errorBanner: {
     borderWidth: 1,
-    borderColor: '#efcaca',
-    backgroundColor: '#fff0f0',
+    borderColor: appTheme.colors.dangerBorder,
+    backgroundColor: appTheme.colors.dangerBg,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
   errorBannerText: {
-    color: '#a33b3b',
+    color: appTheme.colors.dangerText,
     fontSize: 14,
     fontWeight: '600',
   },
   emptyCard: {
     borderWidth: 1,
-    borderColor: '#dde4df',
+    borderColor: appTheme.colors.borderSubtle,
     borderRadius: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: appTheme.colors.surface,
     padding: 18,
     gap: 6,
   },
   emptyTitle: {
-    color: '#283630',
+    color: appTheme.colors.textStrong,
     fontSize: 17,
     fontWeight: '700',
   },
   postCard: {
     borderWidth: 1,
-    borderColor: '#e2e8e3',
+    borderColor: appTheme.colors.borderSubtle,
     borderRadius: 18,
-    backgroundColor: '#ffffff',
+    backgroundColor: appTheme.colors.surface,
     padding: 18,
     shadowColor: '#13241e',
     shadowOpacity: 0.08,
@@ -692,12 +693,12 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#ffffff',
+    color: appTheme.colors.white,
     fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.5,
@@ -707,13 +708,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   userName: {
-    color: '#13201b',
+    color: appTheme.colors.textStrong,
     fontSize: 21,
     fontWeight: '700',
     letterSpacing: -0.2,
   },
   timeText: {
-    color: '#67756f',
+    color: appTheme.colors.textMuted,
     fontSize: 14,
     fontWeight: '500',
   },
@@ -728,11 +729,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: '#b9dace',
-    backgroundColor: '#d8eee6',
+    borderColor: appTheme.colors.successBorder,
+    backgroundColor: appTheme.colors.successBg,
   },
   primaryTagText: {
-    color: '#195848',
+    color: appTheme.colors.successText,
     fontSize: 14,
     fontWeight: '700',
     textTransform: 'capitalize',
@@ -742,12 +743,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: '#edf3ef',
+    backgroundColor: appTheme.colors.surfaceSoft,
     borderWidth: 1,
-    borderColor: '#d9e3dd',
+    borderColor: appTheme.colors.borderSubtle,
   },
   secondaryTagText: {
-    color: '#4e5c56',
+    color: appTheme.colors.textSoft,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -762,22 +763,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   kiteablePill: {
-    backgroundColor: '#dff4e5',
-    borderColor: '#a8d5b4',
+    backgroundColor: appTheme.colors.successBg,
+    borderColor: appTheme.colors.successBorder,
   },
   notKiteablePill: {
-    backgroundColor: '#fde7e7',
-    borderColor: '#efb8b8',
+    backgroundColor: appTheme.colors.dangerBg,
+    borderColor: appTheme.colors.dangerBorder,
   },
   kiteabilityPillTextBase: {
     fontSize: 13,
     fontWeight: '700',
   },
   kiteablePillText: {
-    color: '#1f6b3b',
+    color: appTheme.colors.successText,
   },
   notKiteablePillText: {
-    color: '#9d2f2f',
+    color: appTheme.colors.dangerText,
   },
   mapWrap: {
     marginTop: 12,
@@ -785,11 +786,11 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#d9e1dc',
+    borderColor: appTheme.colors.borderSubtle,
   },
   notesText: {
     marginTop: 10,
-    color: '#495751',
+    color: appTheme.colors.textSoft,
     fontSize: 15,
     lineHeight: 22,
   },
@@ -801,23 +802,23 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   commentsTitle: {
-    color: '#24312b',
+    color: appTheme.colors.textStrong,
     fontSize: 18,
     fontWeight: '700',
   },
   commentsError: {
-    color: '#a33b3b',
+    color: appTheme.colors.dangerText,
     fontSize: 14,
     fontWeight: '600',
   },
   commentsEmpty: {
-    color: '#66746e',
+    color: appTheme.colors.textMuted,
     fontSize: 14,
   },
   commentCard: {
     borderWidth: 1,
-    borderColor: '#dde5e0',
-    backgroundColor: '#f5f8f6',
+    borderColor: appTheme.colors.borderSubtle,
+    backgroundColor: appTheme.colors.surfaceSoft,
     borderRadius: 12,
     padding: 12,
     gap: 6,
@@ -829,7 +830,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   commentAuthor: {
-    color: '#415048',
+    color: appTheme.colors.textSoft,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -839,26 +840,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8dfdf',
+    backgroundColor: appTheme.colors.dangerBg,
   },
   commentDeleteButtonPressed: {
-    backgroundColor: '#f3cbcb',
+    backgroundColor: appTheme.colors.dangerBorder,
   },
   commentDeleteButtonDisabled: {
     opacity: 0.8,
   },
   commentDeleteText: {
-    color: '#923333',
+    color: appTheme.colors.dangerText,
     fontSize: 12,
     fontWeight: '700',
   },
   commentBody: {
-    color: '#1f2a25',
+    color: appTheme.colors.textStrong,
     fontSize: 16,
     lineHeight: 21,
   },
   commentDate: {
-    color: '#74827b',
+    color: appTheme.colors.textSubtle,
     fontSize: 12,
   },
   commentInputRow: {
@@ -872,30 +873,30 @@ const styles = StyleSheet.create({
     minHeight: 46,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#cfd9d3',
-    backgroundColor: '#ffffff',
+    borderColor: appTheme.colors.borderSubtle,
+    backgroundColor: appTheme.colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#16201b',
+    color: appTheme.colors.text,
     fontSize: 16,
   },
   commentSubmitButton: {
     minWidth: 76,
     minHeight: 46,
     borderRadius: 12,
-    backgroundColor: '#1f6f5f',
+    backgroundColor: appTheme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 14,
   },
   commentSubmitButtonDisabled: {
-    backgroundColor: '#b8c8c1',
+    backgroundColor: appTheme.colors.borderSubtle,
   },
   commentSubmitButtonPressed: {
-    backgroundColor: '#19594d',
+    backgroundColor: appTheme.colors.primaryPressed,
   },
   commentSubmitText: {
-    color: '#ffffff',
+    color: appTheme.colors.white,
     fontSize: 16,
     fontWeight: '700',
   },

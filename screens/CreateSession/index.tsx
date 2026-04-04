@@ -1,5 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
+import { appTheme } from '@/constants/theme';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -45,7 +46,7 @@ const VISIBILITY_OPTIONS: readonly PostVisibility[] = [
   'private',
   'custom',
 ];
-const IOS_PICKER_TEXT_COLOR = '#1A1A1A';
+const IOS_PICKER_TEXT_COLOR = appTheme.colors.text;
 
 function padDateTimePart(value: number) {
   return String(value).padStart(2, '0');
@@ -530,7 +531,7 @@ export default function CreateSessionScreen() {
               />
             </Input>
             {locationSearching ? (
-              <ActivityIndicator size="small" color="#F5C542" />
+              <ActivityIndicator size="small" color={appTheme.colors.accent} />
             ) : null}
             {locationError ? (
               <Text style={styles.errorText}>{locationError}</Text>
@@ -657,7 +658,10 @@ export default function CreateSessionScreen() {
                   Choose friends who can see this post
                 </Text>
                 {loadingFriends ? (
-                  <ActivityIndicator size="small" color="#1f6f5f" />
+                  <ActivityIndicator
+                    size="small"
+                    color={appTheme.colors.primary}
+                  />
                 ) : null}
                 {friendsError ? (
                   <Text style={styles.errorText}>{friendsError}</Text>
@@ -732,11 +736,11 @@ export default function CreateSessionScreen() {
                   style={{
                     width: '100%',
                     borderRadius: 16,
-                    border: '1px solid #ddd',
+                    border: `1px solid ${appTheme.colors.border}`,
                     padding: '14px 16px',
                     fontSize: 16,
-                    color: '#1A1A1A',
-                    backgroundColor: '#fff',
+                    color: appTheme.colors.text,
+                    backgroundColor: appTheme.colors.surface,
                     boxSizing: 'border-box',
                   }}
                 />
@@ -802,7 +806,7 @@ export default function CreateSessionScreen() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#f7f6f2',
+    backgroundColor: appTheme.colors.background,
   },
   container: {
     flex: 1,
