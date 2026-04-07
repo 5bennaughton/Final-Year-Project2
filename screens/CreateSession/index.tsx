@@ -42,7 +42,6 @@ const SPORT_OPTIONS: readonly Sport[] = [
 ];
 const VISIBILITY_OPTIONS: readonly PostVisibility[] = [
   'public',
-  'friends',
   'private',
   'custom',
 ];
@@ -115,7 +114,7 @@ export default function CreateSessionScreen() {
   const [draftDateTime, setDraftDateTime] = useState<Date>(new Date());
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  // Post visibility controls (public/friends/private/custom).
+  // Post visibility controls (public/private/custom).
   const [postVisibility, setPostVisibility] =
     useState<PostVisibility>('public');
   // Friend list + selection for custom visibility.

@@ -13,7 +13,7 @@ export type LocationCoords = {
 
 export type Sport = 'kitesurfing' | 'wingfoiling' | 'windsurfing' | 'surfing';
 
-export type PostVisibility = 'public' | 'friends' | 'private' | 'custom';
+export type PostVisibility = 'public' | 'private' | 'custom';
 
 export type SessionPayload = {
   sport: Sport;

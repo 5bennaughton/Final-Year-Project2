@@ -31,7 +31,6 @@ import {
 import type { MeResponse, ProfileVisibility } from './settings.types';
 const VISIBILITY_OPTIONS: readonly ProfileVisibility[] = [
   'public',
-  'friends',
   'private',
 ];
 
@@ -83,7 +82,10 @@ export default function SettingsScreen() {
     setBio(profile.bio ?? '');
     setAvatarUrl(profile.avatarUrl ?? null);
     setProfileVisibility(
-      (profile.profileVisibility as ProfileVisibility) ?? 'public'
+      profile.profileVisibility === 'private' ||
+        profile.profileVisibility === 'friends'
+        ? 'private'
+        : 'public'
     );
     setHasHydrated(true);
   }, [profile, hasHydrated]);
@@ -121,7 +123,10 @@ export default function SettingsScreen() {
           : (data?.avatarUrl ?? avatarUrl ?? null);
       const nextVisibility =
         typeof data?.profileVisibility === 'string'
-          ? (data.profileVisibility as ProfileVisibility)
+          ? data.profileVisibility === 'private' ||
+            data.profileVisibility === 'friends'
+            ? 'private'
+            : 'public'
           : profileVisibility;
 
       setName(nextName);

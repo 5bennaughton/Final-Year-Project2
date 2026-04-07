@@ -1,4 +1,4 @@
-export type ProfileVisibility = 'public' | 'friends' | 'private';
+export type ProfileVisibility = 'public' | 'private';
 
 export type MeResponse = {
   name?: string;
