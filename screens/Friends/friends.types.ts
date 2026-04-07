@@ -1,9 +1,3 @@
-export type UserResult = {
-  id: string;
-  name: string;
-  email: string;
-};
-
 export type FriendRequest = {
   id: string;
   requesterId: string;

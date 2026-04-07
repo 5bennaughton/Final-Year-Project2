@@ -1,6 +1,6 @@
 import PostList from '@/components/PostList';
 import Slider from '@react-native-community/slider';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import { getCurrentLocation } from '@/helpers/helpers';
 import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -37,7 +37,7 @@ export default function NearbySessionsScreen() {
   const router = useRouter();
   const [radiusKm, setRadiusKm] = useState(10);
   const [posts, setPosts] = useState<any[]>([]);
-  const [coords, setCoords] = useState<GeoCoords | null>(null);
+  const [, setCoords] = useState<GeoCoords | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,13 +102,6 @@ export default function NearbySessionsScreen() {
           </Pressable>
         </View>
 
-        {coords ? (
-          <Text style={styles.coordsText}>
-            Using location: {coords.latitude.toFixed(4)},{' '}
-            {coords.longitude.toFixed(4)}
-          </Text>
-        ) : null}
-
         <PostList
           posts={posts}
           loading={loading}
@@ -128,31 +121,23 @@ export default function NearbySessionsScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: appTheme.colors.background,
+    ...uiStyles.screen,
   },
   content: {
-    padding: 20,
-    gap: 16,
+    ...uiStyles.screenContent,
   },
   backButton: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: appTheme.colors.borderSoft,
-    backgroundColor: appTheme.colors.surface,
+    ...uiStyles.smallOutlineButton,
   },
   backButtonText: {
-    fontWeight: '600',
+    ...uiStyles.smallOutlineButtonText,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...uiStyles.pageTitle,
   },
   formSection: {
-    gap: 8,
+    ...uiStyles.section,
   },
   fieldLabel: {
     fontWeight: '600',

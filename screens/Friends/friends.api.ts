@@ -4,10 +4,6 @@ import { requestJson } from '@/helpers/helpers';
 const FRIENDS_BASE = `${API_BASE}/friends`;
 const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
-export async function fetchFriendsList() {
-  return requestJson(`${FRIENDS_BASE}/list`, {}, 'Fetch friends failed');
-}
-
 export async function fetchIncomingFriendRequests() {
   return requestJson(
     `${FRIENDS_BASE}/list-requests?type=incoming`,

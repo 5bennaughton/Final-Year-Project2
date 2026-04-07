@@ -16,6 +16,7 @@ export type SpotRouteShape = {
   createdById?: string | null;
   windDirStart?: number | string | null;
   windDirEnd?: number | string | null;
+  directionMode?: string | null;
   isTidal?: boolean | string | null;
   tidePreference?: string | null;
   tideWindowHours?: number | string | null;
@@ -58,6 +59,7 @@ export function buildSpotRouteParams(spot: SpotRouteShape) {
     createdById: toRouteString(spot.createdBy ?? spot.createdById),
     windDirStart: toRouteString(spot.windDirStart),
     windDirEnd: toRouteString(spot.windDirEnd),
+    directionMode: toRouteString(spot.directionMode),
     isTidal: toRouteString(spot.isTidal),
     tidePreference: toRouteString(spot.tidePreference),
     tideWindowHours: toRouteString(spot.tideWindowHours),

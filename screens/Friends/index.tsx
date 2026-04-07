@@ -1,5 +1,5 @@
 import { Input, InputField } from '@/components/ui/input';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import { useUserSearch } from '@/helpers/helpers';
 import { buildSpotRouteParams } from '@/helpers/spotRoute';
 import { searchGlobalSpots } from '@/screens/Spots/spots.api';
@@ -337,16 +337,14 @@ export default function Friends() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    padding: 20,
+    ...uiStyles.screen,
   },
   content: {
-    gap: 16,
+    ...uiStyles.screenContent,
     paddingBottom: 24,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...uiStyles.pageTitle,
   },
   headerRow: {
     flexDirection: 'row',
@@ -368,34 +366,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   section: {
-    gap: 10,
+    ...uiStyles.section,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    ...uiStyles.sectionTitle,
   },
   searchPillWrap: {
     borderWidth: 1,
     borderColor: appTheme.colors.borderSubtle,
-    borderRadius: 999,
-    backgroundColor: 'white',
-    paddingHorizontal: 6,
+    borderRadius: appTheme.radius.pill,
+    backgroundColor: appTheme.colors.surface,
+    paddingHorizontal: appTheme.spacing.xs,
   },
   searchPillInput: {
     borderWidth: 0,
     backgroundColor: 'transparent',
   },
   inputText: {
-    color: 'black',
+    color: appTheme.colors.text,
   },
   errorText: {
-    color: 'red',
+    ...uiStyles.errorText,
   },
   successText: {
-    color: 'green',
+    ...uiStyles.successText,
   },
   subtleText: {
-    color: appTheme.colors.textMuted,
+    ...uiStyles.subtleText,
   },
   subtleLabel: {
     color: '#4d5a55',
@@ -428,15 +425,15 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
   },
   acceptRequestText: {
-    color: 'white',
-    fontSize: 12,
+    color: appTheme.colors.white,
+    fontSize: appTheme.fontSize.xs,
     fontWeight: '600',
   },
   declineRequestButton: {
-    borderRadius: 8,
+    borderRadius: appTheme.radius.sm,
     borderWidth: 1,
-    borderColor: '#d6d6d6',
-    backgroundColor: 'white',
+    borderColor: appTheme.colors.borderSoft,
+    backgroundColor: appTheme.colors.surface,
     paddingHorizontal: 12,
     paddingVertical: 7,
   },
@@ -452,16 +449,10 @@ const styles = StyleSheet.create({
     color: appTheme.colors.textMuted,
   },
   modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'center',
-    padding: 20,
+    ...uiStyles.modalBackdrop,
   },
   modalCard: {
-    borderRadius: 14,
-    backgroundColor: 'white',
-    padding: 14,
-    gap: 10,
+    ...uiStyles.modalCard,
     maxHeight: '70%',
   },
   modalHeaderRow: {
@@ -471,9 +462,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   modalCloseButton: {
-    borderRadius: 8,
+    borderRadius: appTheme.radius.sm,
     borderWidth: 1,
-    borderColor: '#d6d6d6',
+    borderColor: appTheme.colors.borderSoft,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
@@ -484,9 +475,9 @@ const styles = StyleSheet.create({
   },
   refreshRequestsButton: {
     alignSelf: 'flex-start',
-    borderRadius: 8,
+    borderRadius: appTheme.radius.sm,
     borderWidth: 1,
-    borderColor: '#d6d6d6',
+    borderColor: appTheme.colors.borderSoft,
     paddingHorizontal: 10,
     paddingVertical: 6,
     backgroundColor: appTheme.colors.surfaceMuted,

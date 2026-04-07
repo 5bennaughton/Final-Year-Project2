@@ -1,7 +1,8 @@
 import React from 'react';
-import { ActivityIndicator, Modal, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, Text, View } from 'react-native';
 
 import { Button, ButtonText } from '@/components/ui/button';
+import { appTheme, uiStyles } from '@/constants/theme';
 import type { DeleteSessionModalProps } from '@/helpers/types';
 
 export default function DeleteSessionModal({
@@ -14,36 +15,20 @@ export default function DeleteSessionModal({
 }: DeleteSessionModalProps) {
   return (
     <Modal visible={visible} transparent animationType="fade">
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(0, 0, 0, 0.4)',
-          justifyContent: 'center',
-          padding: 20,
-        }}
-      >
-        <View
-          style={{
-            backgroundColor: 'white',
-            padding: 16,
-            borderRadius: 12,
-            gap: 12,
-          }}
-        >
-          <Text style={{ fontSize: 18, fontWeight: '600' }}>
-            Delete session
-          </Text>
-          <Text style={{ color: '#666' }}>
+      <View style={styles.backdrop}>
+        <View style={styles.card}>
+          <Text style={styles.title}>Delete session</Text>
+          <Text style={styles.metaText}>
             {post?.sport} • {post ? new Date(post.time).toLocaleString() : ''}
           </Text>
-          {deleteError && <Text style={{ color: 'red' }}>{deleteError}</Text>}
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+          {deleteError ? <Text style={styles.errorText}>{deleteError}</Text> : null}
+          <View style={styles.actionsRow}>
             <Button onPress={onCancel} action="secondary" variant="outline">
               <ButtonText>Cancel</ButtonText>
             </Button>
             <Button onPress={onDelete} disabled={deleting}>
               {deleting ? (
-                <ActivityIndicator color="white" />
+                <ActivityIndicator color={appTheme.colors.white} />
               ) : (
                 <ButtonText>Delete</ButtonText>
               )}
@@ -54,3 +39,27 @@ export default function DeleteSessionModal({
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    ...uiStyles.modalBackdrop,
+  },
+  card: {
+    ...uiStyles.modalCard,
+  },
+  title: {
+    fontSize: appTheme.fontSize.lg,
+    fontWeight: '600',
+    color: appTheme.colors.textStrong,
+  },
+  metaText: {
+    color: appTheme.colors.textMuted,
+  },
+  errorText: {
+    ...uiStyles.errorText,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+});

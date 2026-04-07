@@ -10,6 +10,7 @@ export type SpotDetailsParams = {
   createdById?: string;
   windDirStart?: string;
   windDirEnd?: string;
+  directionMode?: string;
   isTidal?: string;
   tidePreference?: string;
   tideWindowHours?: string;

@@ -1,6 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -449,7 +449,7 @@ export default function CreateSessionScreen() {
             >
               <ButtonText style={styles.backButtonText}>Back</ButtonText>
             </Button>
-            <Text style={styles.title}>Create Post</Text>
+            <Text style={styles.title}>Create Session</Text>
             <View style={styles.headerSpacer} />
           </View>
         </View>
@@ -512,7 +512,7 @@ export default function CreateSessionScreen() {
                   value={formattedDateTime}
                   editable={false}
                   style={styles.inputField}
-                  placeholderTextColor="#888"
+                  placeholderTextColor={appTheme.colors.textSubtle}
                 />
               </Input>
             </Pressable>
@@ -527,7 +527,7 @@ export default function CreateSessionScreen() {
                 onChangeText={handleChangeLocation}
                 autoCapitalize="words"
                 style={styles.inputField}
-                placeholderTextColor="#888"
+                placeholderTextColor={appTheme.colors.textSubtle}
               />
             </Input>
             {locationSearching ? (
@@ -805,17 +805,16 @@ export default function CreateSessionScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: appTheme.colors.background,
+    ...uiStyles.screen,
   },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 12,
+    paddingHorizontal: appTheme.spacing.xl,
+    paddingTop: appTheme.spacing.md,
   },
   headerSection: {
-    marginBottom: 24,
-    gap: 8,
+    marginBottom: appTheme.spacing.xxl,
+    gap: appTheme.spacing.sm,
   },
   headerRow: {
     flexDirection: 'row',
@@ -823,210 +822,178 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   backButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    ...uiStyles.smallOutlineButton,
   },
   backButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    ...uiStyles.smallOutlineButtonText,
+    color: appTheme.colors.textStrong,
   },
   title: {
+    ...uiStyles.pageTitle,
     fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
   },
   headerSpacer: {
     width: 64,
   },
   scrollContent: {
-    gap: 20,
+    gap: appTheme.spacing.xl,
     paddingBottom: 64,
   },
   card: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 24,
-    backgroundColor: 'white',
-    padding: 16,
-    gap: 12,
+    ...uiStyles.largeSurfaceCard,
+    padding: appTheme.spacing.lg,
+    gap: appTheme.spacing.md,
   },
   cardLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    color: '#777',
+    ...uiStyles.fieldLabel,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: appTheme.spacing.sm,
   },
   sportChip: {
-    borderRadius: 999,
-    borderWidth: 1,
+    ...uiStyles.pillButton,
   },
   sportChipSelected: {
-    borderColor: '#F5C542',
-    backgroundColor: '#F5C542',
+    borderColor: appTheme.colors.accent,
+    backgroundColor: appTheme.colors.accent,
   },
   sportChipUnselected: {
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surface,
   },
   sportChipText: {
-    fontSize: 12,
+    ...uiStyles.pillButtonText,
     textTransform: 'capitalize',
   },
   sportChipTextSelected: {
-    color: '#1A1A1A',
+    color: appTheme.colors.textStrong,
   },
   sportChipTextUnselected: {
-    color: '#333',
+    color: appTheme.colors.textSoft,
   },
   inputRoot: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 16,
-    backgroundColor: 'white',
+    ...uiStyles.inputSurface,
   },
   inputField: {
-    fontSize: 16,
-    color: '#1A1A1A',
+    fontSize: appTheme.fontSize.md,
+    color: appTheme.colors.textStrong,
   },
   errorText: {
-    color: '#F26A5B',
+    ...uiStyles.errorText,
   },
   suggestionsWrap: {
     overflow: 'hidden',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    ...uiStyles.inputSurface,
   },
   suggestionsTitle: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    color: '#1f6f5f',
+    ...uiStyles.fieldLabel,
+    color: appTheme.colors.primary,
+    paddingHorizontal: appTheme.spacing.md,
+    paddingVertical: appTheme.spacing.sm,
   },
   suggestionItem: {
-    paddingHorizontal: 12,
+    paddingHorizontal: appTheme.spacing.md,
     paddingVertical: 10,
   },
   suggestionItemStriped: {
-    backgroundColor: '#f6f6f6',
+    backgroundColor: appTheme.colors.surfaceTint,
   },
   suggestionItemPlain: {
-    backgroundColor: 'white',
+    backgroundColor: appTheme.colors.surface,
   },
   suggestionPrimaryText: {
-    fontSize: 14,
+    fontSize: appTheme.fontSize.sm,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: appTheme.colors.textStrong,
   },
   suggestionSecondaryText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: appTheme.fontSize.xs,
+    color: appTheme.colors.textMuted,
   },
   suggestionLocationText: {
-    fontSize: 14,
-    color: '#1A1A1A',
+    fontSize: appTheme.fontSize.sm,
+    color: appTheme.colors.textStrong,
   },
   mapPreviewWrap: {
     height: 192,
     overflow: 'hidden',
-    borderRadius: 16,
+    borderRadius: appTheme.radius.xl,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: appTheme.colors.border,
   },
   mapPreview: {
     flex: 1,
   },
   visibilityChip: {
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    ...uiStyles.pillButton,
   },
   visibilityChipSelected: {
-    borderColor: '#1f6f5f',
-    backgroundColor: '#1f6f5f',
+    borderColor: appTheme.colors.primary,
+    backgroundColor: appTheme.colors.primary,
   },
   visibilityChipUnselected: {
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surface,
   },
   visibilityChipText: {
-    fontSize: 12,
+    ...uiStyles.pillButtonText,
     textTransform: 'capitalize',
   },
   visibilityChipTextSelected: {
-    color: 'white',
+    color: appTheme.colors.white,
   },
   visibilityChipTextUnselected: {
-    color: '#333',
+    color: appTheme.colors.textSoft,
   },
   customVisibilityWrap: {
-    gap: 8,
+    gap: appTheme.spacing.sm,
   },
   helperText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: appTheme.fontSize.xs,
+    color: appTheme.colors.textMuted,
   },
   friendItem: {
-    borderRadius: 16,
+    borderRadius: appTheme.radius.xl,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: appTheme.spacing.md,
+    paddingVertical: appTheme.spacing.sm,
   },
   friendItemSelected: {
-    borderColor: '#1f6f5f',
-    backgroundColor: '#f0fbf8',
+    borderColor: appTheme.colors.primary,
+    backgroundColor: appTheme.colors.primarySoft,
   },
   friendItemUnselected: {
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surface,
   },
   friendName: {
-    fontSize: 14,
+    fontSize: appTheme.fontSize.sm,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: appTheme.colors.textStrong,
   },
   friendHint: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: appTheme.fontSize.xs,
+    color: appTheme.colors.textMuted,
   },
   submitButton: {
-    borderRadius: 16,
+    borderRadius: appTheme.radius.xl,
     borderWidth: 1,
-    borderColor: '#1f6f5f',
-    backgroundColor: '#1f6f5f',
+    borderColor: appTheme.colors.primary,
+    backgroundColor: appTheme.colors.primary,
   },
   submitButtonText: {
-    fontSize: 16,
+    fontSize: appTheme.fontSize.md,
     fontWeight: '600',
-    color: 'white',
+    color: appTheme.colors.white,
   },
   modalBackdrop: {
-    flex: 1,
+    ...uiStyles.modalBackdrop,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   modalSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingBottom: 24,
-    paddingTop: 16,
+    ...uiStyles.bottomSheet,
   },
   modalHeaderRow: {
     flexDirection: 'row',
@@ -1034,43 +1001,39 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: appTheme.fontSize.lg,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: appTheme.colors.textStrong,
   },
   closeButton: {
     height: 32,
     width: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 999,
-    backgroundColor: '#eee',
+    borderRadius: appTheme.radius.pill,
+    backgroundColor: appTheme.colors.surfaceTint,
   },
   closeButtonText: {
-    fontSize: 12,
+    fontSize: appTheme.fontSize.xs,
     fontWeight: '600',
-    color: '#333',
+    color: appTheme.colors.textSoft,
   },
   modalPreviewText: {
     marginTop: 4,
-    fontSize: 14,
-    color: '#666',
+    fontSize: appTheme.fontSize.sm,
+    color: appTheme.colors.textMuted,
   },
   webPickerLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    ...uiStyles.fieldLabel,
   },
   pickerPanel: {
-    marginTop: 16,
-    gap: 12,
-    borderRadius: 16,
+    marginTop: appTheme.spacing.lg,
+    gap: appTheme.spacing.md,
+    borderRadius: appTheme.radius.xl,
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f7f7f7',
-    padding: 12,
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surfaceTint,
+    padding: appTheme.spacing.md,
   },
   pickerDateWrap: {
     height: 160,
@@ -1085,12 +1048,12 @@ const styles = StyleSheet.create({
     left: 16,
     right: 16,
     height: 36,
-    borderRadius: 12,
+    borderRadius: appTheme.radius.lg,
     borderWidth: 1,
     top: '50%',
     transform: [{ translateY: -18 }],
-    borderColor: '#F5C542',
-    backgroundColor: 'rgba(245, 197, 66, 0.12)',
+    borderColor: appTheme.colors.accent,
+    backgroundColor: 'rgba(242, 138, 84, 0.12)',
   },
   datePicker: {
     height: 160,
@@ -1099,32 +1062,29 @@ const styles = StyleSheet.create({
     height: 140,
   },
   modalActionsRow: {
-    marginTop: 16,
+    marginTop: appTheme.spacing.lg,
     flexDirection: 'row',
-    gap: 12,
+    gap: appTheme.spacing.md,
   },
   modalCancelButton: {
     flex: 1,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    ...uiStyles.inputSurface,
   },
   modalCancelButtonText: {
-    fontSize: 14,
+    fontSize: appTheme.fontSize.sm,
     fontWeight: '600',
-    color: '#333',
+    color: appTheme.colors.textSoft,
   },
   modalDoneButton: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: appTheme.radius.xl,
     borderWidth: 1,
-    borderColor: '#1f6f5f',
-    backgroundColor: '#1f6f5f',
+    borderColor: appTheme.colors.primary,
+    backgroundColor: appTheme.colors.primary,
   },
   modalDoneButtonText: {
-    fontSize: 14,
+    fontSize: appTheme.fontSize.sm,
     fontWeight: '600',
-    color: 'white',
+    color: appTheme.colors.white,
   },
 });

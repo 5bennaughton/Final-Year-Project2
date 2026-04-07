@@ -1,6 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import {
   buildSpotRouteParams,
   parseRouteBoolean,
@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { createGlobalSpot, updateGlobalSpot } from './addSpot.api';
 import type {
   AddSpotParams,
+  DirectionMode,
   SpotPayload,
   TidePreference,
 } from './addSpot.types';
@@ -39,6 +40,7 @@ export default function AddSpot() {
     lng,
     windDirStart: routeWindDirStart,
     windDirEnd: routeWindDirEnd,
+    directionMode: routeDirectionMode,
     isTidal: routeIsTidal,
     tidePreference: routeTidePreference,
     tideWindowHours: routeTideWindowHours,
@@ -72,7 +74,10 @@ export default function AddSpot() {
   const [windDirEndInput, setWindDirEndInput] = useState(
     routeWindDirEnd ? parseRouteText(routeWindDirEnd) : ''
   );
-  // Basic tidal flag. Default is false (non-tidal).
+  const [directionMode, setDirectionMode] = useState<DirectionMode>(
+    routeDirectionMode === 'anticlockwise' ? 'anticlockwise' : 'clockwise'
+  );
+  // tidal flag. Default is false (non-tidal).
   const [isTidal, setIsTidal] = useState(
     parseRouteBoolean(routeIsTidal) === true
   );
@@ -217,6 +222,7 @@ export default function AddSpot() {
       description: description.trim() ? description.trim() : null,
       windDirStart,
       windDirEnd,
+      directionMode,
       isTidal,
       tidePreference: isTidal ? tidePreference : null,
       tideWindowHours,
@@ -268,7 +274,7 @@ export default function AddSpot() {
               value={name}
               onChangeText={setName}
               style={styles.inputText}
-              placeholderTextColor="#888"
+              placeholderTextColor={appTheme.colors.textSubtle}
             />
           </Input>
         </View>
@@ -281,7 +287,7 @@ export default function AddSpot() {
               value={type}
               onChangeText={setType}
               style={styles.inputText}
-              placeholderTextColor="#888"
+              placeholderTextColor={appTheme.colors.textSubtle}
             />
           </Input>
         </View>
@@ -290,7 +296,7 @@ export default function AddSpot() {
           <Text style={styles.label}>Description</Text>
           <TextInput
             placeholder="Great kickers on high"
-            placeholderTextColor="#888"
+            placeholderTextColor={appTheme.colors.textSubtle}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -369,6 +375,26 @@ export default function AddSpot() {
                 onValueChange={(value) => setWindDirection('end', value)}
               />
             </View>
+
+            <View style={styles.switchRow}>
+              <Switch
+                value={directionMode === 'anticlockwise'}
+                onValueChange={(value) =>
+                  setDirectionMode(value ? 'anticlockwise' : 'clockwise')
+                }
+                trackColor={{
+                  false: appTheme.colors.borderSoft,
+                  true: appTheme.colors.primary,
+                }}
+                thumbColor={appTheme.colors.white}
+                ios_backgroundColor={appTheme.colors.borderSoft}
+              />
+              <Text style={styles.switchStateText}>
+                {directionMode === 'anticlockwise'
+                  ? 'Anti-clockwise'
+                  : 'Clockwise'}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -441,35 +467,30 @@ export default function AddSpot() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: appTheme.colors.background,
+    ...uiStyles.screen,
   },
   content: {
-    padding: 20,
-    gap: 16,
+    ...uiStyles.screenContent,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...uiStyles.pageTitle,
   },
   formGroup: {
-    gap: 8,
+    ...uiStyles.section,
+    gap: appTheme.spacing.sm,
   },
   label: {
-    fontWeight: '600',
+    ...uiStyles.fieldLabel,
   },
   inputText: {
-    color: 'black',
+    color: appTheme.colors.textStrong,
   },
   descriptionInput: {
     minHeight: 90,
-    borderWidth: 1,
-    borderColor: appTheme.colors.border,
-    borderRadius: 8,
+    ...uiStyles.inputSurface,
     padding: 10,
-    backgroundColor: 'white',
     textAlignVertical: 'top',
-    color: 'black',
+    color: appTheme.colors.textStrong,
   },
   helperText: {
     color: appTheme.colors.textMuted,
@@ -480,20 +501,17 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   switchStateText: {
-    fontSize: 14,
+    fontSize: appTheme.fontSize.sm,
     fontWeight: '600',
     color: appTheme.colors.textSoft,
   },
   errorText: {
-    color: 'red',
+    ...uiStyles.errorText,
   },
   windCard: {
+    ...uiStyles.surfaceCard,
     gap: 14,
     padding: 14,
-    borderWidth: 1,
-    borderColor: appTheme.colors.border,
-    borderRadius: 12,
-    backgroundColor: 'white',
   },
   windPreviewRow: {
     flexDirection: 'row',
@@ -551,8 +569,8 @@ const styles = StyleSheet.create({
   compassCenterDot: {
     width: 10,
     height: 10,
-    borderRadius: 999,
-    backgroundColor: '#333',
+    borderRadius: appTheme.radius.pill,
+    backgroundColor: appTheme.colors.textSoft,
   },
   windValues: {
     gap: 8,
@@ -567,7 +585,10 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   sliderLabel: {
+    ...uiStyles.fieldLabel,
     fontWeight: '600',
+    textTransform: 'none',
+    letterSpacing: 0,
     color: appTheme.colors.textSoft,
   },
 });

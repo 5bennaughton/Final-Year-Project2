@@ -29,4 +29,145 @@ export const appTheme = {
     dangerTextStrong: '#b91c1c',
     white: '#ffffff',
   },
+  spacing: {
+    xs: 6,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 20,
+    xxl: 24,
+  },
+  radius: {
+    sm: 8,
+    md: 10,
+    lg: 12,
+    xl: 14,
+    xxl: 18,
+    pill: 999,
+  },
+  fontSize: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    xl: 20,
+    xxl: 22,
+    hero: 28,
+  },
+} as const;
+
+export const uiStyles = {
+  screen: {
+    flex: 1,
+    backgroundColor: appTheme.colors.background,
+  },
+  screenContent: {
+    padding: appTheme.spacing.xl,
+    gap: appTheme.spacing.lg,
+  },
+  pageTitle: {
+    fontSize: appTheme.fontSize.xxl,
+    fontWeight: '700' as const,
+    color: appTheme.colors.textStrong,
+  },
+  heroTitle: {
+    fontSize: appTheme.fontSize.hero,
+    fontWeight: '800' as const,
+    letterSpacing: -1,
+    color: appTheme.colors.textStrong,
+  },
+  eyebrowText: {
+    fontSize: appTheme.fontSize.xs,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 1,
+    color: appTheme.colors.primary,
+  },
+  section: {
+    gap: appTheme.spacing.md,
+  },
+  sectionTitle: {
+    fontSize: appTheme.fontSize.md,
+    fontWeight: '700' as const,
+    color: appTheme.colors.textStrong,
+  },
+  fieldLabel: {
+    fontSize: appTheme.fontSize.xs,
+    fontWeight: '600' as const,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.6,
+    color: appTheme.colors.textSubtle,
+  },
+  subtleText: {
+    color: appTheme.colors.textMuted,
+  },
+  errorText: {
+    color: appTheme.colors.dangerTextStrong,
+  },
+  successText: {
+    color: appTheme.colors.successText,
+  },
+  surfaceCard: {
+    backgroundColor: appTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    borderRadius: appTheme.radius.md,
+  },
+  largeSurfaceCard: {
+    backgroundColor: appTheme.colors.surface,
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    borderRadius: appTheme.radius.xxl,
+  },
+  inputSurface: {
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    borderRadius: appTheme.radius.xl,
+    backgroundColor: appTheme.colors.surface,
+  },
+  pillButton: {
+    borderRadius: appTheme.radius.pill,
+    borderWidth: 1,
+    paddingHorizontal: appTheme.spacing.md,
+    paddingVertical: appTheme.spacing.xs,
+  },
+  pillButtonText: {
+    fontSize: appTheme.fontSize.xs,
+    fontWeight: '600' as const,
+  },
+  smallOutlineButton: {
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surface,
+    paddingHorizontal: appTheme.spacing.sm,
+    paddingVertical: appTheme.spacing.xs,
+    borderRadius: appTheme.radius.sm,
+  },
+  smallOutlineButtonText: {
+    fontSize: appTheme.fontSize.xs,
+    fontWeight: '600' as const,
+    color: appTheme.colors.textSoft,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center' as const,
+    padding: appTheme.spacing.xl,
+  },
+  modalCard: {
+    backgroundColor: appTheme.colors.surface,
+    padding: appTheme.spacing.lg,
+    borderRadius: appTheme.radius.lg,
+    gap: appTheme.spacing.md,
+  },
+  bottomSheet: {
+    borderTopLeftRadius: appTheme.radius.xxl,
+    borderTopRightRadius: appTheme.radius.xxl,
+    borderWidth: 1,
+    borderColor: appTheme.colors.border,
+    backgroundColor: appTheme.colors.surface,
+    paddingHorizontal: appTheme.spacing.xl,
+    paddingBottom: appTheme.spacing.xxl,
+    paddingTop: appTheme.spacing.lg,
+  },
 } as const;

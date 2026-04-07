@@ -150,7 +150,7 @@ function parseMapChildren(children: React.ReactNode) {
   return { markers, tile };
 }
 
-// Keep tile selection minimal: use explicit tiles when given, otherwise support the one satellite case.
+// use tiles when given, otherwise support the one satellite case.
 function getTileConfig(tile: UrlTileProps | null, mapType?: string) {
   if (tile?.urlTemplate) {
     return {
@@ -177,7 +177,7 @@ function getTileConfig(tile: UrlTileProps | null, mapType?: string) {
   };
 }
 
-// Use a simple HTML pin so web does not depend on Leaflet's default image assets.
+// Use a HTML pin so web does not depend on Leaflet's default image
 function buildPinIconHtml(isPending: boolean) {
   const pinColor = isPending ? '#ea580c' : '#1f6f5f';
   const innerColor = isPending ? '#fb923c' : '#2dd4bf';
@@ -308,7 +308,7 @@ const MapView = forwardRef<WebMapViewHandle, WebMapViewProps>(
           dragging: scrollEnabled,
           scrollWheelZoom: zoomEnabled,
           touchZoom: zoomEnabled,
-          zoomControl: zoomEnabled,
+          zoomControl: false,
         });
 
         map.setView(

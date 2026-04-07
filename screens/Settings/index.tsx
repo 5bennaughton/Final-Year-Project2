@@ -1,6 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { Input, InputField } from '@/components/ui/input';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import { useMeProfile } from '@/helpers/helpers';
 import {
   clearAuthToken,
@@ -293,7 +293,7 @@ export default function SettingsScreen() {
               autoCapitalize="words"
               selectionColor={appTheme.colors.primary}
               style={styles.inputText}
-              placeholderTextColor="#777"
+              placeholderTextColor={appTheme.colors.textSubtle}
             />
           </Input>
 
@@ -304,7 +304,7 @@ export default function SettingsScreen() {
               onChangeText={setBio}
               selectionColor={appTheme.colors.primary}
               style={styles.bioInput}
-              placeholderTextColor="#777"
+              placeholderTextColor={appTheme.colors.textSubtle}
             />
           </Input>
 
@@ -380,26 +380,23 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: appTheme.colors.background,
+    ...uiStyles.screen,
   },
   content: {
-    padding: 20,
-    gap: 16,
+    ...uiStyles.screenContent,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...uiStyles.pageTitle,
   },
   section: {
-    gap: 10,
+    ...uiStyles.section,
   },
   sectionTitle: {
-    fontWeight: '700',
+    ...uiStyles.sectionTitle,
   },
   avatarSection: {
     alignItems: 'center',
-    gap: 8,
+    gap: appTheme.spacing.sm,
   },
   avatar: {
     width: 80,
@@ -433,13 +430,13 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   errorText: {
-    color: 'red',
+    ...uiStyles.errorText,
   },
   successText: {
-    color: appTheme.colors.primary,
+    ...uiStyles.successText,
   },
   subtleText: {
-    color: appTheme.colors.textMuted,
+    ...uiStyles.subtleText,
   },
   privacyOptionsRow: {
     flexDirection: 'row',

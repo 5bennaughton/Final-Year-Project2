@@ -1,7 +1,7 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
 import { DeleteSessionModal } from '@/components/ui/modals';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import { useListPosts, useMeProfile } from '@/helpers/helpers';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -167,7 +167,7 @@ export default function HomePage() {
         {/* Primary actions */}
         <View style={styles.primaryActions}>
           <Button onPress={goToCreatePost}>
-            <ButtonText>Create Post</ButtonText>
+            <ButtonText>Create Session</ButtonText>
           </Button>
         </View>
 
@@ -213,12 +213,10 @@ export default function HomePage() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: appTheme.colors.background,
+    ...uiStyles.screen,
   },
   content: {
-    padding: 20,
-    gap: 16,
+    ...uiStyles.screenContent,
   },
   headerRow: {
     flexDirection: 'row',
@@ -264,16 +262,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   quickActionButton: {
-    borderWidth: 1,
-    borderColor: appTheme.colors.border,
-    backgroundColor: appTheme.colors.surface,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    ...uiStyles.smallOutlineButton,
   },
   quickActionButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...uiStyles.smallOutlineButtonText,
   },
   bioText: {
     color: appTheme.colors.textSoft,
@@ -287,14 +279,13 @@ const styles = StyleSheet.create({
     color: appTheme.colors.textSoft,
   },
   errorText: {
-    color: 'red',
+    ...uiStyles.errorText,
   },
   primaryActions: {
     gap: 10,
   },
   postsHeading: {
-    fontSize: 18,
-    fontWeight: '700',
+    ...uiStyles.sectionTitle,
   },
   deleteActionWrap: {
     alignItems: 'flex-end',

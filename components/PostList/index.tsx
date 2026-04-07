@@ -45,6 +45,18 @@ function formatPostTime(time?: string) {
   })}`;
 }
 
+function formatCommentTime(time?: string) {
+  if (!time) return '';
+  const parsed = Date.parse(time);
+  if (Number.isNaN(parsed)) return time;
+
+  const value = new Date(parsed);
+  return `${value.toLocaleDateString()}, ${value.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })}`;
+}
+
 /**
  * Turn any raw post shape into one normalized shape.
  */
@@ -484,9 +496,7 @@ export default function PostList({
                       ) : null}
 
                       {comments.map((comment) => {
-                        const createdAt = comment.createdAt
-                          ? new Date(comment.createdAt).toLocaleString()
-                          : '';
+                        const createdAt = formatCommentTime(comment.createdAt);
 
                         const displayName = comment.userName ?? 'User';
                         const canDelete = currentUserId === comment.userId;

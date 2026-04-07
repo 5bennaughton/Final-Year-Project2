@@ -1,12 +1,12 @@
 import PostList from '@/components/PostList';
 import { Button, ButtonText } from '@/components/ui/button';
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import { getAuthUser } from '@/lib/auth';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  Pressable,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -95,6 +95,7 @@ export default function SpotDetails() {
     lng,
     windDirStart,
     windDirEnd,
+    directionMode: routeDirectionMode,
     isTidal,
     tidePreference,
     tideWindowHours,
@@ -119,8 +120,6 @@ export default function SpotDetails() {
   const [kiteableForecastError, setKiteableForecastError] = useState<
     string | null
   >(null);
-  const [directionMode, setDirectionMode] =
-    useState<DirectionMode>('anticlockwise');
   const [ratingSummary, setRatingSummary] = useState<SpotRatingSummary | null>(
     null
   );
@@ -135,6 +134,8 @@ export default function SpotDetails() {
     currentUserId &&
     (currentUserId === spotOwnerId || currentUserRole === 'admin')
   );
+  const spotDirectionMode: DirectionMode =
+    routeDirectionMode === 'anticlockwise' ? 'anticlockwise' : 'clockwise';
 
   useEffect(() => {
     let isMounted = true;
@@ -262,7 +263,7 @@ export default function SpotDetails() {
       setKiteableForecastError(null);
 
       try {
-        const data = await fetchKiteableForecast(id, directionMode);
+        const data = await fetchKiteableForecast(id, spotDirectionMode);
 
         if (isMounted) {
           setKiteableForecast((data ?? null) as KiteableForecastResult);
@@ -286,7 +287,7 @@ export default function SpotDetails() {
     return () => {
       isMounted = false;
     };
-  }, [id, directionMode]);
+  }, [id, spotDirectionMode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -335,6 +336,18 @@ export default function SpotDetails() {
 
   const confirmDeleteSpot = () => {
     if (!id || deletingSpot) return;
+
+    // Web needs a browser confirm here; otherwise the delete handler never runs.
+    if (Platform.OS === 'web') {
+      if (
+        globalThis.confirm?.(
+          'Delete this spot? This will remove the spot from the global map.'
+        )
+      ) {
+        deleteSpot();
+      }
+      return;
+    }
 
     Alert.alert(
       'Delete spot?',
@@ -386,6 +399,7 @@ export default function SpotDetails() {
         lng: (lng ?? '').toString(),
         windDirStart: (windDirStart ?? '').toString(),
         windDirEnd: (windDirEnd ?? '').toString(),
+        directionMode: spotDirectionMode,
         isTidal: (isTidal ?? '').toString(),
         tidePreference: (tidePreference ?? '').toString(),
         tideWindowHours: (tideWindowHours ?? '').toString(),
@@ -574,7 +588,8 @@ export default function SpotDetails() {
                 <Text style={styles.ruleSummaryText}>
                   Rotation{' '}
                   {formatDirectionModeLabel(
-                    kiteableForecast?.thresholds?.directionMode
+                    kiteableForecast?.thresholds?.directionMode ??
+                      spotDirectionMode
                   )}
                 </Text>
                 {isTidalSpot ? (
@@ -595,102 +610,57 @@ export default function SpotDetails() {
           )}
         </View>
 
-        <View style={styles.splitRow}>
-          <View style={[styles.sectionCard, styles.splitCard]}>
-            <Text style={styles.sectionEyebrow}>Rotation preference</Text>
-            <View style={styles.segmentedControl}>
-              <Pressable
-                onPress={() => setDirectionMode('clockwise')}
-                style={[
-                  styles.segmentButton,
-                  directionMode === 'clockwise' && styles.segmentButtonActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.segmentButtonText,
-                    directionMode === 'clockwise' &&
-                      styles.segmentButtonTextActive,
-                  ]}
-                >
-                  Clockwise
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionEyebrow}>Spot rating</Text>
+
+          {ratingLoading ? (
+            <Text style={styles.subtleText}>Loading rating...</Text>
+          ) : (
+            <>
+              <View style={styles.ratingHeaderRow}>
+                <Text style={styles.ratingNumber}>{ratingAverageLabel}</Text>
+                <Text style={styles.ratingCountText}>
+                  {ratingSummary?.ratingCount ?? 0}{' '}
+                  {ratingSummary?.ratingCount === 1 ? 'rating' : 'ratings'}
                 </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setDirectionMode('anticlockwise')}
-                style={[
-                  styles.segmentButton,
-                  directionMode === 'anticlockwise' &&
-                    styles.segmentButtonActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.segmentButtonText,
-                    directionMode === 'anticlockwise' &&
-                      styles.segmentButtonTextActive,
-                  ]}
-                >
-                  Anti-clockwise
-                </Text>
-              </Pressable>
-            </View>
-          </View>
+              </View>
 
-          <View style={[styles.sectionCard, styles.splitCard]}>
-            <Text style={styles.sectionEyebrow}>Spot rating</Text>
-
-            {ratingLoading ? (
-              <Text style={styles.subtleText}>Loading rating...</Text>
-            ) : (
-              <>
-                <View style={styles.ratingHeaderRow}>
-                  <Text style={styles.ratingNumber}>{ratingAverageLabel}</Text>
-                  <Text style={styles.ratingCountText}>
-                    {ratingSummary?.ratingCount ?? 0}{' '}
-                    {ratingSummary?.ratingCount === 1 ? 'rating' : 'ratings'}
-                  </Text>
-                </View>
-
-                <View style={styles.starRow}>
-                  {STAR_VALUES.map((value) => {
-                    const selected = value <= (ratingSummary?.myRating ?? 0);
-                    return (
-                      <Pressable
-                        key={value}
-                        onPress={() => rateSpot(value)}
-                        disabled={ratingSubmitting}
-                        style={styles.starButton}
+              <View style={styles.starRow}>
+                {STAR_VALUES.map((value) => {
+                  const selected = value <= (ratingSummary?.myRating ?? 0);
+                  return (
+                    <View key={value} style={styles.starButton}>
+                      <Text
+                        onPress={
+                          ratingSubmitting ? undefined : () => rateSpot(value)
+                        }
+                        style={[
+                          styles.starIcon,
+                          selected
+                            ? styles.starIconSelected
+                            : styles.starIconOff,
+                        ]}
                       >
-                        <Text
-                          style={[
-                            styles.starIcon,
-                            selected
-                              ? styles.starIconSelected
-                              : styles.starIconOff,
-                          ]}
-                        >
-                          ★
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                        ★
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
 
-                <Text style={styles.subtleText}>
-                  Your rating: {ratingSummary?.myRating ?? 'Not rated yet'}
-                </Text>
+              <Text style={styles.subtleText}>
+                Your rating: {ratingSummary?.myRating ?? 'Not rated yet'}
+              </Text>
 
-                {ratingSubmitting ? (
-                  <Text style={styles.subtleText}>Saving your rating...</Text>
-                ) : null}
-              </>
-            )}
+              {ratingSubmitting ? (
+                <Text style={styles.subtleText}>Saving your rating...</Text>
+              ) : null}
+            </>
+          )}
 
-            {ratingError ? (
-              <Text style={styles.errorText}>{ratingError}</Text>
-            ) : null}
-          </View>
+          {ratingError ? (
+            <Text style={styles.errorText}>{ratingError}</Text>
+          ) : null}
         </View>
 
         <View style={styles.sectionCard}>
@@ -733,9 +703,8 @@ export default function SpotDetails() {
                       {formatForecastTimeLabel(hour.time)}
                     </Text>
                     <Text style={styles.forecastTileSpeed}>
-                      {hour.speedKn?.toFixed(1) ?? '-'}
+                      {hour.speedKn?.toFixed(1) ?? '-'} knots
                     </Text>
-                    <Text style={styles.forecastTileUnit}>kn</Text>
                     <Text style={styles.forecastTileMeta}>
                       {hour.directionDeg}°
                     </Text>
@@ -798,19 +767,15 @@ export default function SpotDetails() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
-    backgroundColor: appTheme.colors.background,
+    ...uiStyles.screen,
   },
   content: {
-    padding: 20,
-    gap: 16,
+    ...uiStyles.screenContent,
   },
   heroCard: {
+    ...uiStyles.largeSurfaceCard,
     gap: 14,
-    borderWidth: 1,
     borderColor: appTheme.colors.borderSoft,
-    borderRadius: 18,
-    backgroundColor: appTheme.colors.surface,
     padding: 18,
   },
   heroHeaderRow: {
@@ -820,25 +785,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroEyebrow: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: appTheme.colors.primary,
+    ...uiStyles.eyebrowText,
   },
   sectionCard: {
-    gap: 12,
-    borderWidth: 1,
-    borderColor: appTheme.colors.border,
-    borderRadius: 16,
-    backgroundColor: appTheme.colors.surface,
-    padding: 16,
+    ...uiStyles.surfaceCard,
+    gap: appTheme.spacing.md,
+    padding: appTheme.spacing.lg,
+    borderRadius: appTheme.radius.xl,
   },
   pageTitle: {
+    ...uiStyles.heroTitle,
     fontSize: 34,
-    fontWeight: '800',
-    letterSpacing: -1,
-    color: appTheme.colors.text,
   },
   heroMetaRow: {
     flexDirection: 'row',
@@ -879,27 +836,24 @@ const styles = StyleSheet.create({
   heroDescription: {
     fontSize: 15,
     lineHeight: 22,
-    color: '#353535',
+    color: appTheme.colors.text,
   },
   sectionEyebrow: {
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    ...uiStyles.eyebrowText,
     color: appTheme.colors.accent,
   },
   sectionTitle: {
+    ...uiStyles.pageTitle,
     fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.5,
-    color: appTheme.colors.text,
   },
   subtleText: {
-    color: appTheme.colors.textMuted,
+    ...uiStyles.subtleText,
   },
   posterErrorText: {
     color: appTheme.colors.textSubtle,
-    fontSize: 12,
+    fontSize: appTheme.fontSize.xs,
   },
   starRow: {
     flexDirection: 'row',
@@ -942,7 +896,7 @@ const styles = StyleSheet.create({
   windDirectionText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#314152',
+    color: appTheme.colors.textStrong,
   },
   quickStatsRow: {
     flexDirection: 'row',
@@ -953,15 +907,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     minWidth: 96,
     backgroundColor: appTheme.colors.surfaceMuted,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    borderRadius: appTheme.radius.lg,
+    paddingHorizontal: appTheme.spacing.md,
+    paddingVertical: appTheme.spacing.md,
   },
   quickStatLabel: {
-    color: '#7c8794',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    ...uiStyles.fieldLabel,
+    color: appTheme.colors.textSubtle,
     letterSpacing: 0.8,
     marginBottom: 4,
   },
@@ -980,39 +932,6 @@ const styles = StyleSheet.create({
   noteText: {
     color: appTheme.colors.textSubtle,
     fontSize: 12,
-  },
-  splitRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  splitCard: {
-    flexGrow: 1,
-    flexBasis: 220,
-  },
-  segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: appTheme.colors.surfaceTint,
-    borderRadius: 12,
-    padding: 4,
-    gap: 4,
-  },
-  segmentButton: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-  },
-  segmentButtonActive: {
-    backgroundColor: appTheme.colors.accent,
-  },
-  segmentButtonText: {
-    textAlign: 'center',
-    fontWeight: '700',
-    color: appTheme.colors.textSoft,
-  },
-  segmentButtonTextActive: {
-    color: appTheme.colors.white,
   },
   ratingHeaderRow: {
     flexDirection: 'row',
@@ -1069,16 +988,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   forecastTileSpeed: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: '800',
     letterSpacing: -1,
     color: appTheme.colors.textStrong,
-  },
-  forecastTileUnit: {
-    color: appTheme.colors.accent,
-    fontSize: 12,
-    fontWeight: '700',
-    textTransform: 'uppercase',
   },
   forecastTileMeta: {
     color: appTheme.colors.textSoft,
@@ -1092,6 +1005,6 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   errorText: {
-    color: appTheme.colors.dangerTextStrong,
+    ...uiStyles.errorText,
   },
 });

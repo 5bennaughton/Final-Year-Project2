@@ -12,6 +12,7 @@ export type Spot = {
   description?: string | null;
   windDirStart?: number | null;
   windDirEnd?: number | null;
+  directionMode?: string | null;
   isTidal?: boolean | null;
   tidePreference?: string | null;
   tideWindowHours?: number | null;

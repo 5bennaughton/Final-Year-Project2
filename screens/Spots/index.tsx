@@ -1,4 +1,4 @@
-import { appTheme } from '@/constants/theme';
+import { appTheme, uiStyles } from '@/constants/theme';
 import { useFocusEffect } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -303,7 +303,7 @@ export default function SpotsScreen() {
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1,
+    ...uiStyles.screen,
   },
   centeredState: {
     flex: 1,
@@ -315,11 +315,10 @@ const styles = StyleSheet.create({
     color: appTheme.colors.textMuted,
   },
   fallbackWrap: {
-    padding: 20,
+    padding: appTheme.spacing.xl,
   },
   fallbackTitle: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...uiStyles.pageTitle,
   },
   fallbackSubtitle: {
     marginTop: 8,
@@ -327,7 +326,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     marginTop: 8,
-    color: 'red',
+    ...uiStyles.errorText,
   },
   mapWrap: {
     flex: 1,
@@ -349,25 +348,19 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     alignSelf: 'flex-end',
-    backgroundColor: appTheme.colors.surface,
-    borderWidth: 1,
-    borderColor: appTheme.colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    ...uiStyles.smallOutlineButton,
   },
   refreshButtonText: {
+    ...uiStyles.smallOutlineButtonText,
     color: appTheme.colors.primary,
-    fontWeight: '600',
-    fontSize: 12,
   },
   searchStateText: {
     color: appTheme.colors.textMuted,
     fontSize: 12,
   },
   searchErrorText: {
-    color: 'red',
-    fontSize: 12,
+    ...uiStyles.errorText,
+    fontSize: appTheme.fontSize.xs,
   },
   suggestionsList: {
     backgroundColor: appTheme.colors.surface,
@@ -416,7 +409,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   addSpotButtonText: {
-    color: 'white',
+    color: appTheme.colors.white,
     fontWeight: '600',
   },
 });
