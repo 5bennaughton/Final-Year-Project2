@@ -1,7 +1,7 @@
 import PostList from '@/components/PostList';
 import { appTheme } from '@/constants/theme';
 import { useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
@@ -14,52 +14,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchFeedPosts } from './home.api';
 import type { FeedPost } from './home.types';
 
-type FeedFilter = 'all' | 'today' | 'thisWeek';
-
-const FEED_FILTERS: { key: FeedFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'today', label: 'Today' },
-  { key: 'thisWeek', label: 'This Week' },
-];
-
-function getPostTime(post: FeedPost): string | undefined {
-  const nested = post?.futureSessions?.time;
-  if (typeof nested === 'string') return nested;
-
-  if (typeof post?.time === 'string') return post.time;
-  return undefined;
-}
-
-function isSameDay(left: Date, right: Date) {
-  return (
-    left.getFullYear() === right.getFullYear() &&
-    left.getMonth() === right.getMonth() &&
-    left.getDate() === right.getDate()
-  );
-}
-
-function matchesFilter(post: FeedPost, filter: FeedFilter) {
-  if (filter === 'all') return true;
-
-  const rawTime = getPostTime(post);
-  if (!rawTime) return false;
-
-  const parsed = Date.parse(rawTime);
-  if (Number.isNaN(parsed)) return false;
-
-  const postDate = new Date(parsed);
-  const now = new Date();
-
-  if (filter === 'today') {
-    return isSameDay(postDate, now);
-  }
-
-  const endWindow = new Date(now);
-  endWindow.setDate(endWindow.getDate() + 7);
-
-  return postDate >= now && postDate <= endWindow;
-}
-
 /**
  * Home screen showing the friends feed with map pins and comments.
  * Fetches posts once on mount and renders a list.
@@ -69,7 +23,6 @@ export default function Home() {
   const [feedPosts, setFeedPosts] = useState<FeedPost[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FeedFilter>('all');
 
   /**
    * Fetch the friends feed once on mount.
@@ -93,11 +46,6 @@ export default function Home() {
   useEffect(() => {
     void loadFeed();
   }, [loadFeed]);
-
-  const filteredPosts = useMemo(
-    () => feedPosts.filter((post) => matchesFilter(post, activeFilter)),
-    [feedPosts, activeFilter]
-  );
 
   const showInitialLoading = loading && feedPosts.length === 0;
 
@@ -130,45 +78,11 @@ export default function Home() {
           <Text style={styles.nearbyButtonText}>Find Sessions Nearby</Text>
         </Pressable>
 
-        <View style={styles.filterSection}>
-          <Text style={styles.filterLabel}>Filter</Text>
-          <View style={styles.filterRow}>
-            {FEED_FILTERS.map((item) => {
-              const isActive = activeFilter === item.key;
-
-              return (
-                <Pressable
-                  key={item.key}
-                  onPress={() => setActiveFilter(item.key)}
-                  style={({ pressed }) => [
-                    styles.filterChip,
-                    isActive && styles.filterChipActive,
-                    pressed && !isActive && styles.filterChipPressed,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.filterChipText,
-                      isActive && styles.filterChipTextActive,
-                    ]}
-                  >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-
         <PostList
-          posts={filteredPosts}
+          posts={feedPosts}
           loading={showInitialLoading}
           error={error}
-          emptyMessage={
-            activeFilter === 'all'
-              ? 'No friend posts yet.'
-              : 'No sessions for this filter yet.'
-          }
+          emptyMessage="No friend posts yet."
           onPressUser={(userId, name) =>
             router.push({
               pathname: '/(tabs)/user',
@@ -220,47 +134,5 @@ const styles = StyleSheet.create({
     color: appTheme.colors.primary,
     fontSize: 16,
     fontWeight: '700',
-  },
-  filterSection: {
-    gap: 12,
-    marginTop: 4,
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: appTheme.colors.textMuted,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    padding: 6,
-    borderRadius: 14,
-    backgroundColor: appTheme.colors.surfaceSoftAlt,
-  },
-  filterChip: {
-    flex: 1,
-    minHeight: 42,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'transparent',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  filterChipActive: {
-    backgroundColor: appTheme.colors.surface,
-    borderColor: appTheme.colors.borderSubtle,
-  },
-  filterChipPressed: {
-    backgroundColor: appTheme.colors.primarySoft,
-  },
-  filterChipText: {
-    color: appTheme.colors.textSoft,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  filterChipTextActive: {
-    color: '#1a5547',
   },
 });
