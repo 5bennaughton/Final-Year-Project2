@@ -62,13 +62,6 @@ export default function HomePage() {
   }
 
   /**
-   * Navigate to the sessions screen.
-   */
-  function goToSessions() {
-    router.push('/(tabs)/session');
-  }
-
-  /**
    * Navigate to the settings screen.
    */
   function goToSettings() {
@@ -145,10 +138,6 @@ export default function HomePage() {
 
           {/* Small buttons for map + settings */}
           <View style={styles.quickActions}>
-            <Pressable onPress={goToSessions} style={styles.quickActionButton}>
-              <Text style={styles.quickActionButtonText}>Sessions</Text>
-            </Pressable>
-
             <Pressable onPress={goToSettings} style={styles.quickActionButton}>
               <Text style={styles.quickActionButtonText}>Settings</Text>
             </Pressable>
