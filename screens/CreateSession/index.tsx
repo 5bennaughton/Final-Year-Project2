@@ -466,19 +466,18 @@ export default function CreateSessionScreen() {
               {SPORT_OPTIONS.map((option) => {
                 const isSelected = sport === option;
                 return (
-                  <Button
+                  <Pressable
                     key={option}
                     onPress={() => setSport(option)}
-                    variant="solid"
-                    size="sm"
-                    style={[
+                    style={({ pressed }) => [
                       styles.sportChip,
                       isSelected
                         ? styles.sportChipSelected
                         : styles.sportChipUnselected,
+                      pressed && styles.sportChipPressed,
                     ]}
                   >
-                    <ButtonText
+                    <Text
                       style={[
                         styles.sportChipText,
                         isSelected
@@ -487,8 +486,8 @@ export default function CreateSessionScreen() {
                       ]}
                     >
                       {option}
-                    </ButtonText>
-                  </Button>
+                    </Text>
+                  </Pressable>
                 );
               })}
             </View>
@@ -735,13 +734,17 @@ export default function CreateSessionScreen() {
                   }
                   style={{
                     width: '100%',
-                    borderRadius: 16,
+                    minHeight: 52,
+                    borderRadius: 12,
                     border: `1px solid ${appTheme.colors.border}`,
-                    padding: '14px 16px',
+                    padding: '0 14px',
                     fontSize: 16,
-                    color: appTheme.colors.text,
+                    fontFamily: 'inherit',
+                    color: appTheme.colors.textStrong,
                     backgroundColor: appTheme.colors.surface,
                     boxSizing: 'border-box',
+                    appearance: 'none',
+                    WebkitAppearance: 'none',
                   }}
                 />
               </View>
@@ -856,19 +859,22 @@ const styles = StyleSheet.create({
     ...uiStyles.pillButton,
   },
   sportChipSelected: {
-    borderColor: appTheme.colors.accent,
-    backgroundColor: appTheme.colors.accent,
+    borderColor: appTheme.colors.primary,
+    backgroundColor: appTheme.colors.primary,
   },
   sportChipUnselected: {
     borderColor: appTheme.colors.border,
     backgroundColor: appTheme.colors.surface,
+  },
+  sportChipPressed: {
+    opacity: 0.9,
   },
   sportChipText: {
     ...uiStyles.pillButtonText,
     textTransform: 'capitalize',
   },
   sportChipTextSelected: {
-    color: appTheme.colors.textStrong,
+    color: appTheme.colors.white,
   },
   sportChipTextUnselected: {
     color: appTheme.colors.textSoft,
