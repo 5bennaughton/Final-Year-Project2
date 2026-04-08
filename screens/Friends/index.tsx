@@ -137,9 +137,6 @@ export default function Friends() {
         return;
       }
       setRequests(data.requests);
-      if (data.requests.length === 0) {
-        setRequestsMessage('No pending requests.');
-      }
     } catch (err: any) {
       setRequestsError(err?.message ?? 'Fetch requests failed');
     } finally {
