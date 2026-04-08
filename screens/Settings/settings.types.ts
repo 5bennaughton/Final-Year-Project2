@@ -10,6 +10,5 @@ export type MeResponse = {
 export type UpdateProfilePayload = {
   name: string;
   bio: string;
-  avatarUrl: string | null;
   profileVisibility: ProfileVisibility;
 };

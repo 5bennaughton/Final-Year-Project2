@@ -19,32 +19,6 @@ export async function updateMyProfile(payload: UpdateProfilePayload) {
   );
 }
 
-export async function uploadAvatar(formData: FormData) {
-  const res = await authFetch(`${API_BASE}/uploads/avatar`, {
-    method: 'POST',
-    body: formData,
-  });
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) {
-    throw new Error(data?.message ?? 'Upload failed');
-  }
-
-  return data;
-}
-
-export async function updateAvatarUrl(avatarUrl: string) {
-  return requestJson(
-    `${API_BASE}/auth/me`,
-    {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ avatarUrl }),
-    },
-    'Update avatar failed'
-  );
-}
-
 export async function requestDeleteAccount() {
   const res = await authFetch(`${API_BASE}/auth/me`, { method: 'DELETE' });
   const data = await res.json().catch(() => ({}));
