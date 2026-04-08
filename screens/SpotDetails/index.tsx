@@ -665,10 +665,10 @@ export default function SpotDetails() {
 
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Next 42 hours</Text>
+            <Text style={styles.sectionTitle}>Next 48 hours</Text>
             <Text style={styles.sectionHeaderMeta}>
               {kiteableForecast?.kiteableHours ?? 0}/
-              {kiteableForecast?.requestedHours ?? 42} kiteable
+              {kiteableForecast?.requestedHours ?? 48} kiteable
             </Text>
           </View>
 

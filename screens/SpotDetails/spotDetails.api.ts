@@ -15,7 +15,7 @@ export async function fetchKiteableForecast(
   directionMode: DirectionMode
 ) {
   return requestJson(
-    `${API_BASE}/global-spots/${encodeURIComponent(spotId)}/kiteable-forecast?hours=42&directionMode=${directionMode}`,
+    `${API_BASE}/global-spots/${encodeURIComponent(spotId)}/kiteable-forecast?hours=48&directionMode=${directionMode}`,
     {},
     'Fetch kiteable forecast failed'
   );
